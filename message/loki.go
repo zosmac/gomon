@@ -1,0 +1,123 @@
+// Copyright © 2021 The Gomon Project.
+
+package message
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"reflect"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/zosmac/gomon/core"
+)
+
+type (
+	// labels type defined for generating Loki log entries.
+	labels map[string]string
+
+	// label type defined for formatting Loki log entry labels.
+	label [2]string
+
+	// value type defined for formatting Loki log entry values.
+	value [2]string
+
+	// stream type defined for generating Loki log entries.
+	stream struct {
+		Stream labels  `json:"stream"`
+		Values []value `json:"values"`
+	}
+
+	// streams type defined for generating Loki log entries.
+	streams struct {
+		Streams []stream `json:"streams"`
+	}
+)
+
+// lokiTest pings for the Loki server to determine if it is ready for accepting file, log, and process observer observations.
+func lokiTest() bool {
+	if resp, err := http.DefaultClient.Get("http://localhost:3100/ready"); err == nil {
+		buf, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err == nil && len(buf) >= 5 && string(buf[:5]) == "ready" {
+			return true
+		}
+	}
+	return false
+}
+
+// lokiFormatter complies with core.Formatter function prototype for encoding properties as Loki stream labels and values.
+func lokiFormatter(name, tag string, val reflect.Value) interface{} {
+	if strings.HasPrefix(tag, "property") {
+		if val.Kind() == reflect.String {
+			return label{name, val.String()}
+		} else if val.Type().ConvertibleTo(reflect.TypeOf(time.Time{})) {
+			t := val.Convert(reflect.TypeOf(time.Time{})).Interface().(time.Time)
+			if name == "timestamp" {
+				return label{name, strconv.FormatInt(t.UnixNano(), 10)}
+			} else {
+				return label{name, t.Format("2006-01-02 15:04:05.999")}
+			}
+		} else if s, ok := val.Interface().(fmt.Stringer); ok {
+			return label{name, s.String()}
+		} else {
+			switch val.Kind() {
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				return label{name, strconv.FormatInt(val.Int(), 10)}
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				return label{name, strconv.FormatUint(val.Uint(), 10)}
+			case reflect.Float32, reflect.Float64:
+				return label{name, strconv.FormatFloat(val.Float(), 'e', -1, 64)}
+			}
+		}
+		core.LogError(fmt.Errorf("lokiMessage property type not recognized %s %v", name, val.Interface()))
+	}
+	return nil
+}
+
+// lokiEncode encodes file, log, and process observer observations as Loki streams.
+func lokiEncode(os []Content) bool {
+	var s streams
+	for _, o := range os {
+		ls := map[string]string{}
+		for _, l := range core.Format("", "", reflect.ValueOf(o), lokiFormatter) {
+			l := l.(label)
+			ls[l[0]] = l[1]
+		}
+
+		labels := map[string]string{}
+
+		timestamp := ls["timestamp"]
+		message := ls["message"]
+		labels["source"] = ls["source"]
+		labels["event"] = ls["event"]
+		if labels["source"] != "file" {
+			labels["name"] = ls["id_name"] // file name already in message text
+		}
+
+		s.Streams = append(s.Streams, stream{
+			Stream: labels,
+			Values: []value{
+				{
+					timestamp,
+					message,
+				},
+			},
+		})
+	}
+
+	buf, _ := json.Marshal(s)
+	if resp, err := http.DefaultClient.Post(
+		"http://localhost:3100/loki/api/v1/push",
+		"application/json",
+		bytes.NewReader(buf),
+	); err == nil {
+		resp.Body.Close()
+		return true
+	}
+	return false
+}
