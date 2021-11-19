@@ -6,6 +6,7 @@ package log
 #include <libproc.h>
 */
 import "C"
+
 import (
 	"bufio"
 	"fmt"
