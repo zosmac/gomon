@@ -116,6 +116,8 @@ func NodeGraph(r *http.Request) []byte {
 			dir = "back"
 		case "<-->":
 			dir = "both"
+		case "":
+			dir = "none"
 		}
 
 		if conn.self.pid == -1 { // external network connections (self.pid/fd = -1/-1)

@@ -7,9 +7,11 @@ import (
 	"math"
 	"net"
 	"os"
+	"runtime"
 	"sort"
 	"strconv"
-	"strings"
+
+	"github.com/zosmac/gomon/core"
 )
 
 var (
@@ -44,9 +46,6 @@ var (
 		}
 		return l
 	}()
-
-	// remoteHosts caches DNS lookup hostnames
-	remoteHosts = map[string]string{}
 
 	// interfaces maps local ip addresses to their network interfaces.
 	interfaces = func() map[string]string {
@@ -118,6 +117,14 @@ type (
 func connections(pt processTable) []connection {
 	connm := map[[4]int]connection{}
 	epm := map[string]map[Pid][]int{}
+	defer func() {
+		if r := recover(); r != nil {
+			buf := make([]byte, 4096)
+			n := runtime.Stack(buf, false)
+			buf = buf[:n]
+			core.LogError(fmt.Errorf("Connections panicked %v\n%s", r, buf))
+		}
+	}()
 
 	// build a map of all remote (peer) intra-host endpoints
 	for pid, p := range pt {
@@ -126,7 +133,7 @@ func connections(pt processTable) []connection {
 				continue
 			}
 			switch conn.Type {
-			case "FIFO", "PIPE", "SEMA", "SHMEM", "TCP", "UDP", "UNIX", "KEVT", "KCTL":
+			case "FIFO", "PIPE", "TCP", "UDP", "unix":
 				self := conn.Type + ": " + conn.Self
 				if _, ok := epm[self]; !ok {
 					epm[self] = map[Pid][]int{}
@@ -169,9 +176,7 @@ func connections(pt processTable) []connection {
 
 			switch conn.Type {
 			case "NUL": // ignore /dev/null connection endpoints
-			// case "ATALK", "FSEVENTS", "NETPOLICY", "SOCK:NDRV":
-			// case "BLK", "CHR", "DIR", "KQUEUE", "LINK", "REG", "SOCK":
-			case "REG":
+			case "REG", "PSXSHM":
 				connm[[4]int{int(pid), int(fd), math.MaxInt32, 0}] = connection{
 					ftype:     conn.Type,
 					name:      conn.Name,
@@ -182,7 +187,7 @@ func connections(pt processTable) []connection {
 						name: conn.Name,
 					},
 				}
-			case "KEVT", "KCTL":
+			case "systm":
 				connm[[4]int{int(pid), int(fd), 0, 0}] = connection{
 					ftype:     conn.Type,
 					name:      conn.Name,
@@ -194,23 +199,18 @@ func connections(pt processTable) []connection {
 						name:    conn.Name,
 					},
 				}
-			case "FIFO", "PIPE", "SEMA", "SHMEM", "TCP", "UDP", "UNIX":
+			case "FIFO", "PIPE", "TCP", "UDP", "unix":
 				if conn.Peer == "" {
 					continue
 				}
 				if _, ok := epm[conn.Type+": "+conn.Peer]; !ok {
 					if conn.Type == "TCP" || conn.Type == "UDP" { // possible external connection
-						host, _, _ := net.SplitHostPort(conn.Peer)
+						host, port, _ := net.SplitHostPort(conn.Peer)
 						ip := net.ParseIP(host)
 						_, ok := localIps[ip.String()]
 						_, ok2 := interfaces[ip.String()]
 						if !(ok || ok2 || ip.IsLoopback() || ip.IsInterfaceLocalMulticast() ||
 							ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast()) {
-							if _, ok := remoteHosts[ip.String()]; !ok {
-								hosts, err := net.LookupAddr(ip.String())
-								fmt.Fprintf(os.Stderr, "ip: %s, hosts: %v err: %v\n", ip, hosts, err)
-								remoteHosts[ip.String()] = strings.Join(hosts, ", ")
-							}
 							connm[[4]int{-1, -1, int(pid), int(fd)}] = connection{
 								ftype: conn.Type,
 								name:  conn.Name,
@@ -218,7 +218,7 @@ func connections(pt processTable) []connection {
 									pid:     -1,
 									fd:      -1,
 									name:    conn.Peer,
-									command: remoteHosts[ip.String()],
+									command: port,
 								},
 								peer: self,
 							}
@@ -249,7 +249,7 @@ func connections(pt processTable) []connection {
 						if !(conn.Type == rconn.Type &&
 							conn.Peer == rconn.Self &&
 							(rconn.Peer == conn.Self ||
-								rconn.Peer == "" && (conn.Type == "SHMEM" || conn.Type == "UNIX"))) {
+								rconn.Peer == "" && (conn.Type == "PSXSHM" || conn.Type == "unix"))) {
 							continue
 						}
 

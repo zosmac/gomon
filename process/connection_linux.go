@@ -18,15 +18,6 @@ import (
 )
 
 var (
-	// udpCache: UDP connections are not persistent, cache remote address and process to avoid repeated netlink queries.
-	// However, we need a way to expire these as over time ports are reused. For now, just expire every 10 minutes.
-	// udpCache = struct {
-	// 	sync.Mutex
-	// 	addresses map[string]string // map remote address to process
-	// }{
-	// 	addresses: map[string]string{},
-	// }
-
 	// netInodes built from /proc/net tcp, udp, and unix files
 	netInodes map[int]netInode
 )
@@ -38,17 +29,6 @@ type (
 		faddr net.Addr
 	}
 )
-
-func init() {
-	// go func() {
-	// 	ticker := time.NewTicker(10 * time.Minute)
-	// 	for range ticker.C {
-	// 		udpCache.Lock()
-	// 		udpCache.addresses = map[string]string{}
-	// 		udpCache.Unlock()
-	// 	}
-	// }()
-}
 
 // endpoints returns a list of Connection structures for a process.
 func (pid Pid) endpoints() Connections {

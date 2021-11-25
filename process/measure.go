@@ -15,11 +15,15 @@ import (
 
 var (
 	// commandLines cache for command lines, which are expensive to query.
-	commandLines = map[Pid]CommandLine{}
-	clLock       sync.RWMutex
+	clMap  = map[Pid]CommandLine{}
+	clLock sync.RWMutex
 
 	// oldTimes used to limit reporting only to processes that consumed CPU since the previous measurement.
 	oldTimes = map[Pid]time.Duration{}
+
+	// endpoints of processes periodically populated by lsof.
+	epMap  = map[Pid]Connections{}
+	epLock sync.Mutex
 )
 
 type (
@@ -29,6 +33,12 @@ type (
 	// processTree organizes the process into a hierarchy
 	processTree map[Pid]processTree
 )
+
+func init() {
+	ready := make(chan struct{})
+	go lsofCommand(ready)
+	<-ready
+}
 
 // Measure captures all processes' metrics.
 func Measure() (ProcStats, []message.Content) {
@@ -71,7 +81,7 @@ func Measure() (ProcStats, []message.Content) {
 	clLock.Lock()
 	for pid := range oldTimes { // process exited
 		pids = append(pids, int(pid))
-		delete(commandLines, pid)
+		delete(clMap, pid)
 	}
 	clLock.Unlock()
 
@@ -92,8 +102,14 @@ func buildTable() processTable {
 		panic("could not build process table")
 	}
 
-	pt := make(map[Pid]*measurement, len(pids))
+	var epm map[Pid]Connections
+	epLock.Lock()
+	if len(epMap) > 0 {
+		epm = epMap
+	}
+	epLock.Unlock()
 
+	pt := make(map[Pid]*measurement, len(pids))
 	for _, pid := range pids {
 		id, props, metrics := pid.metrics()
 		pt[pid] = &measurement{
@@ -102,7 +118,7 @@ func buildTable() processTable {
 			Id:          id,
 			Props:       props,
 			Metrics:     metrics,
-			Connections: pid.endpoints(),
+			Connections: epm[pid],
 		}
 	}
 

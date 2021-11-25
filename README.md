@@ -85,7 +85,7 @@ To enable collection, open the `prometheus.yml` configuration file for the *Prom
 
 ## Loki
 
-*[Loki](https://grafana.com/oss/loki/)* is an open-source log aggregation server. Via *Gomon*’s HTTP POSTs to the `/loki/api/v1/push` endpoint, *Loki* can receive the *observations*. To install *Loki*, select an appropriate binary from the list of Assets on the [Loki releases page](https://github.com/grafana/loki/releases/) for your platform, download, and install it.
+*[Loki](https://grafana.com/oss/loki/)* is an open-source log aggregation server. Via *Gomon*’s HTTP POSTs to the `/loki/api/v1/push` endpoint, *Loki* can receive the *observations*. To install *Loki*, create a `loki` folder, select appropriate `loki` and `promtail` binaries from the list of Assets on the [Loki releases page](https://github.com/grafana/loki/releases/) for your platform, and download. Each binary also requires a configuration file; follow the instructions on the [Loki installation page](https://grafana.com/docs/loki/latest/installation/local) to use `wget` (or `curl`) to copy these to the `loki` folder.
 
 ## Grafana
 
