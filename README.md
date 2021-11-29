@@ -24,7 +24,7 @@ Copyright © 2021 The Gomon Project.
 - [Visualize!](#visualize)
   - [Gomon Dashboard](#gomon-dashboard)
   - [Inter-process and remote host connections](#inter-process-and-remote-host-connections)
-
+  
 # Overview
 
 The `gomon` command starts itself as a server that monitors its system. *Gomon* periodically measures the state of the system, including its CPU, memory, filesystems, network interfaces, and processes. *Gomon* also observes system logs and the system's management of files and processes. Hence, gomon's processing consists of two fundamental operations: **measurement** and **observation**.
@@ -102,15 +102,17 @@ To install *Grafana*, select an appropriate binary from the [Grafana download pa
 
 ## Configure the *Prometheus* data source
 
-*Note that while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field.*
+*Note that while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field. Then, scroll down and select* **Save & test.**
 
-<img src="assets/grafana/prometheus-settings.png" width="500">
+<img src="assets/grafana/prometheus-settings.png" width="500"><br>
+<img src="assets/grafana/saventest.png" width="500">
 
 ## Configure the *Loki* data source
 
-*Note that while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field.*
+*Note that while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field. Then, scroll down and select* **Save & test.**
 
-<img src="assets/grafana/loki-settings.png" width="500">
+<img src="assets/grafana/loki-settings.png" width="500"><br>
+<img src="assets/grafana/saventest.png" width="500">
 
 ## Install the *[Gomon Dashboard](assets/grafana/dashboard.json)* to *Grafana*
 

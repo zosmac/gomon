@@ -1,14 +1,8 @@
 // Copyright © 2021 The Gomon Project.
 
 //go:build !windows
-// +build !windows
 
 package process
-
-/*
-#include <libproc.h>
-*/
-import "C"
 
 import (
 	"bufio"
@@ -21,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gomon/log"
 )
 
 var (
@@ -30,8 +25,8 @@ var (
 			`(?P<command>[^ ]+)[ ]+` +
 			`(?P<pid>[^ ]+)[ ]+` +
 			`(?:[^ ]+)[ ]+` + // USER
-			`(?P<fd>(?:\d+|fp\.))` +
-			`(?P<mode>(?: |[-rwu](?:.?)))[ ]+` + // ignore possible lock character after mode
+			`(?:(?P<fd>\d+)|fp\.|mem|cwd|rtd)` +
+			`(?P<mode> |[rwu-][rwuNRWU]?)[ ]+` +
 			`(?P<type>(?:[^ ]+|))[ ]+` +
 			`(?P<device>(?:0x[0-9a-f]+|\d+,\d+|kpipe|upipe|))[ ]+` +
 			`(?:[^ ]+|)[ ]+` + // SIZE/OFF
@@ -123,7 +118,7 @@ func lsofCommand(ready chan<- struct{}) {
 		command := match[rgxgroups[groupCommand]]
 		pid, _ := strconv.Atoi(match[rgxgroups[groupPid]])
 		fd, _ := strconv.Atoi(match[rgxgroups[groupFd]])
-		mode := match[rgxgroups[groupMode]]
+		mode := match[rgxgroups[groupMode]][0]
 		fdType := match[rgxgroups[groupType]]
 		device := match[rgxgroups[groupDevice]]
 		node := match[rgxgroups[groupNode]]
@@ -132,14 +127,18 @@ func lsofCommand(ready chan<- struct{}) {
 		var self, peer string
 
 		switch fdType {
-		case "BLK", "DIR", "REG", "LINK",
+		case "REG":
+			if runtime.GOOS == "linux" && name != "" && pid != os.Getpid() {
+				log.Watch(name, pid)
+			}
+		case "BLK", "DIR", "LINK",
 			"CHAN", "FSEVENT", "KQUEUE", "NEXUS", "NPOLICY", "PSXSHM":
 		case "CHR":
 			if name == os.DevNull {
 				fdType = "NUL"
 			}
 		case "FIFO":
-			if mode == "w" {
+			if mode == 'w' {
 				peer = name
 			} else {
 				self = name
@@ -156,11 +155,11 @@ func lsofCommand(ready chan<- struct{}) {
 			fdType = node
 			split := strings.Split(name, " ")
 			if len(split) > 1 {
-				state = split[0]
+				state = split[1]
 			}
 			split = strings.Split(split[0], "->")
 			self = split[0]
-			if len(split) == 2 {
+			if len(split) > 1 {
 				peer = strings.Split(split[1], " ")[0]
 			} else {
 				self += " " + state
@@ -205,13 +204,13 @@ func lsofCommand(ready chan<- struct{}) {
 }
 
 // accmode determines the I/O direction.
-func accmode(mode string) string {
+func accmode(mode byte) string {
 	switch mode {
-	case "r":
+	case 'r':
 		return "<<--"
-	case "w":
+	case 'w':
 		return "-->>"
-	case "u":
+	case 'u':
 		return "<-->"
 	}
 	return ""

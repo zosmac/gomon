@@ -84,7 +84,6 @@ type (
 
 	// Connection represents a process connection to a data source.
 	Connection struct {
-		inode      int    // linux only
 		Descriptor int    `json:"descriptor" gomon:"property"`
 		Type       string `json:"type" gomon:"property"`
 		Name       string `json:"name" gomon:"property"`

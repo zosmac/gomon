@@ -188,36 +188,34 @@ func report(ready map[int]*os.File) {
 }
 
 // Watch adds a process' logs to watch to the observer.
-func Watch(names []string, pid int) {
-	for _, name := range names {
-		for _, l := range watched[pid] {
-			if name == l.Name() { // already watching
-				continue
-			}
-		}
-		if err := filter(name); err != nil {
+func Watch(name string, pid int) {
+	for _, l := range watched[pid] {
+		if name == l.Name() { // already watching
 			continue
 		}
-
-		l, err := os.Open(name)
-		if err != nil {
-			continue
-		}
-		l.Seek(0, io.SeekEnd)
-
-		wd, err := syscall.InotifyAddWatch(nd, name, uint32(syscall.IN_MODIFY))
-		if err != nil {
-			l.Close()
-			continue
-		}
-
-		defer wLock.Lock()
-		defer wLock.Unlock()
-		if _, ok := watched[pid]; !ok {
-			watched[pid] = map[int]*os.File{}
-		}
-		watched[pid][wd] = l
 	}
+	if err := filter(name); err != nil {
+		return
+	}
+
+	l, err := os.Open(name)
+	if err != nil {
+		return
+	}
+	l.Seek(0, io.SeekEnd)
+
+	wd, err := syscall.InotifyAddWatch(nd, name, uint32(syscall.IN_MODIFY))
+	if err != nil {
+		l.Close()
+		return
+	}
+
+	wLock.Lock()
+	if _, ok := watched[pid]; !ok {
+		watched[pid] = map[int]*os.File{}
+	}
+	watched[pid][wd] = l
+	wLock.Unlock()
 }
 
 // Remove exited processes' logs from observation.

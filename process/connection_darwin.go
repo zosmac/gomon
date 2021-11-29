@@ -12,19 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 )
-
-var (
-	fdinfos = func() []C.struct_proc_fdinfo {
-		var rlimit syscall.Rlimit
-		syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlimit)
-		return make([]C.struct_proc_fdinfo, rlimit.Cur)
-	}()
-)
-
-// getInodes is called from Measure(), but is only relevant for Linux, so for Darwin is a noop.
-func getInodes() {}
 
 // hostCommand builds a host specific command line for lsof.
 func hostCommand() *exec.Cmd {

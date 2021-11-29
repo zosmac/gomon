@@ -94,9 +94,6 @@ func Measure() (ProcStats, []message.Content) {
 
 // buildTable builds a process table and captures current process state
 func buildTable() processTable {
-	// use inodes in linux to pair connection endpoints
-	getInodes()
-
 	pids, err := getPids()
 	if err != nil {
 		panic("could not build process table")

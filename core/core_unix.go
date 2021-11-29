@@ -1,6 +1,6 @@
 // Copyright © 2021 The Gomon Project.
 
-// +build !windows
+//go:build !windows
 
 package core
 

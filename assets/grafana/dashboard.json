@@ -31,7 +31,7 @@
       "liveNow" : false,
       "panels" : [
          {
-            "datasource" : null,
+            "datasource" : "Prometheus",
             "description" : "",
             "fieldConfig" : {
                "defaults" : {
@@ -101,7 +101,7 @@
             "type" : "stat"
          },
          {
-            "datasource" : null,
+            "datasource" : "Prometheus",
             "description" : "",
             "fieldConfig" : {
                "defaults" : {
@@ -163,7 +163,7 @@
             "type" : "stat"
          },
          {
-            "datasource" : null,
+            "datasource" : "Prometheus",
             "description" : "",
             "fieldConfig" : {
                "defaults" : {
@@ -354,11 +354,10 @@
             "timeFrom" : null,
             "timeShift" : null,
             "title" : "Network and Device I/O (log2)",
-            "transparent" : true,
             "type" : "timeseries"
          },
          {
-            "datasource" : null,
+            "datasource" : "Prometheus",
             "fieldConfig" : {
                "defaults" : {
                   "color" : {
@@ -454,7 +453,6 @@
             "timeFrom" : null,
             "timeShift" : null,
             "title" : "Load Average",
-            "transparent" : true,
             "type" : "timeseries"
          },
          {
@@ -563,7 +561,6 @@
             "timeFrom" : null,
             "timeShift" : null,
             "title" : "System Memory and Swap Used (log2)",
-            "transparent" : true,
             "type" : "timeseries"
          },
          {
@@ -680,7 +677,6 @@
             "timeFrom" : null,
             "timeShift" : null,
             "title" : "System and Top5 Process CPU Usage (log2)",
-            "transparent" : true,
             "type" : "timeseries"
          },
          {
@@ -788,7 +784,6 @@
             "timeFrom" : null,
             "timeShift" : null,
             "title" : "Top5 Process Res. and Virt. Memory Usage (log2)",
-            "transparent" : true,
             "type" : "timeseries"
          },
          {
@@ -903,7 +898,6 @@
             "timeFrom" : null,
             "timeShift" : null,
             "title" : "System and Top5 Process I/O (log2)",
-            "transparent" : true,
             "type" : "timeseries"
          },
          {
@@ -940,7 +934,6 @@
          }
       ],
       "refresh" : "15s",
-      "schemaVersion" : 32,
       "style" : "light",
       "tags" : [
          "gomon",
@@ -969,16 +962,13 @@
       },
       "timezone" : "",
       "title" : "Gomon Dashboard",
-      "version" : 1
+      "version" : 0
    },
    "meta" : {
       "canAdmin" : true,
       "canEdit" : true,
       "canSave" : true,
       "canStar" : true,
-      "created" : "2021-11-17T15:04:52-08:00",
-      "createdBy" : "admin",
-      "expires" : "0001-01-01T00:00:00Z",
       "folderId" : 0,
       "folderTitle" : "General",
       "folderUid" : "",
@@ -989,9 +979,9 @@
       "provisionedExternalId" : "",
       "slug" : "gomon-dashboard",
       "type" : "db",
-      "updated" : "2021-11-17T15:46:45-08:00",
-      "updatedBy" : "admin",
-      "url" : "/d/KECb_lc7z/gomon-dashboard",
-      "version" : 1
-   }
+      "version" : 0
+   },
+
+   "message" : "Initialize gomon dashboard",
+   "overwrite" : true
 }

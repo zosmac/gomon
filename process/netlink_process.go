@@ -1,7 +1,6 @@
 // Copyright © 2021 The Gomon Project.
 
 //go:build linux
-// +build linux
 
 package process
 

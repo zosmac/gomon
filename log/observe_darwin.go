@@ -201,6 +201,10 @@ func parseLog(cmdline []string, regex *regexp.Regexp, groups map[captureGroup]in
 	return sc.Err()
 }
 
+// Watch adds a process' logs to watch to the observer, which is a noop for Darwin.
+func Watch(name string, pid int) {
+}
+
 // Remove exited processes' logs from observation, which is a noop for Darwin.
 func Remove(pid []int) {
 }
