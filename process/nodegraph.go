@@ -147,7 +147,7 @@ func NodeGraph(r *http.Request) []byte {
 				conn.name,
 			)
 		} else if conn.peer.pid == math.MaxInt32 { // peer is file
-			if conn.self.pid > 1 && q.files {
+			if conn.self.pid > 1 && q.files && (q.daemons || pt[conn.self.pid].Ppid > 1) {
 				if _, ok := include[conn.self.pid]; !ok {
 					include[conn.self.pid] = false
 				}
