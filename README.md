@@ -74,7 +74,7 @@ sudo npm install -global yarn
 
 *[Prometheus](http://prometheus.io)* is an open-source systems monitoring server for scraping and storing time-series data. At startup, *Gomon* opens a `/metrics` endpoint for *Prometheus* to collect *Gomon*’s system resource *measurement stream*.
 
-To install *Prometheus*, select an appropriate binary from the [Prometheus download page](https://prometheus.io/download/) for your platform, download, and install it.
+To install *Prometheus*, select an appropriate binary from the [Prometheus download page](https://prometheus.io/download/) for your Operating System and Architecture, download, and install it.
 
 To enable collection, open the `prometheus.yml` configuration file for the *Prometheus* deployment and add the following to `scrape_configs` *(a sample configuration file is in [`assets/prometheus.yml`](assets/prometheus.yml))*: 
 ```yml
@@ -85,7 +85,15 @@ To enable collection, open the `prometheus.yml` configuration file for the *Prom
 
 ## Loki
 
-*[Loki](https://grafana.com/oss/loki/)* is an open-source log aggregation server. Via *Gomon*’s HTTP POSTs to the `/loki/api/v1/push` endpoint, *Loki* can receive the *observations*. To install *Loki*, create a `loki` folder, select appropriate `loki` and `promtail` binaries from the list of Assets on the [Loki releases page](https://github.com/grafana/loki/releases/) for your platform, and download. Each binary also requires a configuration file; follow the instructions on the [Loki installation page](https://grafana.com/docs/loki/latest/installation/local) to use `wget` (or `curl`) to copy these to the `loki` folder.
+*[Loki](https://grafana.com/oss/loki/)* is an open-source log aggregation server. Via *Gomon*’s HTTP POSTs to the `/loki/api/v1/push` endpoint, *Loki* can receive the *observations*. To install *Loki*, create a `loki` folder, select appropriate `loki` and `promtail` binaries from the list of Assets on the [Loki releases page](https://github.com/grafana/loki/releases/latest) for your platform, and download. Each binary also requires a configuration file; follow the instructions on the [Loki installation page](https://grafana.com/docs/loki/latest/installation/local) to copy these to the `loki` folder.
+```zsh
+cd ${LOKI_DIR}
+unzip =(curl -L "https://github.com/grafana/loki/releases/latest/download/loki-$(go env GOOS)-$(go env GOARCH).zip")
+unzip =(curl -L "https://github.com/grafana/loki/releases/latest/download/promtail-$(go env GOOS)-$(go env GOARCH).zip")
+chmod a+x loki-$(go env GOOS)-$(go env GOARCH) promtail-$(go env GOOS)-$(go env GOARCH)
+curl -O -L "https://raw.githubusercontent.com/grafana/loki/main/cmd/loki/loki-local-config.yaml"
+curl -O -L "https://raw.githubusercontent.com/grafana/loki/main/clients/cmd/promtail/promtail-local-config.yaml"
+```
 
 ## Grafana
 
@@ -115,7 +123,6 @@ To install *Grafana*, select an appropriate binary from the [Grafana download pa
 <img src="assets/grafana/saventest.png" width="500">
 
 ## Install the *[Gomon Dashboard](assets/grafana/dashboard.json)* to *Grafana*
-
 ```zsh
 curl ${GRAFANA_CRED} -X POST -i -w "\n" -H "Content-Type: application/json" -T ${GOMON_DIR}/assets/grafana/dashboard.json "http://localhost:3000/api/dashboards/db"
 ```
@@ -124,20 +131,20 @@ curl ${GRAFANA_CRED} -X POST -i -w "\n" -H "Content-Type: application/json" -T $
 
 ### *Prometheus*
 ```zsh
-cd $PROMETHEUS_DIR
+cd ${PROMETHEUS_DIR}
 ./prometheus >prometheus.log 2>&1 &
 ```
 
 ### *Loki*
 ```zsh
-cd $LOKI_DIR
-cmd/loki/loki -config.file=cmd/loki/loki-local-config.yaml >loki.log 2>&1 &
+cd ${LOKI_DIR}
+./loki-$(go env GOOS)-$(go env GOARCH) -config.file loki-local-config.yaml >loki.log 2>&1 &
 ```
 
 ### *Grafana*
 ```zsh
-cd $GRAFANA_DIR
-bin/grafana-server web 2>&1 >grafana.log &
+cd ${GRAFANA_DIR}
+bin/$(go env GOOS)-$(go env GOARCH)/grafana-server web >grafana.log 2>&1 &
 ```
 
 ### *Gomon*
@@ -153,16 +160,14 @@ sudo gomon -pretty -port 1234
 
 ## Inter-process and remote host connections
 
-If *[Graphviz](https://graphviz.gitlab.io)* is installed, *Gomon* can render a view of the inter-process and remote host connections `/gomon` endpoint.
-
+If *[Graphviz](https://graphviz.gitlab.io)* is installed, *Gomon* can render a view of the inter-process and remote host connections via the `/gomon` endpoint.
 [<img src="assets/graphviz-process-nodegraph.png">](http://localhost:1234/gomon)
-To download and install *[Graphviz](https://graphviz.org/download/source/)*, select a stable release and download the latest tar file and sha256.
+To download and install *[Graphviz](https://graphviz.org/download/source/)*, select a stable release, download its tar file, and build and install it.
 ```zsh
-shasum -a 256 -c graphviz-2.47.0.tar.xz.sha256
-tar xzvf graphviz-2.47.0.tar.xz 
-cd graphviz-2.47.0
-PS2PDF=pstopdf ./configure
+tar xzvf =(curl -L "https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/2.49.3/graphviz-2.49.3.tar.gz")
+cd graphviz-2.49.3
+./configure
 make
 sudo make install
 ```
-*(Note: installing from the git repository (i.e. `git clone https://gitlab.com/graphviz/graphviz/`) requires pre-configuration with `autogen.sh`, which in turn requires GNU autoconf, automake, and libtool.)*
+*(Note: installing from the git repository (i.e. `git clone https://gitlab.com/graphviz/graphviz/`) requires pre-configuration with `autogen.sh`, which in turn requires GNU autoconf, automake, and libtool. Find details at https://graphviz.org/download/source/#git-repos)*
