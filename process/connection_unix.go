@@ -167,7 +167,6 @@ func lsofCommand(ready chan<- struct{}) {
 			name = device
 		case "systm":
 			self = device
-			peer = "kernel"
 		case "key":
 			name = device
 			self = device

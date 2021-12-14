@@ -3,8 +3,6 @@
 package process
 
 import (
-	"fmt"
-	"os"
 	"sort"
 	"sync"
 	"time"
@@ -171,7 +169,7 @@ func flatTree(t processTree, indent int) []Pid {
 
 	for _, pid := range pids {
 		flat = append(flat, pid)
-		fmt.Fprintf(os.Stderr, "%*s%6d\n", indent, "", pid)
+		// fmt.Fprintf(os.Stderr, "%*s%6d\n", indent, "", pid)
 		flat = append(flat, flatTree(t[pid], indent+2)...)
 	}
 

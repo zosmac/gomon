@@ -81,14 +81,13 @@ func NodeGraph(r *http.Request) []byte {
 		hostsNode    string
 		hostEdges    string
 		processes    []string
-		daemons      string
 		processNodes []string
 		processEdges []string
 		files        string
 		fileNode     string
 		fileEdges    string
 	)
-	include := map[Pid]bool{} // record which processes have a connection to include in report, and whether it is a parent
+	include := map[Pid]struct{}{} // record which processes have a connection to include in report
 
 	pt := buildTable()
 	q := parse(r)
@@ -116,40 +115,129 @@ func NodeGraph(r *http.Request) []byte {
 			dir = "back"
 		case "<-->":
 			dir = "both"
-		case "":
+		default:
 			dir = "none"
 		}
 
 		if conn.self.pid == -1 { // external network connections (self.pid/fd = -1/-1)
-			if _, ok := include[conn.peer.pid]; !ok {
-				include[conn.peer.pid] = false
-			}
+			include[conn.peer.pid] = struct{}{}
 
 			host, port, _ := net.SplitHostPort(conn.self.name)
 			hosts += fmt.Sprintf(`
-    %q [width=1.5 height=0.5 shape=cds label="%s:%s\n%s\n%s"]`,
+    %q [width=1.5 height=0.5 shape=cds label="%s:%s\n%s"]`,
 				conn.self.name,
 				conn.ftype,
 				port,
 				host,
-				conn.self.command,
 			)
 			if hostsNode == "" {
 				hostsNode = conn.self.name
 			}
 
 			hostEdges += fmt.Sprintf(`
-    %q -> "%d:%s" [color="black" dir=both tooltip="%s:%s\n%[2]d:%s"]`,
+    %q -> %d [color="black" dir=both tooltip="%s\n%d:%s"]`,
 				conn.self.name,
 				conn.peer.pid,
-				conn.peer.command,
+				conn.peer.name,
+				conn.peer.pid,
+				pt[conn.peer.pid].Exec,
+			)
+		} else if conn.peer.pid == math.MaxInt32 { // peer is file
+		} else if conn.self.pid == 0 { // ignore kernel
+		} else if conn.self.pid == 1 {
+			if q.daemons {
+				include[conn.peer.pid] = struct{}{}
+			}
+		} else if conn.peer.pid == 1 {
+			if q.daemons {
+				include[conn.self.pid] = struct{}{}
+			}
+		} else { // peer is process
+			if !q.kernel && conn.peer.pid == 0 {
+				continue
+			}
+			if !q.syslog && conn.ftype == "unix" && strings.HasSuffix(conn.name, filepath.Join("var", "run", "syslog")) {
+				continue
+			}
+
+			include[conn.self.pid] = struct{}{}
+			include[conn.peer.pid] = struct{}{}
+
+			depth := len(pt[conn.self.pid].ancestors)
+			for i := len(processNodes); i <= depth; i++ {
+				processNodes = append(processNodes, "")
+				processEdges = append(processEdges, "")
+			}
+			if processNodes[depth] == "" {
+				processNodes[depth] = strconv.Itoa(int(conn.self.pid))
+			}
+
+			color := color(conn.self.pid)
+			if strings.HasPrefix(conn.ftype, "parent:") {
+				color = "black"
+			}
+
+			processEdges[depth] += fmt.Sprintf(`
+      %d -> %[3]d [color=%[5]q dir=%s tooltip="%s:%s\n%[1]d:%s\n%d:%s"]`,
+				conn.self.pid,
+				pt[conn.self.pid].Exec,
+				conn.peer.pid,
+				pt[conn.peer.pid].Exec,
+				color,
+				dir,
 				conn.ftype,
 				conn.name,
 			)
-		} else if conn.peer.pid == math.MaxInt32 { // peer is file
-			if conn.self.pid > 1 && q.files && (q.daemons || pt[conn.self.pid].Ppid > 1) {
+		}
+	}
+
+	delete(include, 0) // remove process 0
+	// for _, pid := range flatTree(buildTree(pt), 0) {
+	for pid, p := range pt {
+		if _, ok := include[pid]; !ok {
+			continue
+		}
+		// p := pt[pid]
+
+		for i := len(processes); i <= len(p.ancestors); i++ {
+			processes = append(processes, fmt.Sprintf(`
+    subgraph cluster_processes_%d {
+      label="Process depth %[1]d" rank=same fontsize=11 penwidth=3.0 pencolor="#5599BB"`,
+				i+1))
+		}
+
+		node := fmt.Sprintf(`
+      %d [color=%[3]q label=%q tooltip=%q URL="http://localhost:%d/gomon?pid=%[1]d"]`,
+			pid,
+			p.Exec,
+			color(pid),
+			p.Id.Name,
+			p.ID(),
+			core.Flags.Port,
+		)
+		processes[len(p.ancestors)] += node
+	}
+	for i := range processes {
+		processes[i] += "\n    }"
+	}
+
+	if q.files {
+		for _, conn := range connections(pt) {
+			if conn.peer.pid == math.MaxInt32 { // peer is file
 				if _, ok := include[conn.self.pid]; !ok {
-					include[conn.self.pid] = false
+					continue
+				}
+
+				var dir string // graphviz arrow direction
+				switch conn.direction {
+				case "-->>":
+					dir = "forward"
+				case "<<--":
+					dir = "back"
+				case "<-->":
+					dir = "both"
+				default:
+					dir = "none"
 				}
 
 				files += fmt.Sprintf(`
@@ -162,119 +250,28 @@ func NodeGraph(r *http.Request) []byte {
 				}
 
 				fileEdges += fmt.Sprintf(`
-    "%d:%s" -> %q [minlen=4 color="#BBBB99" dir=%s tooltip="%[1]d:%s\n%[5]s:%s"]`,
+    %d -> %[3]q [minlen=4 color="#BBBB99" dir=%s tooltip="%[1]d:%s\n%[5]s:%[3]s"]`,
 					conn.self.pid,
-					conn.self.command,
+					pt[conn.self.pid].Exec,
 					conn.name,
 					dir,
 					conn.ftype,
-					conn.name,
 				)
 			}
-		} else if conn.self.pid == 0 { // ignore kernel
-		} else if conn.self.pid == 1 {
-			if q.daemons {
-				if _, ok := include[conn.peer.pid]; !ok {
-					include[conn.peer.pid] = false
-				}
-			}
-		} else if conn.peer.pid == 1 {
-			if q.daemons {
-				if _, ok := include[conn.self.pid]; !ok {
-					include[conn.self.pid] = false
-				}
-			}
-		} else { // peer is process
-			if !q.kernel && conn.peer.pid == 0 {
-				continue
-			}
-			if !q.syslog && conn.ftype == "UNIX" && strings.HasSuffix(conn.name, filepath.Join("var", "run", "syslog")) {
-				continue
-			}
-
-			if conn.self.fd < 0 { // parent/child relationship
-				include[conn.self.pid] = true
-			}
-			if _, ok := include[conn.self.pid]; !ok {
-				include[conn.self.pid] = false
-			}
-			if _, ok := include[conn.peer.pid]; !ok {
-				include[conn.peer.pid] = false
-			}
-
-			depth := len(pt[conn.self.pid].ancestors)
-			for i := len(processNodes); i <= depth; i++ {
-				processNodes = append(processNodes, "")
-				processEdges = append(processEdges, "")
-			}
-			if processNodes[depth] == "" {
-				processNodes[depth] = strconv.Itoa(int(conn.self.pid)) + ":" + conn.self.command
-			}
-
-			color := color(conn.self.pid)
-			if conn.self.fd < 0 { // parent-child connection
-				color = "black"
-			}
-
-			processEdges[depth] += fmt.Sprintf(`
-      "%d:%s" -> "%d:%s" [color=%q dir=%s tooltip="%s:%s\n%[1]d:%s\n%d:%s"]`,
-				conn.self.pid,
-				conn.self.command,
-				conn.peer.pid,
-				conn.peer.command,
-				color,
-				dir,
-				conn.ftype,
-				conn.name,
-			)
 		}
-	}
-
-	delete(include, 0) // remove process 0
-	// for _, pid := range flatTree(buildTree(pt), 0) {
-	for pid, p := range pt {
-		parent, ok := include[pid]
-		if !ok {
-			continue
-		}
-		// p := pt[pid]
-
-		for i := len(processes); i <= len(p.ancestors); i++ {
-			processes = append(processes, fmt.Sprintf(`
-    subgraph cluster_processes_%d {
-      label="Process depth %[1]d" rank=same fontsize=11 penwidth=3.0 pencolor="#5599BB"`,
-				i+1))
-		}
-		node := fmt.Sprintf(`
-      "%d:%s" [color=%q label=%q URL="http://localhost:%d/gomon?pid=%[1]d"]`,
-			pid,
-			p.Exec,
-			color(pid),
-			p.Id.Name,
-			core.Flags.Port,
-		)
-		if !parent && len(p.ancestors) == 0 {
-			daemons += node
-		} else {
-			processes[len(p.ancestors)] += node
-		}
-	}
-	processes[0] += daemons
-	for i := range processes {
-		processes[i] += "\n    }"
 	}
 
 	if len(processNodes) > 0 {
 		if hostsNode != "" {
 			clusterEdges += fmt.Sprintf(`
-  %q -> %q [style=invis ltail="cluster_hosts" lhead="cluster_processes_1"]`,
+  %q -> %s [style=invis ltail="cluster_hosts" lhead="cluster_processes_1"]`,
 				hostsNode,
 				processNodes[0],
 			)
 		}
 		for i := range processNodes[:len(processNodes)-1] {
 			clusterEdges += fmt.Sprintf(`
-  %q -> %q [style=invis ltail="cluster_processes_%d" lhead="cluster_processes_%d"]`,
+  %s -> %s [style=invis ltail="cluster_processes_%d" lhead="cluster_processes_%d"]`,
 				processNodes[i],
 				processNodes[i+1],
 				i+1,
@@ -283,7 +280,7 @@ func NodeGraph(r *http.Request) []byte {
 		}
 		if q.files {
 			clusterEdges += fmt.Sprintf(`
-  %q -> %q [style=invis ltail="cluster_processes_%d" lhead="cluster_files"]`,
+  %s -> %q [style=invis ltail="cluster_processes_%d" lhead="cluster_files"]`,
 				processNodes[len(processNodes)-1],
 				fileNode,
 				len(processNodes),
@@ -319,13 +316,13 @@ func NodeGraph(r *http.Request) []byte {
     label=Processes fontsize=11 penwidth=3.0 pencolor="#5599BB"` +
 		strings.Join(processes, "") +
 		strings.Join(processEdges, "") + `
-  }
+  }` +
+		clusterEdges + `
   subgraph cluster_files {
     label="Open Files" rank=max fontsize=11 penwidth=3 pencolor="#99BB55"` +
 		files +
 		fileEdges + `
-  }` +
-		clusterEdges + `
+  }
 }`)
 }
 
