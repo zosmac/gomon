@@ -30,6 +30,7 @@ var (
 		h, _ := os.Hostname()
 		ips, _ := net.LookupIP(h)
 		l := map[string]struct{}{}
+		l["localhost"] = struct{}{}
 		for _, ip := range ips {
 			l[ip.String()] = struct{}{}
 			// fmt.Fprintf(os.Stderr,
@@ -56,6 +57,11 @@ var (
 					for _, addr := range addrs {
 						if ip, _, err := net.ParseCIDR(addr.String()); err == nil {
 							im[ip.String()] = ni.Name
+							if hosts, err := net.LookupAddr(ip.String()); err == nil {
+								for _, host := range hosts {
+									im[host] = ni.Name
+								}
+							}
 							// fmt.Fprintf(os.Stderr,
 							// 	"interface %s: %s\n"+ipinfo,
 							// 	ni.Name,
@@ -75,6 +81,11 @@ var (
 					for _, addr := range addrs {
 						if ip, _, err := net.ParseCIDR(addr.String()); err == nil {
 							im[ip.String()] = ni.Name
+							if hosts, err := net.LookupAddr(ip.String()); err == nil {
+								for _, host := range hosts {
+									im[host] = ni.Name
+								}
+							}
 							// fmt.Fprintf(os.Stderr,
 							// 	"interface %s: %s\n"+ipinfo,
 							// 	ni.Name,
@@ -158,11 +169,6 @@ func connections(pt processTable) []connection {
 
 		for _, conn := range p.Connections {
 			fd := conn.Descriptor
-			self := endpoint{
-				name: conn.Self,
-				pid:  pid,
-			}
-
 			switch conn.Type {
 			case "NUL": // ignore /dev/null connection endpoints
 			case "REG", "PSXSHM":
@@ -170,7 +176,9 @@ func connections(pt processTable) []connection {
 					ftype:     conn.Type,
 					name:      conn.Name,
 					direction: conn.Direction,
-					self:      self,
+					self: endpoint{
+						pid: pid,
+					},
 					peer: endpoint{
 						pid: math.MaxInt32,
 					},
@@ -180,7 +188,9 @@ func connections(pt processTable) []connection {
 					ftype:     conn.Type,
 					name:      conn.Name,
 					direction: conn.Direction,
-					self:      self,
+					self: endpoint{
+						pid: pid,
+					},
 				}
 			case "FIFO", "PIPE", "TCP", "UDP", "unix":
 				if conn.Peer == "" {
@@ -203,7 +213,10 @@ func connections(pt processTable) []connection {
 									name: conn.Peer,
 									pid:  -1,
 								},
-								peer: self,
+								peer: endpoint{
+									name: conn.Self,
+									pid:  pid,
+								},
 							}
 						}
 					}

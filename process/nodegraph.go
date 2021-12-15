@@ -106,7 +106,16 @@ func NodeGraph(r *http.Request) []byte {
 		pt = ft
 	}
 
-	for _, conn := range connections(pt) {
+	conns := connections(pt)
+
+	if q.kernel {
+		hosts = fmt.Sprintf(`
+		0 [width=1.5 height=0.5 label="kernel"]`,
+		)
+		hostsNode = "0"
+	}
+
+	for _, conn := range conns {
 		var dir string // graphviz arrow direction
 		switch conn.direction {
 		case "-->>":
@@ -177,12 +186,17 @@ func NodeGraph(r *http.Request) []byte {
 				color = "black"
 			}
 
+			name := "kernel"
+			if conn.peer.pid != 0 {
+				name = filepath.Base(pt[conn.peer.pid].Exec)
+			}
+
 			processEdges[depth] += fmt.Sprintf(`
       %d -> %[3]d [color=%[5]q dir=%s tooltip="%s:%s\n%[1]d:%s\n%d:%s"]`,
 				conn.self.pid,
 				pt[conn.self.pid].Exec,
 				conn.peer.pid,
-				pt[conn.peer.pid].Exec,
+				name,
 				color,
 				dir,
 				conn.ftype,
@@ -222,7 +236,7 @@ func NodeGraph(r *http.Request) []byte {
 	}
 
 	if q.files {
-		for _, conn := range connections(pt) {
+		for _, conn := range conns {
 			if conn.peer.pid == math.MaxInt32 { // peer is file
 				if _, ok := include[conn.self.pid]; !ok {
 					continue
