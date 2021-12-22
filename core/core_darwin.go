@@ -34,7 +34,7 @@ func FdPath(fd int) (string, error) {
 		unsafe.Pointer(&fdi),
 		C.PROC_PIDFDVNODEPATHINFO_SIZE,
 	); n <= 0 {
-		return "", NewError("proc_pidfdinfo", fmt.Errorf("PROC_PIDFDVNODEPATHINFO failed %v", err))
+		return "", Error("proc_pidfdinfo PROC_PIDFDVNODEPATHINFO failed", err)
 	}
 	return C.GoString(&fdi.pvip.vip_path[0]), nil
 }
@@ -43,11 +43,11 @@ func FdPath(fd int) (string, error) {
 func MountMap() (map[string]string, error) {
 	n, err := syscall.Getfsstat(nil, C.MNT_NOWAIT)
 	if err != nil {
-		return nil, NewError("getfsstat", err)
+		return nil, Error("getfsstat", err)
 	}
 	list := make([]syscall.Statfs_t, n)
 	if _, err = syscall.Getfsstat(list, C.MNT_NOWAIT); err != nil {
-		return nil, NewError("getfsstat", err)
+		return nil, Error("getfsstat", err)
 	}
 
 	m := map[string]string{"/": ""} // have "/" at a minimum
@@ -73,7 +73,7 @@ func boottime() time.Time {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		LogError(fmt.Errorf("sysctl kern.boottime %v", err))
+		LogError(Error("sysctl kern.boottime", err))
 		return time.Time{}
 	}
 

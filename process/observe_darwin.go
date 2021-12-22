@@ -47,18 +47,18 @@ func watch(kd int, pid Pid) error {
 	return err
 }
 
-// listen for events and notify observer's callbacks.
-func listen() {
+// observe events and notify observer's callbacks.
+func observe() {
 	kd, err := syscall.Kqueue()
 	if err != nil {
-		errorChan <- core.NewError("Kqueue", err)
+		errorChan <- core.Error("Kqueue", err)
 		return
 	}
 	defer syscall.Close(kd)
 
 	pids, err := getPids()
 	if err != nil {
-		errorChan <- core.NewError("getPids", err)
+		errorChan <- core.Error("getPids", err)
 		return
 	}
 
@@ -69,11 +69,11 @@ func listen() {
 		for pid := range pids {
 			id, err := pid.id()
 			if err != nil {
-				errorChan <- core.NewError("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %v", ppid, pid, err))
+				errorChan <- core.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
 				continue
 			}
 			if err := watch(kd, pid); err != nil {
-				errorChan <- core.NewError("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %v", ppid, pid, err))
+				errorChan <- core.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
 				continue
 			}
 			id.ppid = ppid // preserve in case child reassigned to init process
@@ -88,14 +88,14 @@ func listen() {
 			if errors.Is(err, syscall.EINTR) {
 				continue
 			}
-			errorChan <- core.NewError("Kevent", err)
+			errorChan <- core.Error("Kevent", err)
 			return
 		}
 
 		for _, event := range events[:n] {
 			pid := Pid(event.Ident)
 			if event.Flags&syscall.EV_ERROR != 0 {
-				errorChan <- core.NewError("Kevent", fmt.Errorf("pid: %d, %#v", pid, event))
+				errorChan <- core.Error("Kevent", fmt.Errorf("pid: %d, %#v", pid, event))
 				continue
 			}
 
@@ -116,7 +116,7 @@ func listen() {
 
 			if event.Fflags&syscall.NOTE_EXEC != 0 {
 				if id, err = pid.id(); err != nil {
-					errorChan <- core.NewError("Kevent", fmt.Errorf("exec pid: %d, err: %v", pid, err))
+					errorChan <- core.Error("Kevent", fmt.Errorf("exec pid: %d, err: %w", pid, err))
 					if ok {
 						delete(youth, pid)
 					}
@@ -153,7 +153,7 @@ func newKids(kd int, ppid Pid) {
 		}
 		if err != nil {
 			if !errors.Is(err, syscall.ESRCH) {
-				errorChan <- core.NewError("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %v", ppid, pid, err))
+				errorChan <- core.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
 			}
 			continue
 		}

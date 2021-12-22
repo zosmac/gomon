@@ -38,7 +38,6 @@ type query struct {
 	Pid
 	kernel  bool
 	daemons bool
-	syslog  bool
 	files   bool
 }
 
@@ -48,7 +47,7 @@ func parse(r *http.Request) query {
 		return query{}
 	}
 	var pid int
-	var kernel, daemons, syslog, files bool
+	var kernel, daemons, files bool
 	if v, ok := values["pid"]; ok && len(v) > 0 {
 		pid, _ = strconv.Atoi(v[0])
 	}
@@ -58,9 +57,6 @@ func parse(r *http.Request) query {
 	if v, ok := values["daemons"]; ok && (v[0] == "" || v[0] == "true") {
 		daemons = true
 	}
-	if v, ok := values["syslog"]; ok && (v[0] == "" || v[0] == "true") {
-		syslog = true
-	}
 	if v, ok := values["files"]; ok && (v[0] == "" || v[0] == "true") {
 		files = true
 	}
@@ -68,7 +64,6 @@ func parse(r *http.Request) query {
 		Pid:     Pid(pid),
 		kernel:  kernel || pid > 0,
 		daemons: daemons || pid > 0,
-		syslog:  syslog || pid > 0,
 		files:   files || pid > 0,
 	}
 }
@@ -109,9 +104,8 @@ func NodeGraph(r *http.Request) []byte {
 	conns := connections(pt)
 
 	if q.kernel {
-		hosts = fmt.Sprintf(`
-		0 [width=1.5 height=0.5 label="kernel"]`,
-		)
+		hosts = `
+    0 [width=1.0 height=0.2 label="kernel"]`
 		hostsNode = "0"
 	}
 
@@ -144,14 +138,13 @@ func NodeGraph(r *http.Request) []byte {
 			}
 
 			hostEdges += fmt.Sprintf(`
-    %q -> %d [color="black" dir=both tooltip="%s\n%d:%s"]`,
+  %q -> %d [color="black" dir=both tooltip="%s\n%[2]d:%[4]s"]`,
 				conn.self.name,
 				conn.peer.pid,
 				conn.peer.name,
-				conn.peer.pid,
 				pt[conn.peer.pid].Exec,
 			)
-		} else if conn.peer.pid == math.MaxInt32 { // peer is file
+		} else if conn.peer.pid == math.MaxInt32 { // peer is file, add node after all processes identified
 		} else if conn.self.pid == 0 { // ignore kernel
 		} else if conn.self.pid == 1 {
 			if q.daemons {
@@ -162,11 +155,14 @@ func NodeGraph(r *http.Request) []byte {
 				include[conn.self.pid] = struct{}{}
 			}
 		} else { // peer is process
-			if !q.kernel && conn.peer.pid == 0 {
-				continue
-			}
-			if !q.syslog && conn.ftype == "unix" && strings.HasSuffix(conn.name, filepath.Join("var", "run", "syslog")) {
-				continue
+			var peerExec string
+			if conn.peer.pid == 0 {
+				if !q.kernel {
+					continue
+				}
+				peerExec = "kernel"
+			} else {
+				peerExec = filepath.Base(pt[conn.peer.pid].Exec)
 			}
 
 			include[conn.self.pid] = struct{}{}
@@ -186,32 +182,27 @@ func NodeGraph(r *http.Request) []byte {
 				color = "black"
 			}
 
-			name := "kernel"
-			if conn.peer.pid != 0 {
-				name = filepath.Base(pt[conn.peer.pid].Exec)
-			}
-
 			processEdges[depth] += fmt.Sprintf(`
-      %d -> %[3]d [color=%[5]q dir=%s tooltip="%s:%s\n%[1]d:%s\n%d:%s"]`,
+  %d -> %d [color=%q dir=%s tooltip="%s:%s\n%[1]d:%[7]s\n%[2]d:%[8]s"]`,
 				conn.self.pid,
-				pt[conn.self.pid].Exec,
 				conn.peer.pid,
-				name,
 				color,
 				dir,
 				conn.ftype,
 				conn.name,
+				pt[conn.self.pid].Exec,
+				peerExec,
 			)
 		}
 	}
 
 	delete(include, 0) // remove process 0
-	// for _, pid := range flatTree(buildTree(pt), 0) {
-	for pid, p := range pt {
+	for _, pid := range flatTree(buildTree(pt), 0) {
+		// for pid, p := range pt {
 		if _, ok := include[pid]; !ok {
 			continue
 		}
-		// p := pt[pid]
+		p := pt[pid]
 
 		for i := len(processes); i <= len(p.ancestors); i++ {
 			processes = append(processes, fmt.Sprintf(`
@@ -221,13 +212,12 @@ func NodeGraph(r *http.Request) []byte {
 		}
 
 		node := fmt.Sprintf(`
-      %d [color=%[3]q label=%q tooltip=%q URL="http://localhost:%d/gomon?pid=%[1]d"]`,
+      %[2]d [color=%q label=%q tooltip="%s\n[%[2]d]" URL="http://localhost:%[1]d/gomon?pid=%d"]`,
+			core.Flags.Port,
 			pid,
-			p.Exec,
 			color(pid),
 			p.Id.Name,
-			p.ID(),
-			core.Flags.Port,
+			p.Exec,
 		)
 		processes[len(p.ancestors)] += node
 	}
@@ -255,7 +245,7 @@ func NodeGraph(r *http.Request) []byte {
 				}
 
 				files += fmt.Sprintf(`
-    %q [color="#BBBB99" shape=note label=%q]`,
+    %q [color="#BBBB99" shape=note label=%q tooltip=%[1]q]`,
 					conn.name,
 					filepath.Base(conn.name),
 				)
@@ -264,11 +254,11 @@ func NodeGraph(r *http.Request) []byte {
 				}
 
 				fileEdges += fmt.Sprintf(`
-    %d -> %[3]q [minlen=4 color="#BBBB99" dir=%s tooltip="%[1]d:%s\n%[5]s:%[3]s"]`,
+  %d -> %q [minlen=4 color="#BBBB99" dir=%s tooltip="%[1]d:%[4]s\n%s:%[2]s"]`,
 					conn.self.pid,
-					pt[conn.self.pid].Exec,
 					conn.name,
 					dir,
+					pt[conn.self.pid].Exec,
 					conn.ftype,
 				)
 			}
@@ -324,19 +314,19 @@ func NodeGraph(r *http.Request) []byte {
   subgraph cluster_hosts {
     label="External Connections" rank=same fontsize=11 penwidth=3.0 pencolor="#BB5599"` +
 		hosts + `
-  }` +
-		hostEdges + `
+  }
   subgraph cluster_processes {
     label=Processes fontsize=11 penwidth=3.0 pencolor="#5599BB"` +
-		strings.Join(processes, "") +
-		strings.Join(processEdges, "") + `
-  }` +
-		clusterEdges + `
+		strings.Join(processes, "") + `
+  }
   subgraph cluster_files {
     label="Open Files" rank=max fontsize=11 penwidth=3 pencolor="#99BB55"` +
-		files +
+		files + `
+  }` +
+		clusterEdges +
+		hostEdges +
+		strings.Join(processEdges, "") +
 		fileEdges + `
-  }
 }`)
 }
 
@@ -349,7 +339,7 @@ func dot(graphviz string) []byte {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	if err := cmd.Run(); err != nil {
-		core.LogError(fmt.Errorf("dot command failed %v %s", err, stderr.Bytes()))
+		core.LogError(fmt.Errorf("dot command failed %w\n%s", err, stderr.Bytes()))
 		sc := bufio.NewScanner(strings.NewReader(graphviz))
 		for i := 1; sc.Scan(); i++ {
 			fmt.Fprintf(os.Stderr, "%4.d %s\n", i, sc.Text())

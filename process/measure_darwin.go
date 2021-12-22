@@ -37,7 +37,7 @@ func (pid Pid) id() (id, error) {
 		unsafe.Pointer(&bsd),
 		C.int(C.PROC_PIDTBSDINFO_SIZE),
 	); n != C.int(C.PROC_PIDTBSDINFO_SIZE) {
-		return id{Pid: pid}, core.NewError("proc_pidinfo", fmt.Errorf("PROC_PIDTBSDINFO failed %v", err))
+		return id{Pid: pid}, core.Error("proc_pidinfo PROC_PIDTBSDINFO failed", err)
 	}
 
 	name := C.GoString(&bsd.pbi_name[0])
@@ -89,7 +89,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 		Props{
 			Ppid:        Pid(tai.pbsd.pbi_ppid),
 			Pgid:        int(tai.pbsd.pbi_pgid),
-			Tty:         fmt.Sprintf("0x%.8X", tai.pbsd.e_tdev),
+			Tty:         fmt.Sprintf("%#.8X", tai.pbsd.e_tdev),
 			UID:         int(tai.pbsd.pbi_uid),
 			GID:         int(tai.pbsd.pbi_gid),
 			Username:    core.Username(int(tai.pbsd.pbi_uid)),
@@ -245,13 +245,13 @@ func (pid Pid) directories() Directories {
 func getPids() ([]Pid, error) {
 	n, err := C.proc_listpids(C.PROC_ALL_PIDS, 0, nil, 0)
 	if n <= 0 {
-		return nil, core.NewError("proc_listpids", fmt.Errorf("PROC_ALL_PIDS failed %v", err))
+		return nil, core.Error("proc_listpids PROC_ALL_PIDS failed", err)
 	}
 
 	var pid C.int
 	buf := make([]C.int, n/C.int(unsafe.Sizeof(pid))+10)
 	if n, err = C.proc_listpids(C.PROC_ALL_PIDS, 0, unsafe.Pointer(&buf[0]), n); n <= 0 {
-		return nil, core.NewError("proc_listpids", fmt.Errorf("PROC_ALL_PIDS failed %v", err))
+		return nil, core.Error("proc_listpids PROC_ALL_PIDS failed", err)
 	}
 	n /= C.int(unsafe.Sizeof(pid))
 	if int(n) < len(buf) {

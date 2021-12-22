@@ -4,7 +4,6 @@ package system
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -47,7 +46,7 @@ func uname() string {
 func loadAverage() LoadAverage {
 	buf, err := os.ReadFile("/proc/loadavg")
 	if err != nil {
-		core.LogError(fmt.Errorf("/proc/loadavg %v", err))
+		core.LogError(core.Error("/proc/loadavg", err))
 		return LoadAverage{}
 	}
 	f := strings.Fields(string(buf))
@@ -109,7 +108,7 @@ func rlimits() Rlimits {
 func cpu() CPU {
 	f, err := os.Open("/proc/stat")
 	if err != nil {
-		core.LogError(fmt.Errorf("/proc/stat open %v", err))
+		core.LogError(core.Error("/proc/stat open", err))
 		return CPU{}
 	}
 	defer f.Close()
@@ -124,7 +123,7 @@ func cpu() CPU {
 		}
 	}
 
-	core.LogError(fmt.Errorf("/proc/stat cpu %v", sc.Err()))
+	core.LogError(core.Error("/proc/stat cpu", sc.Err()))
 	return CPU{}
 }
 
@@ -132,7 +131,7 @@ func cpu() CPU {
 func cpus() []CPU {
 	f, err := os.Open("/proc/stat")
 	if err != nil {
-		core.LogError(fmt.Errorf("/proc/stat open %v", err))
+		core.LogError(core.Error("/proc/stat open", err))
 		return nil
 	}
 	defer f.Close()
@@ -147,7 +146,7 @@ func cpus() []CPU {
 		}
 	}
 	if len(cpus) == 0 && sc.Err() != nil {
-		core.LogError(fmt.Errorf("/proc/stat cpu %v", sc.Err()))
+		core.LogError(core.Error("/proc/stat cpu", sc.Err()))
 		return nil
 	}
 	return cpus
@@ -183,7 +182,7 @@ func scale(stat string) CPU {
 func memory() (Memory, Swap) {
 	i, err := core.Measures("/proc/meminfo")
 	if err != nil {
-		core.LogError(fmt.Errorf("/proc/meminfo %v", err))
+		core.LogError(core.Error("/proc/meminfo", err))
 	}
 
 	total, _ := strconv.Atoi(i["MemTotal"])

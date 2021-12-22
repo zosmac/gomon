@@ -35,8 +35,8 @@ func open(directory string) (*handle, error) {
 func (h *handle) close() {
 }
 
-// listen for events and notify observer's callbacks.
-func listen() {
+// observe events and notify observer's callbacks.
+func observe() {
 	defer obs.close()
 	runtime.LockOSThread() // tie this goroutine to an OS thread
 	defer runtime.UnlockOSThread()

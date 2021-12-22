@@ -21,11 +21,11 @@ import (
 func filesystems() ([]message.Request, error) {
 	n, err := syscall.Getfsstat(nil, C.MNT_NOWAIT)
 	if err != nil {
-		return nil, core.NewError("getfsstat", err)
+		return nil, core.Error("getfsstat", err)
 	}
 	fss := make([]syscall.Statfs_t, n)
 	if _, err = syscall.Getfsstat(fss, C.MNT_NOWAIT); err != nil {
-		return nil, core.NewError("getfsstat", err)
+		return nil, core.Error("getfsstat", err)
 	}
 
 	var qs []message.Request

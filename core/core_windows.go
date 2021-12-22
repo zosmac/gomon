@@ -3,10 +3,8 @@
 package core
 
 import (
-	"errors"
 	"os"
 	"os/signal"
-	"runtime"
 	"strings"
 	"time"
 	"unsafe"
@@ -58,7 +56,7 @@ func FdPath(fd int) (string, error) {
 		volumeNameDOS,
 	)
 	if n == 0 {
-		return "", NewError("GetFinalPathNameByHandle", err)
+		return "", Error("GetFinalPathNameByHandle", err)
 	}
 
 	path := windows.UTF16ToString(wchar[:n])
@@ -68,7 +66,7 @@ func FdPath(fd int) (string, error) {
 
 // MountMap builds a map of mount points to file systems.
 func MountMap() (map[string]string, error) {
-	return map[string]string{}, NewError(runtime.GOOS, errors.New("unsupported"))
+	return map[string]string{}, Unsupported()
 }
 
 // Win32_OperatingSystem is a WMI Class for operating system information.

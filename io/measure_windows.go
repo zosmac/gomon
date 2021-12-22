@@ -3,7 +3,6 @@
 package io
 
 import (
-	"fmt"
 	"runtime"
 	"unsafe"
 
@@ -176,7 +175,7 @@ func Measure() (ms []message.Content) {
 			0,
 		)
 		if err != nil {
-			core.LogError(fmt.Errorf("CreateFile %v", err))
+			core.LogError(core.Error("CreateFile", err))
 			continue
 		}
 
@@ -196,7 +195,7 @@ func Measure() (ms []message.Content) {
 			nil,
 		)
 		if err != nil {
-			core.LogError(fmt.Errorf("DeviceIoControl %v", err))
+			core.LogError(core.Error("DeviceIoControl", err))
 			return
 		}
 

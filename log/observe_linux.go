@@ -58,10 +58,10 @@ const (
 func open() error {
 	var err error
 	if flags.logDirectory, err = filepath.Abs(flags.logDirectory); err != nil {
-		return core.NewError("Abs", err)
+		return core.Error("Abs", err)
 	}
 	if flags.logDirectory, err = filepath.EvalSymlinks(flags.logDirectory); err != nil {
-		return core.NewError("EvalSymlinks", err)
+		return core.Error("EvalSymlinks", err)
 	}
 
 	core.LogInfo(
@@ -75,7 +75,7 @@ func open() error {
 
 	nd, err = syscall.InotifyInit()
 	if err != nil {
-		return core.NewError("inotify_init", err)
+		return core.Error("inotify_init", err)
 	}
 
 	return nil
@@ -95,15 +95,15 @@ func close() error {
 	return nil
 }
 
-// listen for inotify events and notify observer's callbacks
-func listen() {
+// observe inotify events and notify observer's callbacks
+func observe() {
 	defer close()
 
 	for {
 		events := make([]byte, 16384)
 		n, err := syscall.Read(nd, events)
 		if err != nil {
-			errorChan <- core.NewError("read", err)
+			errorChan <- core.Error("read", err)
 			return
 		}
 

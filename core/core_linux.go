@@ -48,7 +48,7 @@ func MountMap() (map[string]string, error) {
 func boottime() time.Time {
 	f, err := os.Open("/proc/stat")
 	if err != nil {
-		LogError(NewError("/proc/stat open", err))
+		LogError(Error("/proc/stat open", err))
 		return time.Time{}
 	}
 	defer f.Close()
@@ -60,14 +60,14 @@ func boottime() time.Time {
 		case "btime":
 			sec, err := strconv.Atoi(kv[1])
 			if err != nil {
-				LogError(NewError("/proc/stat btime", err))
+				LogError(Error("/proc/stat btime", err))
 				return time.Time{}
 			}
 			return time.Unix(int64(sec), 0)
 		}
 	}
 
-	LogError(NewError("/proc/stat btime", sc.Err()))
+	LogError(Error("/proc/stat btime", sc.Err()))
 	return time.Time{}
 }
 

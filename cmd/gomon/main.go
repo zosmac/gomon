@@ -63,7 +63,7 @@ func Main() {
 				if !ok || t.Sub(last) > time.Duration(2*core.Flags.Sample) {
 					ms := measure()
 					message.Encode(ms)
-					fmt.Fprintf(os.Stderr, "ENCODE %d metrics at %s\n\trequired %v\n",
+					fmt.Fprintf(os.Stderr, "ENCODE %d measurements at %s\n\trequired %v\n",
 						len(ms), start.Format(core.TimeFormat), time.Since(start))
 				}
 

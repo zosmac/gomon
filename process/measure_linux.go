@@ -32,7 +32,7 @@ var (
 func (pid Pid) id() id {
 	buf, err := os.ReadFile("/proc/" + strconv.Itoa(int(pid)) + "/stat")
 	if err != nil {
-		core.LogError(fmt.Errorf("ReadFile %v", err))
+		core.LogError(core.Error("ReadFile", err))
 		return id{}
 	}
 
@@ -52,7 +52,7 @@ func (pid Pid) id() id {
 func (pid Pid) metrics() (id, Props, Metrics) {
 	buf, err := os.ReadFile("/proc/" + strconv.Itoa(int(pid)) + "/stat")
 	if err != nil {
-		core.LogError(fmt.Errorf("ReadFile %v", err))
+		core.LogError(core.Error("ReadFile", err))
 		return id{Pid: pid}, Props{}, Metrics{}
 	}
 	fields := strings.Fields(string(buf))
@@ -95,7 +95,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 			Ppid:        Pid(ppid),
 			Pgid:        pgid,
 			Tgid:        tgid,
-			Tty:         fmt.Sprintf("0x%.8X", tty),
+			Tty:         fmt.Sprintf("%#.8X", tty),
 			UID:         uid,
 			GID:         gid,
 			Username:    core.Username(uid),
@@ -174,12 +174,12 @@ func (pid Pid) directories() Directories {
 func getPids() ([]Pid, error) {
 	dir, err := os.Open("/proc")
 	if err != nil {
-		return nil, core.NewError("/proc", err)
+		return nil, core.Error("/proc", err)
 	}
 	ns, err := dir.Readdirnames(0)
 	dir.Close()
 	if err != nil {
-		return nil, core.NewError("/proc", err)
+		return nil, core.Error("/proc", err)
 	}
 
 	pids := make([]Pid, 0, len(ns))

@@ -3,8 +3,6 @@
 package system
 
 import (
-	"fmt"
-	"runtime"
 	"time"
 	"unsafe"
 
@@ -80,7 +78,7 @@ func uname() string {
 
 // loadAverage gets the system load averages.
 func loadAverage() LoadAverage {
-	core.LogError(fmt.Errorf("%s unsupported", runtime.GOOS))
+	core.LogInfo(core.Unsupported())
 	return LoadAverage{}
 }
 
@@ -127,7 +125,7 @@ func contextSwitches() int {
 }
 
 func rlimits() Rlimits {
-	core.LogError(fmt.Errorf("%s unsupported", runtime.GOOS))
+	core.LogInfo(core.Unsupported())
 	return Rlimits{}
 }
 
@@ -140,7 +138,7 @@ func cpu() CPU {
 		uintptr(unsafe.Pointer(&lpUserTime)),
 	)
 	if err != nil {
-		core.LogError(fmt.Errorf("GetSystemTimes %v", err))
+		core.LogError(core.Error("GetSystemTimes", err))
 		return CPU{}
 	}
 
@@ -155,7 +153,7 @@ func cpu() CPU {
 
 // cpus captures individual CPU metrics.
 func cpus() []CPU {
-	core.LogError(fmt.Errorf("%s unsupported", runtime.GOOS))
+	core.LogInfo(core.Unsupported())
 	return nil
 }
 
@@ -166,7 +164,7 @@ func memory() (Memory, Swap) {
 		uintptr(unsafe.Pointer(&memoryStatusEx)),
 	)
 	if err != nil {
-		core.LogError(fmt.Errorf("GlobalMemoryStatusEx %v", err))
+		core.LogError(core.Error("GlobalMemoryStatusEx", err))
 	}
 
 	total := memoryStatusEx.ullTotalPhys

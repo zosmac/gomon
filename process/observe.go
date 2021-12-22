@@ -14,17 +14,17 @@ var (
 	// messageChan queues process event observations for periodic reporting.
 	messageChan = make(chan *observation, 100)
 
-	// errorChan communicates errors from the listen goroutine.
+	// errorChan communicates errors from the observe goroutine.
 	errorChan = make(chan error, 10)
 )
 
 // Observer starts capture of process event observations.
 func Observer() error {
 	if err := open(); err != nil {
-		return core.NewError("process observer", err)
+		return core.Error("process observer", err)
 	}
 
-	go listen()
+	go observe()
 
 	go func() {
 		for {

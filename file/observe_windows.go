@@ -52,7 +52,7 @@ func open(directory string) (*handle, error) {
 		0,
 	)
 	if err != nil {
-		return nil, core.NewError("CreateFile", err)
+		return nil, core.Error("CreateFile", err)
 	}
 
 	return &handle{h}, nil
@@ -68,8 +68,8 @@ func owner(info os.FileInfo) (string, string) {
 	return "", ""
 }
 
-// listen for events and notify observer's callbacks.
-func listen() {
+// observe events and notify observer's callbacks.
+func observe() {
 	defer obs.close()
 	runtime.LockOSThread() // tie this goroutine to an OS thread
 	defer runtime.UnlockOSThread()
@@ -100,7 +100,7 @@ func listen() {
 		); err != nil {
 			windows.Close(obs.Handle)
 			obs.Handle = windows.InvalidHandle
-			errorChan <- core.NewError("ReadDirectoryChanges", err)
+			errorChan <- core.Error("ReadDirectoryChanges", err)
 			return
 		}
 

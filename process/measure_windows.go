@@ -3,7 +3,6 @@
 package process
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 	"unsafe"
@@ -97,24 +96,24 @@ type (
 func (pid Pid) metrics() (id, Props, Metrics) {
 	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION|windows.PROCESS_VM_READ, false, uint32(pid))
 	if err != nil {
-		core.LogError(fmt.Errorf("OpenProcess %v", err))
+		core.LogError(core.Error("OpenProcess", err))
 		return id{Pid: pid}, Props{}, Metrics{}
 	}
 	defer windows.CloseHandle(handle)
 
 	var token windows.Token
 	if err = windows.OpenProcessToken(handle, windows.TOKEN_QUERY, &token); err != nil {
-		core.LogInfo(fmt.Errorf("OpenProcessToken %v", err))
+		core.LogInfo(core.Error("OpenProcessToken", err))
 	}
 
 	u, err := token.GetTokenUser()
 	if err != nil {
-		core.LogInfo(fmt.Errorf("GetTokenUser %v", err))
+		core.LogInfo(core.Error("GetTokenUser", err))
 	}
 
 	account, domain, _, err := u.User.Sid.LookupAccount("")
 	if err != nil {
-		core.LogInfo(fmt.Errorf("LookupAccount %v", err))
+		core.LogInfo(core.Error("LookupAccount", err))
 	}
 
 	var name [windows.MAX_PATH + 1]uint16
@@ -124,7 +123,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 		windows.MAX_PATH+1,
 	)
 	if n == 0 {
-		core.LogInfo(fmt.Errorf("GetProcessImageFileName %v", err))
+		core.LogInfo(core.Error("GetProcessImageFileName", err))
 	}
 
 	var lpCreationTime, lpExitTime, lpKernelTime, lpUserTime windows.Filetime
@@ -136,7 +135,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 		&lpUserTime,
 	)
 	if err != nil {
-		core.LogInfo(fmt.Errorf("GetProcessTimes %v", err))
+		core.LogInfo(core.Error("GetProcessTimes", err))
 	}
 
 	processMemoryCounters := processMemoryCountersEx{
@@ -148,7 +147,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 		uintptr(unsafe.Sizeof(processMemoryCounters)),
 	)
 	if err != nil {
-		core.LogInfo(fmt.Errorf("GetProcessMemoryInfo %v", err))
+		core.LogInfo(core.Error("GetProcessMemoryInfo", err))
 	}
 
 	wp := []win32Process{}
@@ -159,7 +158,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 		),
 		&wp,
 	); err != nil {
-		core.LogInfo(fmt.Errorf("Win32_Process %v", err))
+		core.LogInfo(core.Error("Win32_Process", err))
 		wp = []win32Process{win32Process{}}
 	}
 
@@ -196,7 +195,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 func (pid Pid) io() Io {
 	handle, err := windows.OpenProcess(processAllAccess, false, uint32(pid))
 	if err != nil {
-		core.LogError(fmt.Errorf("OpenProcess %v", err))
+		core.LogError(core.Error("OpenProcess", err))
 		return Io{}
 	}
 	defer windows.CloseHandle(handle)
@@ -207,7 +206,7 @@ func (pid Pid) io() Io {
 		uintptr(unsafe.Pointer(&ioCounters)),
 	)
 	if ret == 0 {
-		core.LogError(fmt.Errorf("GetProcessIoCounters %v", err))
+		core.LogError(core.Error("GetProcessIoCounters", err))
 		return Io{}
 	}
 
@@ -238,7 +237,7 @@ func getPids() ([]Pid, error) {
 		bytes *= 2
 		ps = make([]uint32, bytes/4)
 		if err := windows.EnumProcesses(ps, &bytes); err != nil {
-			return nil, core.NewError("EnumProcesses", err)
+			return nil, core.Error("EnumProcesses", err)
 		}
 		if int(bytes) < len(ps)*4 {
 			break

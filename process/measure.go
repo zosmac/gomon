@@ -32,12 +32,6 @@ type (
 	processTree map[Pid]processTree
 )
 
-func init() {
-	ready := make(chan struct{})
-	go lsofCommand(ready)
-	<-ready
-}
-
 // Measure captures all processes' metrics.
 func Measure() (ProcStats, []message.Content) {
 	pt := buildTable()

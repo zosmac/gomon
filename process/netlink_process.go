@@ -1,6 +1,7 @@
 // Copyright © 2021 The Gomon Project.
 
 //go:build linux
+// +build linux
 
 package process
 
@@ -60,8 +61,8 @@ const (
 	connectorMaxMessageSize = 16384
 
 	// enum procCnMcastOp
-	procCnMcastListen = procCnMcastOp(1)
-	procCnMcastIgnore = procCnMcastOp(2)
+	procCnMcastObserve = procCnMcastOp(1)
+	procCnMcastIgnore  = procCnMcastOp(2)
 
 	// enum proc_event.what
 	procEventFork = what(0x00000001)
@@ -166,7 +167,7 @@ type (
 func nlProcess() (int, error) {
 	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_DGRAM, syscall.NETLINK_CONNECTOR)
 	if err != nil {
-		return -1, core.NewError("socket", err)
+		return -1, core.Error("socket", err)
 	}
 
 	if err := syscall.Bind(fd,
@@ -176,17 +177,17 @@ func nlProcess() (int, error) {
 		},
 	); err != nil {
 		syscall.Close(fd)
-		return -1, core.NewError("bind", err)
+		return -1, core.Error("bind", err)
 	}
 
 	if err := nlProcessFilter(fd); err != nil {
 		syscall.Close(fd)
-		return -1, core.NewError("setsockopt attach filter", err)
+		return -1, core.Error("setsockopt attach filter", err)
 	}
 
-	if err := nlProcessListen(fd, true); err != nil {
+	if err := nlProcessObserve(fd, true); err != nil {
 		syscall.Close(fd)
-		return -1, core.NewError("netlink process connector listen", err)
+		return -1, core.Error("netlink process connector", err)
 	}
 
 	return fd, nil
@@ -266,11 +267,11 @@ func nlProcessFilter(fd int) error {
 	return nil
 }
 
-// nlProcessListen sets process connector to listen or ignore process messages.
-func nlProcessListen(fd int, on bool) error {
+// nlProcessObserve sets process connector to observe or ignore process messages.
+func nlProcessObserve(fd int, on bool) error {
 	op := procCnMcastIgnore
 	if on {
-		op = procCnMcastListen
+		op = procCnMcastObserve
 	}
 	req := nlProcRequest{
 		NlMsghdr: syscall.NlMsghdr{
@@ -311,7 +312,7 @@ type nlGenlRequest struct {
 func nlGeneric() (int, error) {
 	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_DGRAM, syscall.NETLINK_GENERIC)
 	if err != nil {
-		return -1, core.NewError("socket", err)
+		return -1, core.Error("socket", err)
 	}
 	if err := syscall.Bind(fd,
 		&syscall.SockaddrNetlink{
@@ -321,7 +322,7 @@ func nlGeneric() (int, error) {
 		},
 	); err != nil {
 		syscall.Close(fd)
-		return -1, core.NewError("bind", err)
+		return -1, core.Error("bind", err)
 	}
 
 	return fd, nil
@@ -393,8 +394,8 @@ func nlAttr(nlMsg []byte, key int) ([]byte, error) {
 	return nil, fmt.Errorf("generic netlink family attribute %d unresolved", key)
 }
 
-// nlGenericListen initiate listen on netlink generic connector for family's messages.
-func nlGenericListen(fd, id int, on bool) error {
+// nlGenericObserve initiate netlink generic connector for family's messages.
+func nlGenericObserve(fd, id int, on bool) error {
 	data := []byte("0-" + strconv.Itoa(runtime.NumCPU()-1) + "\x00")
 	t := unix.TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK
 	if on {

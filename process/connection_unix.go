@@ -1,6 +1,7 @@
 // Copyright © 2021 The Gomon Project.
 
 //go:build !windows
+// +build !windows
 
 package process
 
@@ -63,38 +64,44 @@ type (
 	captureGroup string
 )
 
-// lsofCommand starts the lsof command to capture process connections
-func lsofCommand(ready chan<- struct{}) {
-	cmd := hostCommand() // perform OS specific customizations for command
+// init starts the lsof command as a sub-process.
+func init() {
+	go lsofCommand()
+}
 
+// lsofCommand starts the lsof command to capture process connections
+func lsofCommand() {
+	cmd := hostCommand() // perform OS specific customizations for command
+	var stdout, stderr io.ReadCloser
 	defer func() {
-		if r := recover(); r != nil {
-			buf := make([]byte, 4096)
-			n := runtime.Stack(buf, false)
-			buf = buf[:n]
-			core.LogError(fmt.Errorf("command panicked %q[%d]\n%v\n%s", cmd.String(), cmd.Process.Pid, r, buf))
+		if cmd.Process != nil {
+			cmd.Process.Kill()
+			cmd.Wait()
+		}
+		if err, ok := recover().(error); ok && err != nil {
+			var buf []byte
+			if stderr != nil {
+				buf, _ = io.ReadAll(stderr)
+			}
+			core.LogError(err)
+			core.LogError(fmt.Errorf("exited %q\n%s", cmd.String(), buf))
+		} else {
+			core.LogInfo(fmt.Errorf("exited %q", cmd.String()))
 		}
 	}()
 
-	core.LogInfo(fmt.Errorf("fork command to capture open process descriptors: %q", cmd.String()))
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		core.LogError(fmt.Errorf("pipe to stdout failed %v", err))
-		return
+	var err error
+	if stdout, err = cmd.StdoutPipe(); err != nil {
+		panic(core.Error("stdout pipe failed", err))
 	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		core.LogError(fmt.Errorf("pipe to stderr failed %v", err))
-		return
+	if stderr, err = cmd.StderrPipe(); err != nil {
+		panic(core.Error("stderr pipe failed", err))
 	}
-
 	if err := cmd.Start(); err != nil {
-		core.LogError(fmt.Errorf("command failed %q[%d] %v", cmd.String(), cmd.Process.Pid, err))
-		return
+		panic(core.Error("start failed", err))
 	}
 
-	ready <- struct{}{}
+	core.LogInfo(fmt.Errorf("start %q", cmd.String()))
 
 	epm := map[Pid]Connections{}
 
@@ -132,7 +139,8 @@ func lsofCommand(ready chan<- struct{}) {
 				log.Watch(name, pid)
 			}
 		case "BLK", "DIR", "LINK",
-			"CHAN", "FSEVENT", "KQUEUE", "NEXUS", "NPOLICY", "PSXSHM":
+			"CHAN", "FSEVENT", "KQUEUE", "NEXUS", "NPOLICY", "PSXSHM",
+			"ndrv", "unknown":
 		case "CHR":
 			if name == os.DevNull {
 				fdType = "NUL"
@@ -164,7 +172,6 @@ func lsofCommand(ready chan<- struct{}) {
 			} else {
 				self += " " + state
 			}
-			name = device
 		case "systm":
 			self = device
 		case "key":
@@ -189,17 +196,7 @@ func lsofCommand(ready chan<- struct{}) {
 		epm[Pid(pid)] = append(epm[Pid(pid)], ep)
 	}
 
-	core.LogError(fmt.Errorf("scanning output failed %q[%d] %v", cmd.String(), cmd.Process.Pid, sc.Err()))
-
-	if buf, err := io.ReadAll(stderr); err != nil || len(buf) > 0 {
-		core.LogError(fmt.Errorf("command error log %q[%d] %v\n%s", cmd.String(), cmd.Process.Pid, err, buf))
-	}
-
-	err = cmd.Wait()
-	code := cmd.ProcessState.ExitCode()
-	core.LogError(fmt.Errorf("command failed %q[%d] %d %v", cmd.String(), cmd.Process.Pid, code, err))
-
-	os.Exit(code)
+	panic(core.Error("stdout closed", sc.Err()))
 }
 
 // accmode determines the I/O direction.

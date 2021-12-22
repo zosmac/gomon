@@ -57,14 +57,14 @@ type handle struct {
 func open(directory string) (*handle, error) {
 	fd, err := syscall.InotifyInit()
 	if err != nil {
-		return nil, core.NewError("inotify_init", err)
+		return nil, core.Error("inotify_init", err)
 	}
 
 	// IN_DELETE_SELF evidently not sent to root directory, therefore watch its parent directory for IN_DELETE.
 	wd, err := syscall.InotifyAddWatch(fd, filepath.Join(directory, ".."),
 		syscall.IN_ONLYDIR|syscall.IN_MOVED_FROM|syscall.IN_DELETE)
 	if err != nil {
-		return nil, core.NewError("inotify_add_watch", err)
+		return nil, core.Error("inotify_add_watch", err)
 	}
 
 	return &handle{
@@ -81,15 +81,15 @@ func (h *handle) close() error {
 	return nil
 }
 
-// listen for inotify events and notify observer's callbacks.
-func listen() {
+// observe inotify events and notify observer's callbacks.
+func observe() {
 	defer obs.close()
 
 	for {
 		events := make([]byte, 16384)
 		n, err := syscall.Read(obs.fd, events)
 		if err != nil {
-			errorChan <- core.NewError("read", err)
+			errorChan <- core.Error("read", err)
 			return
 		}
 
@@ -161,7 +161,7 @@ func addDir(abs string) error {
 	wd, err := syscall.InotifyAddWatch(obs.fd, abs, mask)
 	if err != nil {
 		// if ENOSPC, archive unused files or increase fs.inotify.max_user_watches
-		return core.NewError("inotify_add_watch", err)
+		return core.Error("inotify_add_watch", err)
 	}
 	obs.watches[wd] = abs
 	return nil

@@ -3,6 +3,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -49,31 +50,48 @@ const (
 
 type (
 	// Err custom logging error type
-	Err string
+	Err struct {
+		s   string
+		err error
+	}
 )
 
 // Error method to comply with error interface
-func (err Err) Error() string {
-	return string(err)
+func (err *Err) Error() string {
+	return err.s
+}
+
+// Unwrap method to comply with error interface
+func (err *Err) Unwrap() error {
+	return err.err
 }
 
 // NewError formats an error with function name, errno number, and error message, with location
 // details for initial error, preserving the initial logged error for percolation.
-func NewError(name string, err error) Err {
+func Error(name string, err error) *Err {
 	return logMessage(2, name, err)
+}
+
+// Unsupported reports that a specific OS does not support a function
+func Unsupported() error {
+	return fmt.Errorf("%s unsupported", runtime.GOOS)
 }
 
 // logWrite writes a log message to the log destination.
 func logWrite(level string, err error) {
-	if err != nil {
-		log.Printf("%s %-5s %s", time.Now().Format(TimeFormat), level, logMessage(3, "", err))
+	if msg := logMessage(3, "", err); msg != nil {
+		log.Printf("%s %-5s %s", time.Now().Format(TimeFormat), level, msg)
 	}
 }
 
 // logMessage formats a log message with where, what, how, which, who, why of an error.
-func logMessage(depth int, name string, err error) Err {
-	if err, ok := err.(Err); ok {
-		return err // percolate original Err
+func logMessage(depth int, name string, err error) *Err {
+	if err == nil {
+		return nil
+	}
+	e := &Err{}
+	if errors.As(err, &e) {
+		return e // percolate original Err
 	}
 	c := append([]string{executable}, os.Args[1:]...)
 	_, n, l, _ := runtime.Caller(depth)
@@ -86,11 +104,14 @@ func logMessage(depth int, name string, err error) Err {
 	if name != "" {
 		msg += name + ": "
 	}
-	if err, ok := err.(syscall.Errno); ok {
-		msg += fmt.Sprintf("errno %d: ", err)
+	var errno syscall.Errno
+	if errors.As(err, &errno) {
+		msg += fmt.Sprintf("errno %d: ", errno)
 	}
-	msg += fmt.Sprintf("%v", err)
-	return Err(msg)
+	return &Err{
+		s:   msg + err.Error(),
+		err: err,
+	}
 }
 
 // LogTrace log trace message.

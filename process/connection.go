@@ -57,11 +57,11 @@ var (
 					for _, addr := range addrs {
 						if ip, _, err := net.ParseCIDR(addr.String()); err == nil {
 							im[ip.String()] = ni.Name
-							if hosts, err := net.LookupAddr(ip.String()); err == nil {
-								for _, host := range hosts {
-									im[host] = ni.Name
-								}
-							}
+							// if hosts, err := net.LookupAddr(ip.String()); err == nil {
+							// 	for _, host := range hosts {
+							// 		im[host] = ni.Name
+							// 	}
+							// }
 							// fmt.Fprintf(os.Stderr,
 							// 	"interface %s: %s\n"+ipinfo,
 							// 	ni.Name,
@@ -81,11 +81,11 @@ var (
 					for _, addr := range addrs {
 						if ip, _, err := net.ParseCIDR(addr.String()); err == nil {
 							im[ip.String()] = ni.Name
-							if hosts, err := net.LookupAddr(ip.String()); err == nil {
-								for _, host := range hosts {
-									im[host] = ni.Name
-								}
-							}
+							// if hosts, err := net.LookupAddr(ip.String()); err == nil {
+							// 	for _, host := range hosts {
+							// 		im[host] = ni.Name
+							// 	}
+							// }
 							// fmt.Fprintf(os.Stderr,
 							// 	"interface %s: %s\n"+ipinfo,
 							// 	ni.Name,
@@ -131,7 +131,7 @@ func connections(pt processTable) []connection {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
-			core.LogError(fmt.Errorf("Connections panicked %v\n%s", r, buf))
+			core.LogError(fmt.Errorf("connections() panicked %v\n%s", r, buf))
 		}
 	}()
 
@@ -202,9 +202,13 @@ func connections(pt processTable) []connection {
 					if conn.Type == "TCP" || conn.Type == "UDP" { // possible external connection
 						host, _, _ := net.SplitHostPort(conn.Peer)
 						ip := net.ParseIP(host)
-						_, ok := localIps[ip.String()]
-						_, ok2 := interfaces[ip.String()]
-						if !(ok || ok2 || ip.IsLoopback() || ip.IsInterfaceLocalMulticast() ||
+						var local bool
+						if _, local = localIps[ip.String()]; local {
+						} else if _, local = interfaces[ip.String()]; local {
+						} else {
+							local = (host == "localhost")
+						}
+						if !(local || ip.IsLoopback() || ip.IsInterfaceLocalMulticast() ||
 							ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast()) {
 							connm[[4]int{-1, -1, int(pid), int(fd)}] = connection{
 								ftype: conn.Type,

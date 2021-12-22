@@ -1,11 +1,11 @@
 // Copyright © 2021 The Gomon Project.
 
 //go:build !windows
+// +build !windows
 
 package filesystem
 
 import (
-	"fmt"
 	"syscall"
 
 	"github.com/zosmac/gomon/core"
@@ -15,7 +15,7 @@ import (
 func metrics(path string) Metrics {
 	var stat syscall.Statfs_t
 	if err := syscall.Statfs(path, &stat); err != nil {
-		core.LogError(fmt.Errorf("statfs %v", err))
+		core.LogError(core.Error("statfs", err))
 		return Metrics{}
 	}
 

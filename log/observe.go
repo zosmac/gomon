@@ -11,7 +11,7 @@ var (
 	// messageChan queues log messages for encoding.
 	messageChan = make(chan *observation, 100)
 
-	// errorChan communicates errors from the listen goroutine.
+	// errorChan communicates errors from the observe goroutine.
 	errorChan = make(chan error, 10)
 
 	// levelMap maps various applications' log levels to a common set fatal/error/warn/info/debug/trace.
@@ -62,10 +62,10 @@ type (
 // Observer starts capture of log entries.
 func Observer() error {
 	if err := open(); err != nil {
-		return core.NewError("open", err)
+		return core.Error("open", err)
 	}
 
-	go listen()
+	go observe()
 
 	go func() {
 		for {

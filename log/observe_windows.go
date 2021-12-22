@@ -3,19 +3,16 @@
 package log
 
 import (
-	"errors"
-	"runtime"
-
 	"github.com/zosmac/gomon/core"
 	"github.com/zosmac/gomon/message"
 )
 
 // open obtains a watch handle for observer
 func open() error {
-	return core.NewError(runtime.GOOS, errors.New("unsupported"))
+	return core.Unsupported()
 }
 
-func listen() {
+func observe() {
 }
 
 func report() []message.Content {
@@ -24,5 +21,5 @@ func report() []message.Content {
 
 // Remove exited processes' logs from observation, which is unsupported for Windows.
 func Remove(pids []int) {
-	core.LogError(core.NewError(runtime.GOOS, errors.New("unsupported")))
+	core.LogInfo(core.Unsupported())
 }

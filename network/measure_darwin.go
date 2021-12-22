@@ -10,7 +10,6 @@ package network
 import "C"
 
 import (
-	"fmt"
 	"syscall"
 	"unsafe"
 
@@ -38,7 +37,7 @@ func Measure() (ms []message.Content) {
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			core.LogError(fmt.Errorf("IF info %v", err))
+			core.LogError(core.Error("IF info", err))
 			continue
 		}
 
@@ -53,7 +52,7 @@ func Measure() (ms []message.Content) {
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			core.LogError(fmt.Errorf("IF info %v", err))
+			core.LogError(core.Error("IF info", err))
 			continue
 		}
 		if i.ifm_type != syscall.RTM_IFINFO2 {

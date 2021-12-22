@@ -136,12 +136,12 @@ func prometheusMetric(m message.Content, name, tag string, val reflect.Value) pr
 func scrapeInterval() (core.Sample, error) {
 	resp, err := http.Get("http://localhost:9090/api/v1/status/config")
 	if err != nil {
-		return 0, core.NewError("prometheus query", err)
+		return 0, core.Error("prometheus query", err)
 	}
 	body, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		return 0, core.NewError("prometheus query", err)
+		return 0, core.Error("prometheus query", err)
 	}
 
 	j := struct {
@@ -151,17 +151,17 @@ func scrapeInterval() (core.Sample, error) {
 		}
 	}{}
 	if err := json.Unmarshal(body, &j); err != nil || j.Status != "success" {
-		return 0, core.NewError("prometheus query "+j.Status, err)
+		return 0, core.Error("prometheus query "+j.Status, err)
 	}
 
 	ms := yaml.MapSlice{}
 	if err := yaml.Unmarshal([]byte(j.Data.Yaml), &ms); err != nil {
-		return 0, core.NewError("prometheus yaml", err)
+		return 0, core.Error("prometheus yaml", err)
 	}
 
 	val := core.ValueYaml([]string{"scrape_configs", "job_name", "gomon"}, []byte(j.Data.Yaml))
 	if val == "" {
-		return 0, core.NewError("prometheus", errors.New("not configured for gomon collection"))
+		return 0, core.Error("prometheus", errors.New("not configured for gomon collection"))
 	}
 
 	var si time.Duration

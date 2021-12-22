@@ -33,7 +33,7 @@ func (writer) Write(buf []byte) (int, error) { return os.Stdout.Write(buf) }
 func Encoder() error {
 	info, err := os.Stdout.Stat()
 	if err != nil {
-		return core.NewError("Stat", err)
+		return core.Error("Stat", err)
 	}
 
 	if info.Mode().IsRegular() {
@@ -155,7 +155,7 @@ func Rotate(t time.Time) error {
 
 	sout, err := os.Create(oldpath)
 	if err != nil {
-		return core.NewError("Create", err)
+		return core.Error("Create", err)
 	}
 	chown(sout, info)
 

@@ -13,7 +13,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -63,10 +62,10 @@ func open() error {
 	return nil
 }
 
-// listen uses the macOS syslog and log commands to stream log entries.
-func listen() {
-	go syslogCommand() // use macOS syslog command to stream syslog entries
+// observe uses the macOS log and syslog commands to stream log entries.
+func observe() {
 	go logCommand()    // use macOS log command to stream OSLogStore entries
+	go syslogCommand() // use macOS syslog command to stream syslog entries
 }
 
 // logCommand starts the log command to capture OSLog entries (using OSLogStore API directly is MUCH slower)
@@ -99,9 +98,7 @@ func logCommand() {
 		"System Policy: gomon",
 	)
 	cmdline := append(strings.Fields("log stream --predicate"), predicate)
-	if err := parseLog(cmdline, regex, groups, "2006-01-02 15:04:05Z0700", sourceOSLog); err != nil {
-		core.LogError(err)
-	}
+	parseLog(cmdline, regex, groups, "2006-01-02 15:04:05Z0700", sourceOSLog)
 }
 
 // syslogCommand starts the syslog command to capture syslog entries
@@ -126,12 +123,10 @@ func syslogCommand() {
 	}()
 
 	cmdline := append(strings.Fields("syslog -w 0 -T utc.3 -k Level Nle"), syslogLevels[flags.logLevel])
-	if err := parseLog(cmdline, regex, groups, "2006-01-02 15:04:05Z", sourceSyslog); err != nil {
-		core.LogError(err)
-	}
+	parseLog(cmdline, regex, groups, "2006-01-02 15:04:05Z", sourceSyslog)
 }
 
-func parseLog(cmdline []string, regex *regexp.Regexp, groups map[captureGroup]int, format string, source logSource) (err error) {
+func parseLog(cmdline []string, regex *regexp.Regexp, groups map[captureGroup]int, format string, source logSource) {
 	cmd := exec.Command(cmdline[0], cmdline[1:]...)
 	// ensure that no open descriptors propagate to child
 	if n := C.proc_pidinfo(
@@ -143,27 +138,36 @@ func parseLog(cmdline []string, regex *regexp.Regexp, groups map[captureGroup]in
 	); n >= 3*C.PROC_PIDLISTFD_SIZE {
 		cmd.ExtraFiles = make([]*os.File, (n/C.PROC_PIDLISTFD_SIZE)-3) // close gomon files in child
 	}
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return core.NewError("stdout pipe failed", err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return core.NewError("stderr pipe failed", err)
-	}
-
-	if err := cmd.Start(); err != nil {
-		return core.NewError(filepath.Base(cmd.Path)+" command failed", err)
-	}
-	core.Register(func() {
-		cmd.Process.Kill()
-		if buf, err := io.ReadAll(stderr); err != nil || len(buf) > 0 {
-			core.LogInfo(fmt.Errorf("%s[%d] %v stderr:\n%s", filepath.Base(cmd.Path), cmd.Process.Pid, err, buf))
+	var stdout, stderr io.ReadCloser
+	defer func() {
+		if cmd.Process != nil {
+			cmd.Process.Kill()
+			cmd.Wait()
 		}
-		err := cmd.Wait()
-		core.LogInfo(fmt.Errorf("%s[%d] %d %v", filepath.Base(cmd.Path), cmd.Process.Pid, cmd.ProcessState.ExitCode(), err))
-	})
+		if err, ok := recover().(error); ok && err != nil {
+			var buf []byte
+			if stderr != nil {
+				buf, _ = io.ReadAll(stderr)
+			}
+			core.LogError(err)
+			core.LogError(fmt.Errorf("exited %q\n%s", cmd.String(), buf))
+		} else {
+			core.LogInfo(fmt.Errorf("exited %q", cmd.String()))
+		}
+	}()
+
+	var err error
+	if stdout, err = cmd.StdoutPipe(); err != nil {
+		panic(core.Error("stdout pipe failed", err))
+	}
+	if stderr, err = cmd.StderrPipe(); err != nil {
+		panic(core.Error("stderr pipe failed", err))
+	}
+	if err := cmd.Start(); err != nil {
+		panic(core.Error("start failed", err))
+	}
+
+	core.LogInfo(fmt.Errorf("start %q", cmd.String()))
 
 	sc := bufio.NewScanner(stdout)
 	if source == sourceOSLog {
@@ -198,7 +202,7 @@ func parseLog(cmdline []string, regex *regexp.Regexp, groups map[captureGroup]in
 		}
 	}
 
-	return sc.Err()
+	panic(core.Error("stdout closed", sc.Err()))
 }
 
 // Watch adds a process' logs to watch to the observer, which is a noop for Darwin.

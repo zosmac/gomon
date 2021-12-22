@@ -54,8 +54,8 @@ func open() error {
 		syscall.Close(gd)
 		return err
 	}
-	// start listening for taskstats responses
-	if err = nlGenericListen(gd, id, true); err != nil {
+	// start observing taskstats responses
+	if err = nlGenericObserve(gd, id, true); err != nil {
 		syscall.Close(fd)
 		syscall.Close(gd)
 		return err
@@ -66,16 +66,16 @@ func open() error {
 	return nil
 }
 
-// close stops listening for process events and closes the netlink socket
+// close stops observing process events and closes the netlink socket
 func (h *handle) close() {
-	nlProcessListen(h.fd, false)
-	nlGenericListen(h.gd, h.id, false)
+	nlProcessObserve(h.fd, false)
+	nlGenericObserve(h.gd, h.id, false)
 	syscall.Close(h.fd)
 	syscall.Close(h.gd)
 }
 
-// listen for events and notify observer's callbacks.
-func listen() {
+// observe events and notify observer's callbacks.
+func observe() {
 	go taskstats()
 	defer h.close()
 
@@ -83,14 +83,14 @@ func listen() {
 		nlMsg := make([]byte, connectorMaxMessageSize)
 		n, _, err := syscall.Recvfrom(h.fd, nlMsg, 0)
 		if err != nil {
-			errorChan <- core.NewError("recvfrom", err)
+			errorChan <- core.Error("recvfrom", err)
 			return
 		}
 		msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
 		for _, m := range msgs {
 			if m.Header.Type == syscall.NLMSG_ERROR {
-				errorChan <- core.NewError("netlink", syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4]))))
+				errorChan <- core.Error("netlink", syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4]))))
 				break
 			}
 
@@ -171,14 +171,14 @@ func taskstats() {
 		nlMsg := make([]byte, 1024)
 		n, _, err := syscall.Recvfrom(h.gd, nlMsg, 0)
 		if err != nil {
-			errorChan <- core.NewError("recvfrom", err)
+			errorChan <- core.Error("recvfrom", err)
 			return
 		}
 		msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
 		for _, m := range msgs {
 			if m.Header.Type == syscall.NLMSG_ERROR {
-				errorChan <- core.NewError("netlink", syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4]))))
+				errorChan <- core.Error("netlink", syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4]))))
 				break
 			}
 

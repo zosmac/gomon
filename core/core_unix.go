@@ -1,6 +1,7 @@
 // Copyright © 2021 The Gomon Project.
 
 //go:build !windows
+// +build !windows
 
 package core
 
@@ -27,6 +28,6 @@ func setuid() {
 		if err := syscall.Setuid(euid); err == nil {
 			uid = euid
 		}
-		LogInfo(fmt.Errorf("running as %s(%d)", Username(uid), uid))
+		LogInfo(fmt.Errorf("switching user to %s(%d)", Username(uid), uid))
 	}
 }

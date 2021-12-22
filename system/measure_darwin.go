@@ -13,7 +13,6 @@ package system
 import "C"
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 	"unsafe"
@@ -33,7 +32,7 @@ var (
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			core.LogError(fmt.Errorf("sysctl kern.version %v", err))
+			core.LogError(core.Error("sysctl kern.version", err))
 			return ""
 		}
 
@@ -46,7 +45,7 @@ var (
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			core.LogError(fmt.Errorf("sysctl kern.version %v", err))
+			core.LogError(core.Error("sysctl kern.version", err))
 			return ""
 		}
 
@@ -78,7 +77,7 @@ var (
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			core.LogError(fmt.Errorf("sysctl kern.clockrate %v", err))
+			core.LogError(core.Error("sysctl kern.clockrate", err))
 			return 10000 * time.Microsecond // just guess
 		}
 
@@ -136,7 +135,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(fmt.Errorf("sysctl kern.maxproc %v", err))
+		core.LogError(core.Error("sysctl kern.maxproc", err))
 		return l
 	}
 
@@ -149,7 +148,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(fmt.Errorf("sysctl kern.maxfiles %v", err))
+		core.LogError(core.Error("sysctl kern.maxfiles", err))
 		return l
 	}
 
@@ -162,7 +161,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(fmt.Errorf("sysctl kern.maxfilesperproc %v", err))
+		core.LogError(core.Error("sysctl kern.maxfilesperproc", err))
 		return l
 	}
 
@@ -175,7 +174,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(fmt.Errorf("sysctl kern.maxprocperuid %v", err))
+		core.LogError(core.Error("sysctl kern.maxprocperuid", err))
 		return l
 	}
 
@@ -188,7 +187,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(fmt.Errorf("sysctl kern.num_files %v", err))
+		core.LogError(core.Error("sysctl kern.num_files", err))
 		return l
 	}
 
@@ -214,7 +213,7 @@ func cpu() CPU {
 	)
 
 	if status != C.KERN_SUCCESS {
-		core.LogError(fmt.Errorf("host_statistics %v", kernReturn(status)))
+		core.LogError(core.Error("host_statistics", kernReturn(status)))
 		return CPU{}
 	}
 
@@ -236,7 +235,7 @@ func cpus() []CPU {
 	)
 
 	if status != C.KERN_SUCCESS {
-		core.LogError(fmt.Errorf("host_processor_info %v", kernReturn(status)))
+		core.LogError(core.Error("host_processor_info", kernReturn(status)))
 		return nil
 	}
 
@@ -278,7 +277,7 @@ func memory() (Memory, Swap) {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(fmt.Errorf("sysctl hw.memsize %v", err))
+		core.LogError(core.Error("sysctl hw.memsize", err))
 	}
 
 	var vmi C.struct_vm_statistics64
@@ -291,7 +290,7 @@ func memory() (Memory, Swap) {
 		&number,
 	)
 	if status != C.KERN_SUCCESS {
-		core.LogError(fmt.Errorf("host_statistics %v", kernReturn(status)))
+		core.LogError(core.Error("host_statistics", kernReturn(status)))
 	}
 
 	total := int(memsize)
@@ -311,7 +310,7 @@ func memory() (Memory, Swap) {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(fmt.Errorf("sysctl vm.swapusage %v", err))
+		core.LogError(core.Error("sysctl vm.swapusage", err))
 	}
 
 	return Memory{

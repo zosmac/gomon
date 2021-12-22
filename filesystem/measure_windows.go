@@ -20,7 +20,7 @@ func filesystems() ([]message.Request, error) {
 		&driveStrings[0],
 	)
 	if n == 0 {
-		return nil, core.NewError("GetLogicalDriveStrings", err)
+		return nil, core.Error("GetLogicalDriveStrings", err)
 	}
 
 	var qs []message.Request

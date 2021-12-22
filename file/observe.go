@@ -21,7 +21,7 @@ var (
 	// messageChan queues file event observations for periodic reporting.
 	messageChan = make(chan *observation, 100)
 
-	// errorChan communicates errors from the listen goroutine.
+	// errorChan communicates errors from the observe goroutine.
 	errorChan = make(chan error, 10)
 )
 
@@ -44,15 +44,15 @@ type (
 func Observer() error {
 	var err error
 	if flags.fileDirectory, err = filepath.Abs(flags.fileDirectory); err != nil {
-		return core.NewError("Abs", err)
+		return core.Error("Abs", err)
 	}
 	if flags.fileDirectory, err = filepath.EvalSymlinks(flags.fileDirectory); err != nil {
-		return core.NewError("EvalSymlinks", err)
+		return core.Error("EvalSymlinks", err)
 	}
 
 	h, err := open(flags.fileDirectory)
 	if err != nil {
-		return core.NewError("open", err)
+		return core.Error("open", err)
 	}
 
 	obs = &observer{
@@ -62,12 +62,12 @@ func Observer() error {
 	}
 
 	if err := watchDir("."); err != nil {
-		return core.NewError("watch", err)
+		return core.Error("watch", err)
 	}
 
 	core.LogInfo(fmt.Errorf("observing files in %s", flags.fileDirectory))
 
-	go listen()
+	go observe()
 
 	go func() {
 		for {
@@ -116,7 +116,7 @@ func watchDir(rel string) error {
 	err := filepath.WalkDir(filepath.Join(obs.root, rel), func(abs string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, fs.ErrPermission) {
-				core.LogError(fmt.Errorf("WalkDir %v", err))
+				core.LogError(core.Error("WalkDir", err))
 			}
 			return filepath.SkipDir
 		}
