@@ -9,17 +9,23 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/zosmac/gomon/core"
 	"github.com/zosmac/gomon/log"
 )
 
 var (
+	// hnMap caches resolver host name lookup.
+	hnMap  = map[string]string{}
+	hnLock sync.RWMutex
+
 	// regex for parsing lsof output lines from lsof command.
 	regex = regexp.MustCompile(
 		`^(?:(?P<header>COMMAND.*)|====(?P<trailer>\d\d:\d\d:\d\d)====.*|` +
@@ -69,7 +75,34 @@ func init() {
 	go lsofCommand()
 }
 
-// lsofCommand starts the lsof command to capture process connections
+// hostname resolves the host name for an ip address.
+func hostname(addr string) string {
+	ip, port, _ := net.SplitHostPort(addr)
+	hnLock.Lock()
+	defer hnLock.Unlock()
+	host, ok := hnMap[ip]
+	if ok {
+		if host == "" {
+			host = ip
+		}
+	} else {
+		hnMap[ip] = ""
+		host = ip
+		go func() {
+			if hosts, err := net.LookupAddr(ip); err == nil {
+				host = hosts[0]
+			} else {
+				host = ip
+			}
+			hnLock.Lock()
+			hnMap[ip] = host
+			hnLock.Unlock()
+		}()
+	}
+	return net.JoinHostPort(host, port)
+}
+
+// lsofCommand starts the lsof command to capture process connections.
 func lsofCommand() {
 	cmd := hostCommand() // perform OS specific customizations for command
 	var stdout, stderr io.ReadCloser
@@ -166,9 +199,9 @@ func lsofCommand() {
 				state = split[1]
 			}
 			split = strings.Split(split[0], "->")
-			self = split[0]
+			self = hostname(split[0])
 			if len(split) > 1 {
-				peer = strings.Split(split[1], " ")[0]
+				peer = hostname(strings.Split(split[1], " ")[0])
 			} else {
 				self += " " + state
 			}

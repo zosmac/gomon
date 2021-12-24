@@ -57,6 +57,12 @@ var (
 	}
 )
 
+// init starts the log and syslog command child processes
+func init() {
+	go logCommand()    // use macOS log command to stream OSLogStore entries
+	go syslogCommand() // use macOS syslog command to stream syslog entries
+}
+
 // open obtains a watch handle for observer.
 func open() error {
 	return nil
@@ -64,8 +70,6 @@ func open() error {
 
 // observe uses the macOS log and syslog commands to stream log entries.
 func observe() {
-	go logCommand()    // use macOS log command to stream OSLogStore entries
-	go syslogCommand() // use macOS syslog command to stream syslog entries
 }
 
 // logCommand starts the log command to capture OSLog entries (using OSLogStore API directly is MUCH slower)
@@ -171,10 +175,10 @@ func parseLog(cmdline []string, regex *regexp.Regexp, groups map[captureGroup]in
 
 	sc := bufio.NewScanner(stdout)
 	if source == sourceOSLog {
-		sc.Scan()                           // read first line from log command
-		core.LogInfo(fmt.Errorf(sc.Text())) //  and echo it as startup message
-		sc.Scan()                           // this line is column headers
-		sc.Text()                           //  so just ignore it
+		sc.Scan() // ignore first output line from log command
+		sc.Text() //  (it just echoes the filter)
+		sc.Scan() // ignore second output line
+		sc.Text() //  (it is column headers)
 	}
 
 	for sc.Scan() {

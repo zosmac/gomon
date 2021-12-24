@@ -147,7 +147,13 @@ func (pid Pid) io() Io {
 
 // commandLine retrieves process command, arguments, and environment.
 func (pid Pid) commandLine() CommandLine {
-	cl := CommandLine{}
+	clLock.RLock()
+	cl, ok := clMap[pid]
+	clLock.RUnlock()
+	if ok {
+		return cl
+	}
+
 	cl.Exec, _ = os.Readlink(filepath.Join("/proc", strconv.Itoa(int(pid)), "exe"))
 
 	if arg, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(int(pid)), "cmdline")); err == nil {
@@ -158,6 +164,10 @@ func (pid Pid) commandLine() CommandLine {
 	if env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(int(pid)), "environ")); err == nil {
 		cl.Envs = strings.Split(string(env), "\000")
 	}
+
+	clLock.Lock()
+	clMap[pid] = cl
+	clLock.Unlock()
 
 	return cl
 }

@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	// commandLines cache for command lines, which are expensive to query.
+	// clMap caches process command lines, which are expensive to query.
 	clMap  = map[Pid]CommandLine{}
 	clLock sync.RWMutex
 
@@ -21,7 +21,7 @@ var (
 
 	// endpoints of processes periodically populated by lsof.
 	epMap  = map[Pid]Connections{}
-	epLock sync.Mutex
+	epLock sync.RWMutex
 )
 
 type (
@@ -92,11 +92,11 @@ func buildTable() processTable {
 	}
 
 	var epm map[Pid]Connections
-	epLock.Lock()
+	epLock.RLock()
 	if len(epMap) > 0 {
 		epm = epMap
 	}
-	epLock.Unlock()
+	epLock.RUnlock()
 
 	pt := make(map[Pid]*measurement, len(pids))
 	for _, pid := range pids {

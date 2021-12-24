@@ -15,16 +15,6 @@ import (
 )
 
 var (
-	// ipinfo defines message format for ip interface info
-	ipinfo = `  unicast:
-    global:                %v
-    link local:            %v
-  multicast:               %v
-    interface local:       %v
-    link local:            %v
-  loopback:                %v
-  unspecified:             %v
-`
 	// localIps addresses for all local network interfaces on host
 	localIps = func() map[string]struct{} {
 		h, _ := os.Hostname()
@@ -33,17 +23,6 @@ var (
 		l["localhost"] = struct{}{}
 		for _, ip := range ips {
 			l[ip.String()] = struct{}{}
-			// fmt.Fprintf(os.Stderr,
-			// 	"local IP: %s\n"+ipinfo,
-			// 	ip.String(),
-			// 	ip.IsGlobalUnicast(),
-			// 	ip.IsLinkLocalUnicast(),
-			// 	ip.IsMulticast(),
-			// 	ip.IsInterfaceLocalMulticast(),
-			// 	ip.IsLinkLocalMulticast(),
-			// 	ip.IsLoopback(),
-			// 	ip.IsUnspecified(),
-			// )
 		}
 		return l
 	}()
@@ -57,23 +36,6 @@ var (
 					for _, addr := range addrs {
 						if ip, _, err := net.ParseCIDR(addr.String()); err == nil {
 							im[ip.String()] = ni.Name
-							// if hosts, err := net.LookupAddr(ip.String()); err == nil {
-							// 	for _, host := range hosts {
-							// 		im[host] = ni.Name
-							// 	}
-							// }
-							// fmt.Fprintf(os.Stderr,
-							// 	"interface %s: %s\n"+ipinfo,
-							// 	ni.Name,
-							// 	ip.String(),
-							// 	ip.IsGlobalUnicast(),
-							// 	ip.IsLinkLocalUnicast(),
-							// 	ip.IsMulticast(),
-							// 	ip.IsInterfaceLocalMulticast(),
-							// 	ip.IsLinkLocalMulticast(),
-							// 	ip.IsLoopback(),
-							// 	ip.IsUnspecified(),
-							// )
 						}
 					}
 				}
@@ -81,23 +43,6 @@ var (
 					for _, addr := range addrs {
 						if ip, _, err := net.ParseCIDR(addr.String()); err == nil {
 							im[ip.String()] = ni.Name
-							// if hosts, err := net.LookupAddr(ip.String()); err == nil {
-							// 	for _, host := range hosts {
-							// 		im[host] = ni.Name
-							// 	}
-							// }
-							// fmt.Fprintf(os.Stderr,
-							// 	"interface %s: %s\n"+ipinfo,
-							// 	ni.Name,
-							// 	ip.String(),
-							// 	ip.IsGlobalUnicast(),
-							// 	ip.IsLinkLocalUnicast(),
-							// 	ip.IsMulticast(),
-							// 	ip.IsInterfaceLocalMulticast(),
-							// 	ip.IsLinkLocalMulticast(),
-							// 	ip.IsLoopback(),
-							// 	ip.IsUnspecified(),
-							// )
 						}
 					}
 				}
