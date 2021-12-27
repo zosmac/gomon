@@ -3,6 +3,7 @@
 package process
 
 import (
+	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -88,7 +89,7 @@ func Measure() (ProcStats, []message.Content) {
 func buildTable() processTable {
 	pids, err := getPids()
 	if err != nil {
-		panic("could not build process table")
+		panic(fmt.Errorf("could not build process table %v", err))
 	}
 
 	var epm map[Pid]Connections

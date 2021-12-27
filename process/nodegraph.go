@@ -138,10 +138,11 @@ func NodeGraph(r *http.Request) []byte {
 			}
 
 			hostEdges += fmt.Sprintf(`
-  %q -> %d [color="black" dir=both tooltip="%s\n%[2]d:%[4]s"]`,
+  %q -> %d [color="black" dir=both tooltip="%s:%s\n%[2]d:%[5]s"]`,
 				conn.self.name,
 				conn.peer.pid,
-				conn.peer.name,
+				conn.ftype,
+				conn.name,
 				pt[conn.peer.pid].Exec,
 			)
 		} else if conn.peer.pid == math.MaxInt32 { // peer is file, add node after all processes identified

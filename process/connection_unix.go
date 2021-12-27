@@ -72,7 +72,9 @@ type (
 
 // init starts the lsof command as a sub-process.
 func init() {
-	go lsofCommand()
+	if err := lsofCommand(); err != nil {
+		core.LogError(err)
+	}
 }
 
 // hostname resolves the host name for an ip address.
@@ -91,6 +93,9 @@ func hostname(addr string) string {
 		go func() {
 			if hosts, err := net.LookupAddr(ip); err == nil {
 				host = hosts[0]
+				if i, ok := interfaces[ip]; ok {
+					interfaces[host] = i
+				}
 			} else {
 				host = ip
 			}
@@ -103,39 +108,26 @@ func hostname(addr string) string {
 }
 
 // lsofCommand starts the lsof command to capture process connections.
-func lsofCommand() {
+func lsofCommand() error {
 	cmd := hostCommand() // perform OS specific customizations for command
-	var stdout, stderr io.ReadCloser
-	defer func() {
-		if cmd.Process != nil {
-			cmd.Process.Kill()
-			cmd.Wait()
-		}
-		if err, ok := recover().(error); ok && err != nil {
-			var buf []byte
-			if stderr != nil {
-				buf, _ = io.ReadAll(stderr)
-			}
-			core.LogError(err)
-			core.LogError(fmt.Errorf("exited %q\n%s", cmd.String(), buf))
-		} else {
-			core.LogInfo(fmt.Errorf("exited %q", cmd.String()))
-		}
-	}()
-
-	var err error
-	if stdout, err = cmd.StdoutPipe(); err != nil {
-		panic(core.Error("stdout pipe failed", err))
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return core.Error("stdout pipe failed", err)
 	}
-	if stderr, err = cmd.StderrPipe(); err != nil {
-		panic(core.Error("stderr pipe failed", err))
-	}
+	cmd.Stderr = nil // sets to /dev/null
 	if err := cmd.Start(); err != nil {
-		panic(core.Error("start failed", err))
+		return core.Error("start failed", err)
 	}
 
 	core.LogInfo(fmt.Errorf("start %q", cmd.String()))
 
+	go parseOutput(stdout)
+
+	return nil
+}
+
+// parseOutput reads the stdout of the command.
+func parseOutput(stdout io.ReadCloser) {
 	epm := map[Pid]Connections{}
 
 	sc := bufio.NewScanner(stdout)
@@ -229,7 +221,7 @@ func lsofCommand() {
 		epm[Pid(pid)] = append(epm[Pid(pid)], ep)
 	}
 
-	panic(core.Error("stdout closed", sc.Err()))
+	panic(fmt.Errorf("stdout closed %v", sc.Err()))
 }
 
 // accmode determines the I/O direction.

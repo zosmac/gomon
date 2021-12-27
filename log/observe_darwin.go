@@ -59,8 +59,8 @@ var (
 
 // init starts the log and syslog command child processes
 func init() {
-	go logCommand()    // use macOS log command to stream OSLogStore entries
-	go syslogCommand() // use macOS syslog command to stream syslog entries
+	logCommand()    // use macOS log command to stream OSLogStore entries
+	syslogCommand() // use macOS syslog command to stream syslog entries
 }
 
 // open obtains a watch handle for observer.
@@ -101,8 +101,14 @@ func logCommand() {
 		osLogLevels[flags.logLevel],
 		"System Policy: gomon",
 	)
-	cmdline := append(strings.Fields("log stream --predicate"), predicate)
-	parseLog(cmdline, regex, groups, "2006-01-02 15:04:05Z0700", sourceOSLog)
+
+	stdout, err := startCommand(append(strings.Fields("log stream --predicate"), predicate))
+	if err != nil {
+		core.LogError(err)
+		return
+	}
+
+	go parseLog(stdout, regex, groups, "2006-01-02 15:04:05Z0700", sourceOSLog)
 }
 
 // syslogCommand starts the syslog command to capture syslog entries
@@ -126,11 +132,16 @@ func syslogCommand() {
 		return g
 	}()
 
-	cmdline := append(strings.Fields("syslog -w 0 -T utc.3 -k Level Nle"), syslogLevels[flags.logLevel])
-	parseLog(cmdline, regex, groups, "2006-01-02 15:04:05Z", sourceSyslog)
+	stdout, err := startCommand(append(strings.Fields("syslog -w 0 -T utc.3 -k Level Nle"), syslogLevels[flags.logLevel]))
+	if err != nil {
+		core.LogError(err)
+		return
+	}
+
+	go parseLog(stdout, regex, groups, "2006-01-02 15:04:05Z", sourceSyslog)
 }
 
-func parseLog(cmdline []string, regex *regexp.Regexp, groups map[captureGroup]int, format string, source logSource) {
+func startCommand(cmdline []string) (io.ReadCloser, error) {
 	cmd := exec.Command(cmdline[0], cmdline[1:]...)
 	// ensure that no open descriptors propagate to child
 	if n := C.proc_pidinfo(
@@ -142,37 +153,22 @@ func parseLog(cmdline []string, regex *regexp.Regexp, groups map[captureGroup]in
 	); n >= 3*C.PROC_PIDLISTFD_SIZE {
 		cmd.ExtraFiles = make([]*os.File, (n/C.PROC_PIDLISTFD_SIZE)-3) // close gomon files in child
 	}
-	var stdout, stderr io.ReadCloser
-	defer func() {
-		if cmd.Process != nil {
-			cmd.Process.Kill()
-			cmd.Wait()
-		}
-		if err, ok := recover().(error); ok && err != nil {
-			var buf []byte
-			if stderr != nil {
-				buf, _ = io.ReadAll(stderr)
-			}
-			core.LogError(err)
-			core.LogError(fmt.Errorf("exited %q\n%s", cmd.String(), buf))
-		} else {
-			core.LogInfo(fmt.Errorf("exited %q", cmd.String()))
-		}
-	}()
 
-	var err error
-	if stdout, err = cmd.StdoutPipe(); err != nil {
-		panic(core.Error("stdout pipe failed", err))
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, core.Error("stdout pipe failed", err)
 	}
-	if stderr, err = cmd.StderrPipe(); err != nil {
-		panic(core.Error("stderr pipe failed", err))
-	}
+	cmd.Stderr = nil // sets to /dev/null
 	if err := cmd.Start(); err != nil {
-		panic(core.Error("start failed", err))
+		return nil, core.Error("start failed", err)
 	}
 
 	core.LogInfo(fmt.Errorf("start %q", cmd.String()))
 
+	return stdout, nil
+}
+
+func parseLog(stdout io.ReadCloser, regex *regexp.Regexp, groups map[captureGroup]int, format string, source logSource) {
 	sc := bufio.NewScanner(stdout)
 	if source == sourceOSLog {
 		sc.Scan() // ignore first output line from log command
@@ -206,7 +202,7 @@ func parseLog(cmdline []string, regex *regexp.Regexp, groups map[captureGroup]in
 		}
 	}
 
-	panic(core.Error("stdout closed", sc.Err()))
+	panic(fmt.Errorf("stdout closed %v", sc.Err()))
 }
 
 // Watch adds a process' logs to watch to the observer, which is a noop for Darwin.
