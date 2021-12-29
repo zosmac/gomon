@@ -57,19 +57,15 @@ var (
 	}
 )
 
-// init starts the log and syslog command child processes
-func init() {
-	logCommand()    // use macOS log command to stream OSLogStore entries
-	syslogCommand() // use macOS syslog command to stream syslog entries
-}
-
 // open obtains a watch handle for observer.
 func open() error {
 	return nil
 }
 
-// observe uses the macOS log and syslog commands to stream log entries.
+// observe starts the macOS log and syslog commands as sub-processes to stream log entries.
 func observe() {
+	logCommand()
+	syslogCommand()
 }
 
 // logCommand starts the log command to capture OSLog entries (using OSLogStore API directly is MUCH slower)
@@ -143,6 +139,7 @@ func syslogCommand() {
 
 func startCommand(cmdline []string) (io.ReadCloser, error) {
 	cmd := exec.Command(cmdline[0], cmdline[1:]...)
+
 	// ensure that no open descriptors propagate to child
 	if n := C.proc_pidinfo(
 		C.int(os.Getpid()),
@@ -163,7 +160,12 @@ func startCommand(cmdline []string) (io.ReadCloser, error) {
 		return nil, core.Error("start failed", err)
 	}
 
-	core.LogInfo(fmt.Errorf("start %q", cmd.String()))
+	core.Register(func() {
+		cmd.Process.Kill()
+		cmd.Wait()
+	})
+
+	core.LogInfo(fmt.Errorf("start [%d] %q", cmd.Process.Pid, cmd.String()))
 
 	return stdout, nil
 }
@@ -201,8 +203,6 @@ func parseLog(stdout io.ReadCloser, regex *regexp.Regexp, groups map[captureGrou
 			Message: match[groups[groupMessage]],
 		}
 	}
-
-	panic(fmt.Errorf("stdout closed %v", sc.Err()))
 }
 
 // Watch adds a process' logs to watch to the observer, which is a noop for Darwin.

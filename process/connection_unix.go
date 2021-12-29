@@ -70,13 +70,6 @@ type (
 	captureGroup string
 )
 
-// init starts the lsof command as a sub-process.
-func init() {
-	if err := lsofCommand(); err != nil {
-		core.LogError(err)
-	}
-}
-
 // hostname resolves the host name for an ip address.
 func hostname(addr string) string {
 	ip, port, _ := net.SplitHostPort(addr)
@@ -119,7 +112,12 @@ func lsofCommand() error {
 		return core.Error("start failed", err)
 	}
 
-	core.LogInfo(fmt.Errorf("start %q", cmd.String()))
+	core.Register(func() {
+		cmd.Process.Kill()
+		cmd.Wait()
+	})
+
+	core.LogInfo(fmt.Errorf("start [%d] %q", cmd.Process.Pid, cmd.String()))
 
 	go parseOutput(stdout)
 
@@ -220,8 +218,6 @@ func parseOutput(stdout io.ReadCloser) {
 
 		epm[Pid(pid)] = append(epm[Pid(pid)], ep)
 	}
-
-	panic(fmt.Errorf("stdout closed %v", sc.Err()))
 }
 
 // accmode determines the I/O direction.

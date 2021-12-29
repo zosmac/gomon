@@ -30,7 +30,14 @@ func main() {
 
 // Main called from core.Main.
 func Main() {
-	core.LogInfo(fmt.Errorf("gomon started, pid: %d", os.Getpid()))
+	cmd, err := os.Executable()
+	if err != nil {
+		cmd = os.Args[0]
+	}
+	if len(os.Args) > 1 {
+		cmd += " " + strings.Join(os.Args[1:], " ")
+	}
+	core.LogInfo(fmt.Errorf("start [%d] %q", os.Getpid(), cmd))
 
 	if err := message.Encoder(); err != nil {
 		core.LogError(err)

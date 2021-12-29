@@ -49,6 +49,11 @@ func watch(kd int, pid Pid) error {
 
 // observe events and notify observer's callbacks.
 func observe() {
+	// start the lsof command as a sub-process to list periodically all open files and network connections.
+	if err := lsofCommand(); err != nil {
+		core.LogError(err)
+	}
+
 	kd, err := syscall.Kqueue()
 	if err != nil {
 		errorChan <- core.Error("Kqueue", err)
