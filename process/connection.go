@@ -10,19 +10,19 @@ import (
 	"runtime"
 	"sort"
 	"strconv"
+	"sync"
 
 	"github.com/zosmac/gomon/core"
 )
 
 var (
 	// localIps addresses for all local network interfaces on host
-	localIps = func() map[string]struct{} {
+	localIps = func() map[string]string {
+		l := map[string]string{}
 		h, _ := os.Hostname()
 		ips, _ := net.LookupIP(h)
-		l := map[string]struct{}{}
-		l["localhost"] = struct{}{}
 		for _, ip := range ips {
-			l[ip.String()] = struct{}{}
+			l[ip.String()] = h
 		}
 		return l
 	}()
@@ -50,6 +50,10 @@ var (
 		}
 		return im
 	}()
+
+	// hnMap caches resolver host name lookup.
+	hnMap  = map[string]string{}
+	hnLock sync.RWMutex
 )
 
 type (
@@ -66,6 +70,39 @@ type (
 		peer      endpoint
 	}
 )
+
+// hostname resolves the host name for an ip address.
+func hostname(addr string) string {
+	ip, port, _ := net.SplitHostPort(addr)
+	hnLock.Lock()
+	defer hnLock.Unlock()
+
+	if host, ok := hnMap[ip]; ok {
+		if host == "" { // still looking up
+			host = ip
+		}
+		return net.JoinHostPort(host, port)
+	}
+
+	hnMap[ip] = "" // indicate that lookup initiated
+	go func() {    // initiate hostname lookup
+		host := ip
+		i, ok := interfaces[ip]
+		if hosts, err := net.LookupAddr(ip); err == nil {
+			if ok {
+				for _, host := range hosts {
+					interfaces[host] = i
+				}
+			}
+			host = hosts[0]
+		}
+		hnLock.Lock()
+		hnMap[ip] = host
+		hnLock.Unlock()
+	}()
+
+	return net.JoinHostPort(ip, port)
+}
 
 // connections creates an ordered slice of local to remote connections by pid and fd.
 func connections(pt processTable) []connection {
@@ -211,10 +248,12 @@ func connections(pt processTable) []connection {
 							name:      conn.Name,
 							direction: conn.Direction,
 							self: endpoint{
-								pid: pid,
+								name: conn.Self,
+								pid:  pid,
 							},
 							peer: endpoint{
-								pid: rpid,
+								name: conn.Peer,
+								pid:  rpid,
 							},
 						}
 					}

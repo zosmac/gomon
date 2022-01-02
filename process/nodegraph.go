@@ -137,11 +137,12 @@ func NodeGraph(r *http.Request) []byte {
 				hostsNode = conn.self.name
 			}
 
+			host, _, _ = net.SplitHostPort(conn.peer.name)
 			hostEdges += fmt.Sprintf(`
   %q -> %d [color="black" dir=both tooltip="%s:%s\n%[2]d:%[5]s"]`,
 				conn.self.name,
 				conn.peer.pid,
-				conn.ftype,
+				interfaces[host],
 				conn.name,
 				pt[conn.peer.pid].Exec,
 			)
@@ -183,13 +184,19 @@ func NodeGraph(r *http.Request) []byte {
 				color = "black"
 			}
 
+			t := conn.ftype
+			if t == "TCP" || t == "UDP" {
+				host, _, _ := net.SplitHostPort(conn.self.name)
+				t = interfaces[host]
+			}
+
 			processEdges[depth] += fmt.Sprintf(`
   %d -> %d [color=%q dir=%s tooltip="%s:%s\n%[1]d:%[7]s\n%[2]d:%[8]s"]`,
 				conn.self.pid,
 				conn.peer.pid,
 				color,
 				dir,
-				conn.ftype,
+				t,
 				conn.name,
 				pt[conn.self.pid].Exec,
 				peerExec,
