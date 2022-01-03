@@ -72,36 +72,24 @@ type (
 )
 
 // hostname resolves the host name for an ip address.
-func hostname(addr string) string {
-	ip, port, _ := net.SplitHostPort(addr)
+func hostname(ip string) string {
 	hnLock.Lock()
 	defer hnLock.Unlock()
 
 	if host, ok := hnMap[ip]; ok {
-		if host == "" { // still looking up
-			host = ip
-		}
-		return net.JoinHostPort(host, port)
+		return host
 	}
 
-	hnMap[ip] = "" // indicate that lookup initiated
-	go func() {    // initiate hostname lookup
-		host := ip
-		i, ok := interfaces[ip]
+	hnMap[ip] = ip
+	go func() { // initiate hostname lookup
 		if hosts, err := net.LookupAddr(ip); err == nil {
-			if ok {
-				for _, host := range hosts {
-					interfaces[host] = i
-				}
-			}
-			host = hosts[0]
+			hnLock.Lock()
+			hnMap[ip] = hosts[0]
+			hnLock.Unlock()
 		}
-		hnLock.Lock()
-		hnMap[ip] = host
-		hnLock.Unlock()
 	}()
 
-	return net.JoinHostPort(ip, port)
+	return ip
 }
 
 // connections creates an ordered slice of local to remote connections by pid and fd.
@@ -183,15 +171,17 @@ func connections(pt processTable) []connection {
 				if _, ok := epm[key]; !ok {
 					if conn.Type == "TCP" || conn.Type == "UDP" { // possible external connection
 						host, _, _ := net.SplitHostPort(conn.Peer)
-						ip := net.ParseIP(host)
 						var local bool
-						if _, local = localIps[ip.String()]; local {
-						} else if _, local = interfaces[ip.String()]; local {
+						if _, local = localIps[host]; local {
+						} else if _, local = interfaces[host]; local {
 						} else {
-							local = (host == "localhost")
+							ip := net.ParseIP(host)
+							local = ip.IsLoopback() ||
+								ip.IsInterfaceLocalMulticast() ||
+								ip.IsLinkLocalMulticast() ||
+								ip.IsLinkLocalUnicast()
 						}
-						if !(local || ip.IsLoopback() || ip.IsInterfaceLocalMulticast() ||
-							ip.IsLinkLocalMulticast() || ip.IsLinkLocalUnicast()) {
+						if !local {
 							connm[[4]int{-1, -1, int(pid), int(fd)}] = connection{
 								ftype: conn.Type,
 								name:  conn.Name,

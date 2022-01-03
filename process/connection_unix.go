@@ -146,18 +146,12 @@ func parseOutput(stdout io.ReadCloser) {
 			}
 			name = self + "->" + peer
 		case "IPv4", "IPv6":
-			var state string
 			fdType = node
 			split := strings.Split(name, " ")
-			if len(split) > 1 {
-				state = split[1]
-			}
 			split = strings.Split(split[0], "->")
-			self = hostname(split[0])
+			self = split[0]
 			if len(split) > 1 {
-				peer = hostname(strings.Split(split[1], " ")[0])
-			} else {
-				self += " " + state
+				peer = split[1]
 			}
 		case "systm":
 			self = device

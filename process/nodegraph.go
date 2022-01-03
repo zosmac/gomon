@@ -131,7 +131,7 @@ func NodeGraph(r *http.Request) []byte {
 				conn.self.name,
 				conn.ftype,
 				port,
-				host,
+				hostname(host),
 			)
 			if hostsNode == "" {
 				hostsNode = conn.self.name
@@ -186,8 +186,8 @@ func NodeGraph(r *http.Request) []byte {
 
 			t := conn.ftype
 			if t == "TCP" || t == "UDP" {
-				host, _, _ := net.SplitHostPort(conn.self.name)
-				t = interfaces[host]
+				ip, _, _ := net.SplitHostPort(conn.self.name)
+				t = interfaces[ip]
 			}
 
 			processEdges[depth] += fmt.Sprintf(`
