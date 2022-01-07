@@ -94,10 +94,7 @@ func Main(fn func()) {
 		}
 	}()
 
-	go func() {
-		setuid()
-		fn()
-	}()
+	go fn()
 
 	wg.Wait()
 }

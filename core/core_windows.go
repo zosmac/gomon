@@ -42,10 +42,6 @@ func signalChannel() <-chan os.Signal {
 	return signalChan
 }
 
-// setuid not implemented in Windows.
-func setuid() {
-}
-
 // FdPath gets the path for an open file descriptor
 func FdPath(fd int) (string, error) {
 	var wchar [windows.MAX_PATH + 1]uint16

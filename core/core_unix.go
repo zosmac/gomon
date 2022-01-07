@@ -6,7 +6,6 @@
 package core
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,16 +17,4 @@ func signalChannel() <-chan os.Signal {
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM) // , syscall.SIGSEGV)
 	signal.Ignore(syscall.SIGWINCH, syscall.SIGHUP, syscall.SIGTTIN, syscall.SIGTTOU)
 	return signalChan
-}
-
-// setuid attempts to run the "gomon" command as owner (e.g. root) of executable.
-func setuid() {
-	uid := os.Getuid()
-	euid := os.Geteuid()
-	if uid != euid {
-		if err := syscall.Setuid(euid); err == nil {
-			uid = euid
-		}
-		LogInfo(fmt.Errorf("switching user to %s(%d)", Username(uid), uid))
-	}
 }
