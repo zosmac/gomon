@@ -3,7 +3,6 @@
 package process
 
 import (
-	"strconv"
 	"time"
 	"unsafe"
 
@@ -154,7 +153,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 	if err = wmi.Query(
 		wmi.CreateQuery(
 			&wp,
-			"WHERE ProcessId = "+strconv.Itoa(int(pid)),
+			"WHERE ProcessId = "+pid.String(),
 		),
 		&wp,
 	); err != nil {

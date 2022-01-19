@@ -5,6 +5,7 @@ package core
 import (
 	"bufio"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -25,7 +26,7 @@ func FromCString(p []int8) string {
 // FdPath gets the path for an open file descriptor.
 func FdPath(fd int) (string, error) {
 	pid := os.Getpid()
-	return os.Readlink("/proc/" + strconv.Itoa(pid) + "/fd/" + strconv.Itoa(fd))
+	return os.Readlink(filepath.Join("/proc", strconv.Itoa(pid), "fd", strconv.Itoa(fd)))
 }
 
 // MountMap builds a map of mount points to file systems.

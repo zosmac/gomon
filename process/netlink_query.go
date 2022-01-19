@@ -140,7 +140,7 @@ func nlInetPeerInode(addr net.Addr) (int, error) {
 	}
 
 	p, _ := strconv.Atoi(port)
-	sport := core.Htons(uint16(p))
+	sport := uint16(p)
 	var src [4]uint32
 	if len(ip) == net.IPv4len {
 		src[0] = (*(*uint32)(unsafe.Pointer(&ip[0])))

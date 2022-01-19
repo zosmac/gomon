@@ -9,7 +9,6 @@ import (
 	"os"
 	"runtime"
 	"sort"
-	"strconv"
 	"sync"
 
 	"github.com/zosmac/gomon/core"
@@ -126,8 +125,8 @@ func connections(pt processTable) []connection {
 	for pid, p := range pt {
 		ppid := p.Ppid
 		connm[[4]int{int(ppid), -1, int(pid), -1}] = connection{
-			ftype:     "parent:" + strconv.Itoa(int(ppid)), // set for edge tooltip
-			name:      "child:" + strconv.Itoa(int(pid)),
+			ftype:     "parent:" + ppid.String(), // set for edge tooltip
+			name:      "child:" + pid.String(),
 			direction: "-->>",
 			self: endpoint{
 				pid: ppid,

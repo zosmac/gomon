@@ -30,7 +30,7 @@ var (
 
 // id captures the process identifier.
 func (pid Pid) id() id {
-	buf, err := os.ReadFile("/proc/" + strconv.Itoa(int(pid)) + "/stat")
+	buf, err := os.ReadFile(filepath.Join("/proc", pid.String(), "stat"))
 	if err != nil {
 		core.LogError(core.Error("ReadFile", err))
 		return id{}
@@ -50,14 +50,14 @@ func (pid Pid) id() id {
 
 // metrics captures the metrics for a process.
 func (pid Pid) metrics() (id, Props, Metrics) {
-	buf, err := os.ReadFile("/proc/" + strconv.Itoa(int(pid)) + "/stat")
+	buf, err := os.ReadFile(filepath.Join("/proc", pid.String(), "stat"))
 	if err != nil {
 		core.LogError(core.Error("ReadFile", err))
 		return id{Pid: pid}, Props{}, Metrics{}
 	}
 	fields := strings.Fields(string(buf))
 
-	m, _ := core.Measures(filepath.Join("/proc", strconv.Itoa(int(pid)), "status"))
+	m, _ := core.Measures(filepath.Join("/proc", pid.String(), "status"))
 
 	ppid, _ := strconv.Atoi(fields[3])
 	pgid, _ := strconv.Atoi(fields[4])
@@ -129,7 +129,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 // io captures process I/O counts.
 func (pid Pid) io() Io {
 	i := Io{}
-	m, err := core.Measures(filepath.Join("/proc", strconv.Itoa(int(pid)), "io"))
+	m, err := core.Measures(filepath.Join("/proc", pid.String(), "io"))
 	if err != nil {
 		core.LogError(err)
 		return i
@@ -154,14 +154,14 @@ func (pid Pid) commandLine() CommandLine {
 		return cl
 	}
 
-	cl.Exec, _ = os.Readlink(filepath.Join("/proc", strconv.Itoa(int(pid)), "exe"))
+	cl.Exec, _ = os.Readlink(filepath.Join("/proc", pid.String(), "exe"))
 
-	if arg, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(int(pid)), "cmdline")); err == nil {
+	if arg, err := os.ReadFile(filepath.Join("/proc", pid.String(), "cmdline")); err == nil {
 		cl.Args = strings.Split(string(arg[:len(arg)-2]), "\000")
 		cl.Args = cl.Args[1:]
 	}
 
-	if env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(int(pid)), "environ")); err == nil {
+	if env, err := os.ReadFile(filepath.Join("/proc", pid.String(), "environ")); err == nil {
 		cl.Envs = strings.Split(string(env), "\000")
 	}
 
@@ -175,8 +175,8 @@ func (pid Pid) commandLine() CommandLine {
 // directories captures process directories.
 func (pid Pid) directories() Directories {
 	d := Directories{}
-	d.Cwd, _ = os.Readlink(filepath.Join("/proc", strconv.Itoa(int(pid)), "cwd"))
-	d.Root, _ = os.Readlink(filepath.Join("/proc", strconv.Itoa(int(pid)), "root"))
+	d.Cwd, _ = os.Readlink(filepath.Join("/proc", pid.String(), "cwd"))
+	d.Root, _ = os.Readlink(filepath.Join("/proc", pid.String(), "root"))
 	return d
 }
 

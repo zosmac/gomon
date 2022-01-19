@@ -49,6 +49,10 @@ type (
 	}
 )
 
+func (pid Pid) String() string {
+	return strconv.Itoa(int(pid))
+}
+
 func main() {
 	flatTree(buildTree(buildTable()), 0)
 }
@@ -169,7 +173,7 @@ func flatTree(t processTree, indent int) []Pid {
 		if len(pt[pid].Envs) > 0 {
 			envs = tab + strings.Join(pt[pid].Envs, tab)
 		}
-		p := strconv.Itoa(int(pid))
+		p := pid.String()
 		pre := "      "[:6-len(p)] + "\033[36;40m" + p
 		fmt.Fprintf(os.Stderr, "%*s%s\033[m  %s\033[34m%s\033[35m%s\033[m\n", indent, "", pre, cmd, args, envs)
 		flat = append(flat, flatTree(t[pid], indent+3)...)

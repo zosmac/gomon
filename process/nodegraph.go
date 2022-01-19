@@ -184,7 +184,7 @@ func NodeGraph(r *http.Request) []byte {
 				processEdges = append(processEdges, "")
 			}
 			if processNodes[depth] == "" {
-				processNodes[depth] = strconv.Itoa(int(conn.self.pid))
+				processNodes[depth] = conn.self.pid.String()
 			}
 
 			color := color(conn.self.pid)
