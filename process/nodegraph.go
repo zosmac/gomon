@@ -81,27 +81,35 @@ func NodeGraph(r *http.Request) []byte {
 		files        string
 		fileNode     string
 		fileEdges    string
+		include      = map[Pid]struct{}{} // record which processes have a connection to include in report
 	)
-	include := map[Pid]struct{}{} // record which processes have a connection to include in report
 
 	pt := buildTable()
+	conns := connections(pt)
+
 	q := parse(r)
 	if q.Pid > 0 && pt[q.Pid] == nil {
 		q = query{} // reset to default
 	}
 	if q.Pid > 0 {
-		ft := processTable{0: pt[0], 1: pt[1], q.Pid: pt[q.Pid]}
+		ft := map[Pid]struct{}{q.Pid: {}}
 		for _, pid := range pt[q.Pid].ancestors {
-			ft[pid] = pt[pid]
+			ft[pid] = struct{}{}
 		}
-		ps := flatTree(findTree(buildTree(pt), q.Pid), 0)
+		ps := flatTree(findTree(buildTree(pt), q.Pid), 0) // descendants
 		for _, pid := range ps {
-			ft[pid] = pt[pid]
+			ft[pid] = struct{}{}
 		}
-		pt = ft
+		var cs []connection
+		for _, conn := range conns {
+			if _, ok := ft[conn.self.pid]; ok {
+				cs = append(cs, conn)
+			} else if _, ok := ft[conn.peer.pid]; ok {
+				cs = append(cs, conn)
+			}
+		}
+		conns = cs
 	}
-
-	conns := connections(pt)
 
 	if q.kernel {
 		hosts = `
@@ -252,19 +260,34 @@ func NodeGraph(r *http.Request) []byte {
 					dir = "none"
 				}
 
+				var color, label string
+				switch conn.ftype {
+				case "DIR":
+					color = "#00FF00"
+					label = conn.name + string(filepath.Separator)
+				case "REG":
+					color = "#BBBB99"
+					label = filepath.Base(conn.name)
+				case "PSXSHM":
+					color = "#FF0000"
+					label = conn.name
+				}
+
 				files += fmt.Sprintf(`
-    %q [color="#BBBB99" shape=note label=%q tooltip=%[1]q]`,
+    %q [color=%q shape=note label=%q tooltip=%[1]q]`,
 					conn.name,
-					filepath.Base(conn.name),
+					color,
+					label,
 				)
 				if fileNode == "" {
 					fileNode = conn.name
 				}
 
 				fileEdges += fmt.Sprintf(`
-  %d -> %q [minlen=4 color="#BBBB99" dir=%s tooltip="%[1]d:%[4]s\n%s:%[2]s"]`,
+  %d -> %q [minlen=4 color=%q dir=%s tooltip="%[1]d:%[5]s\n%s:%[2]s"]`,
 					conn.self.pid,
 					conn.name,
+					color,
 					dir,
 					pt[conn.self.pid].Exec,
 					conn.ftype,
@@ -300,9 +323,13 @@ func NodeGraph(r *http.Request) []byte {
 		}
 	}
 
-	label := "Remote Hosts and Inter-Process Connections for " +
-		core.HostName + " on " +
-		time.Now().Local().Format("Mon Jan 02 2006, at 03:04:05PM MST")
+	var label string
+	if q.Pid > 0 {
+		label = fmt.Sprintf("Inter-Process Connections for Process %s[%d] on ", filepath.Base(pt[q.Pid].Exec), q.Pid)
+	} else {
+		label = "Remote Hosts and Inter-Process Connections for "
+	}
+	label += core.HostName + time.Now().Local().Format(", Mon Jan 02 2006 at 03:04:05PM MST")
 
 	return dot(`digraph "` + label + `" {
   id="\G"

@@ -28,26 +28,6 @@ var (
 	}()
 )
 
-// Htons converts host short to network format.
-func Htons(h uint16) uint16 {
-	return binary.BigEndian.Uint16((*(*[2]uint8)(unsafe.Pointer(&h)))[:])
-}
-
-// Htonl converts host long to network format.
-func Htonl(h uint32) uint32 {
-	return binary.BigEndian.Uint32((*(*[4]uint8)(unsafe.Pointer(&h)))[:])
-}
-
-// Ntohs converts network short to host format.
-func Ntohs(n uint16) uint16 {
-	return binary.BigEndian.Uint16((*(*[2]uint8)(unsafe.Pointer(&n)))[:])
-}
-
-// Ntohl converts network long to host format.
-func Ntohl(n uint32) uint32 {
-	return binary.BigEndian.Uint32((*(*[4]uint8)(unsafe.Pointer(&n)))[:])
-}
-
 // ChDir is a convenience function for changing the current directory and reporting its canonical path.
 // If changing the directory fails, ChDir returns the error and canonical path of the current directory.
 func ChDir(dir string) (string, error) {

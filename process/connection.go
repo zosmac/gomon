@@ -141,7 +141,7 @@ func connections(pt processTable) []connection {
 			fd := conn.Descriptor
 			switch conn.Type {
 			case "NUL": // ignore /dev/null connection endpoints
-			case "REG", "PSXSHM":
+			case "DIR", "REG", "PSXSHM":
 				connm[[4]int{int(pid), int(fd), math.MaxInt32, 0}] = connection{
 					ftype:     conn.Type,
 					name:      conn.Name,

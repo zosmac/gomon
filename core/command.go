@@ -48,11 +48,6 @@ Copyright © 2021 The Gomon Project.
 		executable, vmmp, buildDate, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }
 
-// SignalChannel provides a channel for receiving signals.
-func SignalChannel() <-chan os.Signal {
-	return signalChannel()
-}
-
 // Init called by main() to initialize core.
 func Init() {
 }
@@ -80,7 +75,7 @@ func Main(fn func()) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		sig := <-SignalChannel()
+		sig := <-signalChannel()
 		LogError(fmt.Errorf("signal %[1]d (%[1]s) pid %d", sig, os.Getpid()))
 		switch sig := sig.(type) {
 		case syscall.Signal:

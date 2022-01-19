@@ -192,23 +192,18 @@ func (pid Pid) commandLine() CommandLine {
 		return CommandLine{}
 	}
 
-	l := int(core.HostEndian.Uint32(buf[:4]))
-	ss := bytes.Split(buf[4:size], []byte{0})
-	var i int
+	l := int(*(*uint32)(unsafe.Pointer(&buf[0])))
+	ss := bytes.FieldsFunc(buf[4:size], func(r rune) bool { return r == 0 })
 	var exec string
 	var args, envs []string
-	for _, s := range ss {
-		if len(s) == 0 { // strings in command line are null padded, so Split will yield many zero length "arg" strings
-			continue
-		}
+	for i, s := range ss {
 		if i == 0 {
-			exec = C.GoString((*C.char)(unsafe.Pointer(&s[0])))
+			exec = string(s)
 		} else if i <= l {
-			args = append(args, C.GoString((*C.char)(unsafe.Pointer(&s[0]))))
+			args = append(args, string(s))
 		} else {
-			envs = append(envs, C.GoString((*C.char)(unsafe.Pointer(&s[0]))))
+			envs = append(envs, string(s))
 		}
-		i++
 	}
 
 	cl = CommandLine{
