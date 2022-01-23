@@ -34,17 +34,20 @@ func color(pid Pid) string {
 	return color
 }
 
-type query struct {
-	Pid
-	kernel  bool
-	daemons bool
-	files   bool
-}
+type (
+	// query from http request.
+	query struct {
+		Pid
+		kernel  bool
+		daemons bool
+		files   bool
+	}
+)
 
-func parse(r *http.Request) query {
+func parse(r *http.Request) (query, error) {
 	values, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		return query{}
+		return query{}, err
 	}
 	var pid int
 	var kernel, daemons, files bool
@@ -65,7 +68,7 @@ func parse(r *http.Request) query {
 		kernel:  kernel || pid > 0,
 		daemons: daemons || pid > 0,
 		files:   files || pid > 0,
-	}
+	}, nil
 }
 
 // NodeGraph returns the process connections node graph.
@@ -87,7 +90,7 @@ func NodeGraph(r *http.Request) []byte {
 	pt := buildTable()
 	conns := connections(pt)
 
-	q := parse(r)
+	q, _ := parse(r)
 	if q.Pid > 0 && pt[q.Pid] == nil {
 		q = query{} // reset to default
 	}
@@ -102,9 +105,11 @@ func NodeGraph(r *http.Request) []byte {
 		}
 		var cs []connection
 		for _, conn := range conns {
-			if _, ok := ft[conn.self.pid]; ok {
-				cs = append(cs, conn)
-			} else if _, ok := ft[conn.peer.pid]; ok {
+			_, ok := ft[conn.self.pid]
+			if !ok {
+				_, ok = ft[conn.peer.pid]
+			}
+			if ok {
 				cs = append(cs, conn)
 			}
 		}

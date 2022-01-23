@@ -177,7 +177,6 @@ func (pid Pid) commandLine() CommandLine {
 		return cl
 	}
 
-	cl = CommandLine{}
 	size := C.size_t(C.ARG_MAX)
 	buf := make([]byte, size)
 
