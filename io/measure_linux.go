@@ -38,10 +38,10 @@ func Measure() (ms []message.Content) {
 
 		ms = append(ms, &measurement{
 			Header: message.Measurement(sourceIO),
-			Id: id{
+			Id: Id{
 				Device: strs[2],
 			},
-			Props: Props{
+			Properties: Properties{
 				Major:     strs[0],
 				Minor:     strs[1],
 				TotalSize: int(statfs.Blocks) * int(statfs.Bsize),

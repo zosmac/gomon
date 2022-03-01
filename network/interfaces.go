@@ -58,10 +58,10 @@ func interfaces() (ms []*measurement) {
 
 		ms = append(ms, &measurement{
 			Header: message.Measurement(sourceNetwork),
-			Id: id{
+			Id: Id{
 				Name: ni.Name,
 			},
-			Props: Props{
+			Properties: Properties{
 				Index:      ni.Index,
 				Flags:      ni.Flags.String(),
 				Mac:        ni.HardwareAddr.String(),

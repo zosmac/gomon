@@ -53,11 +53,11 @@ func filesystems() ([]message.Request, error) {
 				)
 				return []message.Content{
 					&measurement{
-						Id: id{
+						Id: Id{
 							Mount: drive,
 							Path:  windows.UTF16ToString(path[:]),
 						},
-						Props: Props{
+						Properties: Properties{
 							Type:      windows.UTF16ToString(fsType[:]),
 							DriveType: core.DriveTypes[driveType],
 							Device:    windows.UTF16ToString(target[:l]),

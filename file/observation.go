@@ -43,15 +43,15 @@ type (
 	// fileEvent type.
 	fileEvent string
 
-	// id identifies the message.
-	id struct {
+	// Id identifies the message.
+	Id struct {
 		Name string `json:"name" gomon:"property"`
 	}
 
 	// message defines the properties of a file update message.
 	observation struct {
 		message.Header `gomon:""`
-		Id             id     `json:"id" gomon:""`
+		Id             `json:"id" gomon:""`
 		Message        string `json:"message" gomon:"property"`
 	}
 )

@@ -26,13 +26,13 @@ type (
 	// networkSource type.
 	networkSource string
 
-	// id identifies the message.
-	id struct {
+	// Id identifies the message.
+	Id struct {
 		Name string `json:"name" gomon:"property"`
 	}
 
-	// Props defines measurement properties.
-	Props struct {
+	// Properties defines measurement properties.
+	Properties struct {
 		Index      int    `json:"index" gomon:"property"`
 		Flags      string `json:"flags" gomon:"property"`
 		Mtu        int    `json:"mtu" gomon:"property"`
@@ -68,8 +68,8 @@ type (
 	// measurement for the message.
 	measurement struct {
 		message.Header `gomon:""`
-		Id             id `json:"id" gomon:""`
-		Props          `gomon:""`
+		Id             `json:"id" gomon:""`
+		Properties     `gomon:""`
 		Metrics        `gomon:""`
 	}
 )

@@ -29,9 +29,9 @@ type (
 
 	// CommandLine contains a process' command line arguments.
 	CommandLine struct {
-		Exec string   `json:"exec" gomon:"property"`
-		Args []string `json:"args" gomon:"property"`
-		Envs []string `json:"envs" gomon:"property"`
+		Executable string   `json:"executable" gomon:"property"`
+		Args       []string `json:"args" gomon:"property"`
+		Envs       []string `json:"envs" gomon:"property"`
 	}
 
 	// processTable defines a process table as a map of pids to processes.
@@ -224,11 +224,11 @@ func (pid Pid) commandLine() CommandLine {
 
 	l := int(*(*uint32)(unsafe.Pointer(&buf[0])))
 	ss := bytes.FieldsFunc(buf[4:size], func(r rune) bool { return r == 0 })
-	var exec string
+	var executable string
 	var args, envs []string
 	for i, s := range ss {
 		if i == 0 {
-			exec = string(s)
+			executable = string(s)
 		} else if i <= l {
 			args = append(args, string(s))
 		} else {
@@ -237,8 +237,8 @@ func (pid Pid) commandLine() CommandLine {
 	}
 
 	return CommandLine{
-		Exec: exec,
-		Args: args,
-		Envs: envs,
+		Executable: executable,
+		Args:       args,
+		Envs:       envs,
 	}
 }

@@ -195,7 +195,7 @@ func parseLog(stdout io.ReadCloser, regex *regexp.Regexp, groups map[captureGrou
 
 		messageChan <- &observation{
 			Header: message.Observation(t, source, levelMap[strings.ToLower(match[groups[groupLevel]])]),
-			Id: id{
+			Id: Id{
 				Name:   match[groups[groupProcess]],
 				Pid:    pid,
 				Sender: sender,

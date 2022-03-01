@@ -38,11 +38,11 @@ func filesystems() ([]message.Request, error) {
 					return []message.Content{
 						&measurement{
 							Header: message.Measurement(sourceFilesystem),
-							Id: id{
+							Id: Id{
 								Mount: C.GoString((*C.char)(unsafe.Pointer(&fs.Mntfromname[0]))),
 								Path:  path,
 							},
-							Props: Props{
+							Properties: Properties{
 								Type: C.GoString((*C.char)(unsafe.Pointer(&fs.Fstypename[0]))),
 							},
 							Metrics: metrics(path),

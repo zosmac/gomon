@@ -29,18 +29,18 @@ var (
 )
 
 // id captures the process identifier.
-func (pid Pid) id() id {
+func (pid Pid) id() Id {
 	buf, err := os.ReadFile(filepath.Join("/proc", pid.String(), "stat"))
 	if err != nil {
 		core.LogError(core.Error("ReadFile", err))
-		return id{}
+		return Id{}
 	}
 
 	fields := strings.Fields(string(buf))
 	ppid, _ := strconv.Atoi(fields[3])
 	start, _ := strconv.Atoi(fields[21])
 
-	return id{
+	return Id{
 		ppid:      Pid(ppid),
 		Name:      fields[1][1 : len(fields[1])-1],
 		Pid:       pid,
@@ -49,11 +49,11 @@ func (pid Pid) id() id {
 }
 
 // metrics captures the metrics for a process.
-func (pid Pid) metrics() (id, Props, Metrics) {
+func (pid Pid) metrics() (Id, Properties, Metrics) {
 	buf, err := os.ReadFile(filepath.Join("/proc", pid.String(), "stat"))
 	if err != nil {
 		core.LogError(core.Error("ReadFile", err))
-		return id{Pid: pid}, Props{}, Metrics{}
+		return Id{Pid: pid}, Properties{}, Metrics{}
 	}
 	fields := strings.Fields(string(buf))
 
@@ -85,13 +85,13 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 	voluntaryContextSwitches, _ := strconv.Atoi(m["voluntary_ctxt_switches"])
 	nonVoluntaryContextSwitches, _ := strconv.Atoi(m["nonvoluntary_ctxt_switches"])
 
-	return id{
+	return Id{
 			ppid:      Pid(ppid),
 			Name:      fields[1][1 : len(fields[1])-1],
 			Pid:       pid,
 			Starttime: core.Boottime.Add(time.Duration(start) * factor),
 		},
-		Props{
+		Properties{
 			Ppid:        Pid(ppid),
 			Pgid:        pgid,
 			Tgid:        tgid,
@@ -154,7 +154,7 @@ func (pid Pid) commandLine() CommandLine {
 		return cl
 	}
 
-	cl.Exec, _ = os.Readlink(filepath.Join("/proc", pid.String(), "exe"))
+	cl.Executable, _ = os.Readlink(filepath.Join("/proc", pid.String(), "exe"))
 
 	if arg, err := os.ReadFile(filepath.Join("/proc", pid.String(), "cmdline")); err == nil {
 		cl.Args = strings.Split(string(arg[:len(arg)-2]), "\000")

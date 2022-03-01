@@ -53,8 +53,8 @@ type (
 	// logLevel type.
 	logLevel string
 
-	// id identifies the message.
-	id struct {
+	// Id identifies the message.
+	Id struct {
 		Name   string `json:"name" gomon:"property"`
 		Pid    int    `json:"pid" gomon:"property"`
 		Sender string `json:"sender" gomon:"property"`
@@ -63,7 +63,7 @@ type (
 	// message defines the properties of a log message.
 	observation struct {
 		message.Header `gomon:"property"`
-		Id             id     `json:"id" gomon:""`
+		Id             `json:"id" gomon:""`
 		Message        string `json:"message" gomon:"property"`
 	}
 )

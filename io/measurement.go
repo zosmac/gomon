@@ -28,13 +28,13 @@ type (
 	// ioSource type.
 	ioSource string
 
-	// id identifies the message.
-	id struct {
+	// Id identifies the message.
+	Id struct {
 		Device string `json:"device" gomon:"property"`
 	}
 
-	// Props defines measurement properties.
-	Props struct {
+	// Properties defines measurement properties.
+	Properties struct {
 		Major          string `json:"major,omitempty" gomon:"property,,!windows"`
 		Minor          string `json:"minor,omitempty" gomon:"property,,!windows"`
 		Drive          string `json:"drive,omitempty" gomon:"property,,windows"`
@@ -58,8 +58,8 @@ type (
 	// measurement for the message.
 	measurement struct {
 		message.Header `gomon:""`
-		Id             id `json:"id" gomon:""`
-		Props          `gomon:""`
+		Id             `json:"id" gomon:""`
+		Properties     `gomon:""`
 		Metrics        `gomon:""`
 	}
 )

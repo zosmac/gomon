@@ -41,7 +41,7 @@ func Observer() error {
 }
 
 // notify assembles a message and queues it.
-func notify(id *id, ev processEvent, msg string) {
+func notify(id *Id, ev processEvent, msg string) {
 	messageChan <- &observation{
 		Header:  message.Observation(time.Now(), sourceProcess, ev),
 		Id:      *id,
@@ -50,26 +50,26 @@ func notify(id *id, ev processEvent, msg string) {
 }
 
 // fork reports a process fork.
-func (id *id) fork() {
+func (id *Id) fork() {
 	notify(id, processFork, fmt.Sprintf("%s[%d] -> [%d:%s]", id.Name, id.ppid, id.Pid, id.Starttime.Format("20060102-150405")))
 }
 
 // exec reports a process exec.
-func (id *id) exec() {
+func (id *Id) exec() {
 	notify(id, processExec, fmt.Sprintf("[%d] -> %s[%d:%s]", id.ppid, id.Name, id.Pid, id.Starttime.Format("20060102-150405")))
 }
 
 // exit reports a process exit.
-func (id *id) exit() {
+func (id *Id) exit() {
 	notify(id, processExit, fmt.Sprintf("%s[%d:%s]", id.Name, id.Pid, id.Starttime.Format("20060102-150405")))
 }
 
 // setuid reports a process change uid. (linux only)
-func (id *id) setuid(uid int) {
+func (id *Id) setuid(uid int) {
 	notify(id, processSetuid, fmt.Sprintf("%s[%d] uid: %d", id.Name, id.Pid, uid))
 }
 
 // setgid reports a process change gid. (linux only)
-func (id *id) setgid(gid int) {
+func (id *Id) setgid(gid int) {
 	notify(id, processSetgid, fmt.Sprintf("%s[%d] gid: %d", id.Name, id.Pid, gid))
 }

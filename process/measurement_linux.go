@@ -74,7 +74,7 @@ type (
 	// measurement for the message.
 	tsMeasurement struct {
 		message.Header `gomon:""`
-		Id             id `json:"id" gomon:""`
+		Id             `json:"id" gomon:""`
 		Taskstats      `gomon:""`
 	}
 )

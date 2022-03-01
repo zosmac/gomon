@@ -21,21 +21,21 @@ var (
 	oldTimes = map[Pid]time.Duration{}
 
 	// endpoints of processes periodically populated by lsof.
-	epMap  = map[Pid]Connections{}
+	epMap  = map[Pid][]Connection{}
 	epLock sync.RWMutex
 )
 
 type (
-	// processTable defines a process table as a map of pids to processes.
-	processTable map[Pid]*measurement
+	// Table defines a process table as a map of pids to processes.
+	Table map[Pid]*measurement
 
-	// processTree organizes the process into a hierarchy
-	processTree map[Pid]processTree
+	// Tree organizes the processes into a hierarchy
+	Tree map[Pid]Tree
 )
 
 // Measure captures all processes' metrics.
 func Measure() (ProcStats, []message.Content) {
-	pt := buildTable()
+	pt := BuildTable()
 
 	newTimes := map[Pid]time.Duration{}
 	for pid, p := range pt {
@@ -85,14 +85,14 @@ func Measure() (ProcStats, []message.Content) {
 	return ps, ms
 }
 
-// buildTable builds a process table and captures current process state
-func buildTable() processTable {
+// BuildTable builds a process table and captures current process state
+func BuildTable() Table {
 	pids, err := getPids()
 	if err != nil {
 		panic(fmt.Errorf("could not build process table %v", err))
 	}
 
-	var epm map[Pid]Connections
+	var epm map[Pid][]Connection
 	epLock.RLock()
 	if len(epMap) > 0 {
 		epm = epMap
@@ -103,17 +103,17 @@ func buildTable() processTable {
 	for _, pid := range pids {
 		id, props, metrics := pid.metrics()
 		pt[pid] = &measurement{
-			ancestors:   []Pid{},
+			Ancestors:   []Pid{},
 			Header:      message.Measurement(sourceProcess),
 			Id:          id,
-			Props:       props,
+			Properties:  props,
 			Metrics:     metrics,
 			Connections: epm[pid],
 		}
 	}
 
 	for pid, p := range pt {
-		p.ancestors = func() []Pid {
+		p.Ancestors = func() []Pid {
 			var pids []Pid
 			for pid = pt[pid].Ppid; pid > 1; pid = pt[pid].Ppid {
 				pids = append([]Pid{pid}, pids...)
@@ -125,27 +125,27 @@ func buildTable() processTable {
 	return pt
 }
 
-func buildTree(pt processTable) processTree {
-	t := processTree{}
+func BuildTree(pt Table) Tree {
+	t := Tree{}
 
 	for pid, p := range pt {
-		addPid(t, append(p.ancestors, pid))
+		addPid(t, append(p.Ancestors, pid))
 	}
 
 	return t
 }
 
-func addPid(t processTree, ancestors []Pid) {
+func addPid(t Tree, ancestors []Pid) {
 	if len(ancestors) == 0 {
 		return
 	}
 	if _, ok := t[ancestors[0]]; !ok {
-		t[ancestors[0]] = processTree{}
+		t[ancestors[0]] = Tree{}
 	}
 	addPid(t[ancestors[0]], ancestors[1:])
 }
 
-func flatTree(t processTree, indent int) []Pid {
+func FlatTree(t Tree, indent int) []Pid {
 	var flat []Pid
 
 	pids := make([]Pid, len(t))
@@ -165,13 +165,13 @@ func flatTree(t processTree, indent int) []Pid {
 	for _, pid := range pids {
 		flat = append(flat, pid)
 		// fmt.Fprintf(os.Stderr, "%*s%6d\n", indent, "", pid)
-		flat = append(flat, flatTree(t[pid], indent+2)...)
+		flat = append(flat, FlatTree(t[pid], indent+2)...)
 	}
 
 	return flat
 }
 
-func depthTree(t processTree) int {
+func depthTree(t Tree) int {
 	depth := 0
 	for _, tree := range t {
 		dt := depthTree(tree) + 1
@@ -182,12 +182,12 @@ func depthTree(t processTree) int {
 	return depth
 }
 
-func findTree(t processTree, pid Pid) processTree {
+func FindTree(t Tree, pid Pid) Tree {
 	if t, ok := t[pid]; ok {
 		return t
 	}
 	for _, t := range t {
-		if findTree(t, pid) != nil {
+		if FindTree(t, pid) != nil {
 			return t
 		}
 	}

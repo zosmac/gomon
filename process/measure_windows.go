@@ -92,11 +92,11 @@ type (
 )
 
 // metrics captures the metrics for a process.
-func (pid Pid) metrics() (id, Props, Metrics) {
+func (pid Pid) metrics() (Id, Properties, Metrics) {
 	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION|windows.PROCESS_VM_READ, false, uint32(pid))
 	if err != nil {
 		core.LogError(core.Error("OpenProcess", err))
-		return id{Pid: pid}, Props{}, Metrics{}
+		return Id{Pid: pid}, Properties{}, Metrics{}
 	}
 	defer windows.CloseHandle(handle)
 
@@ -166,12 +166,12 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 	user := time.Duration(lpUserTime.Nanoseconds())
 	system := time.Duration(lpKernelTime.Nanoseconds())
 
-	return id{
+	return Id{
 			Name:      windows.UTF16ToString(name[:n]),
 			Pid:       Pid(wp[0].ProcessID),
 			Starttime: time.Unix(0, lpCreationTime.Nanoseconds()),
 		},
-		Props{
+		Properties{
 			Ppid:        Pid(wp[0].ParentProcessID),
 			Username:    account + "@" + domain,
 			Status:      status[wp[0].ExecutionState],

@@ -35,7 +35,7 @@ type (
 	// message defines the properties of a process message.
 	observation struct {
 		message.Header `gomon:""`
-		Id             id     `json:"id" gomon:""`
+		Id             `json:"id" gomon:""`
 		Message        string `json:"message" gomon:"property"`
 	}
 )

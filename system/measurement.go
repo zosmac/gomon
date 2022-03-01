@@ -29,12 +29,12 @@ type (
 	// systemSource type.
 	systemSource string
 
-	// id identifies the message.
-	id struct {
+	// Id identifies the message.
+	Id struct {
 	}
 
-	// Props defines measurement properties.
-	Props struct {
+	// Properties defines measurement properties.
+	Properties struct {
 		Uname    string    `json:"uname" gomon:"property"`
 		Boottime time.Time `json:"boottime" gomon:"property"`
 	}
@@ -92,8 +92,8 @@ type (
 	// measurement for the message.
 	measurement struct {
 		message.Header `gomon:""`
-		Id             id `json:"id" gomon:""`
-		Props          `gomon:""`
+		Id             `json:"id" gomon:""`
+		Properties     `gomon:""`
 		Metrics        `gomon:""`
 	}
 )

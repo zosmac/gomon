@@ -23,7 +23,7 @@ var (
 )
 
 type (
-	ids map[Pid]id
+	ids map[Pid]Id
 )
 
 func open() error {
@@ -109,7 +109,7 @@ func observe() {
 				continue
 			}
 
-			var id id
+			var id Id
 			var ok bool
 			var ppid Pid
 			var youth ids
@@ -184,7 +184,7 @@ func children(ppid Pid) ids {
 
 	kids := ids{}
 	for _, pid := range pids[:n] {
-		kids[Pid(pid)] = id{}
+		kids[Pid(pid)] = Id{}
 	}
 
 	return kids

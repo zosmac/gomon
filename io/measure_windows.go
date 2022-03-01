@@ -210,10 +210,10 @@ func Measure() (ms []message.Content) {
 
 		ms = append(ms, &measurement{
 			Header: message.Measurement(sourceIO),
-			Id: id{
+			Id: Id{
 				Device: windows.UTF16ToString(target[:l]),
 			},
-			Props: Props{
+			Properties: Properties{
 				Drive:          w.Name,
 				DriveType:      core.DriveTypes[*w.DriveType],
 				Path:           windows.UTF16ToString(path[:]),

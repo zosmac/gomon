@@ -32,8 +32,8 @@ type (
 	//processSource type.
 	processSource string
 
-	// id identifies the message.
-	id struct {
+	// Id identifies the message.
+	Id struct {
 		ppid      Pid       // for observer
 		Name      string    `json:"name" gomon:"property"`
 		Pid       Pid       `json:"pid" gomon:"property"`

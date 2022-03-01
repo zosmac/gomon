@@ -26,14 +26,14 @@ type (
 	// filesystemSource type.
 	filesystemSource string
 
-	// id identifies the message.
-	id struct {
+	// Id identifies the message.
+	Id struct {
 		Mount string `json:"mount" gomon:"property"`
 		Path  string `json:"path" gomon:"property"`
 	}
 
-	// Props defines measurement properties.
-	Props struct {
+	// Properties defines measurement properties.
+	Properties struct {
 		Type      string `json:"type" gomon:"property"`
 		Options   string `json:"options,omitempty" gomon:"property,,linux"`
 		DriveType string `json:"drive_type,omitempty" gomon:"property,,windows"`
@@ -53,8 +53,8 @@ type (
 	// measurement for the message.
 	measurement struct {
 		message.Header `gomon:""`
-		Id             id `json:"id" gomon:""`
-		Props          `gomon:""`
+		Id             `json:"id" gomon:""`
+		Properties     `gomon:""`
 		Metrics        `gomon:""`
 	}
 )

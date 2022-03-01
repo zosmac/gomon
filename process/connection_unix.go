@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"regexp"
 	"runtime"
@@ -22,17 +23,15 @@ import (
 var (
 	// regex for parsing lsof output lines from lsof command.
 	regex = regexp.MustCompile(
-		`^(?:(?P<header>COMMAND.*)|====(?P<trailer>\d\d:\d\d:\d\d)====.*|` +
-			`(?P<command>[^ ]+)[ ]+` +
-			`(?P<pid>[^ ]+)[ ]+` +
-			`(?:[^ ]+)[ ]+` + // USER
+		`^(?P<command>[^ ]+)[ ]+` +
+			`(?P<pid>\d+)[ ]+` +
+			`(?:\d+)[ ]+` + // USER
 			`(?:(?P<fd>\d+)|fp\.|mem|cwd|rtd)` +
 			`(?P<mode> |[rwu-][rwuNRWU]?)[ ]+` +
 			`(?P<type>(?:[^ ]+|))[ ]+` +
 			`(?P<device>(?:0x[0-9a-f]+|\d+,\d+|kpipe|upipe|))[ ]+` +
 			`(?:[^ ]+|)[ ]+` + // SIZE/OFF
-			`(?P<node>(?:\d+|TCP|UDP|))[ ]+` +
-			`(?P<name>.*))$`,
+			`(?P<node>(?:[^ ]+|))`,
 	)
 
 	// rgxgroups maps names of capture groups to indices.
@@ -43,12 +42,38 @@ var (
 		}
 		return g
 	}()
+
+	// zoneregex determines if a link local address embeds a zone index.
+	zoneregex = regexp.MustCompile(`^((fe|FE)80):(\d{1,2})(::.*)$`)
+
+	// Zones maps local ip addresses to their network zones.
+	zones = func() map[string]string {
+		zm := map[string]string{}
+		if nis, err := net.Interfaces(); err == nil {
+			for _, ni := range nis {
+				zm[strconv.FormatUint(uint64(ni.Index), 16)] = ni.Name
+				if addrs, err := ni.Addrs(); err == nil {
+					for _, addr := range addrs {
+						if ip, _, err := net.ParseCIDR(addr.String()); err == nil {
+							zm[ip.String()] = ni.Name
+						}
+					}
+				}
+				if addrs, err := ni.MulticastAddrs(); err == nil {
+					for _, addr := range addrs {
+						if ip, _, err := net.ParseCIDR(addr.String()); err == nil {
+							zm[ip.String()] = ni.Name
+						}
+					}
+				}
+			}
+		}
+		return zm
+	}()
 )
 
 const (
 	// lsof line regular expressions named capture groups.
-	groupHeader  captureGroup = "header"
-	groupTrailer captureGroup = "trailer"
 	groupCommand captureGroup = "command"
 	groupPid     captureGroup = "pid"
 	groupFd      captureGroup = "fd"
@@ -56,13 +81,26 @@ const (
 	groupType    captureGroup = "type"
 	groupDevice  captureGroup = "device"
 	groupNode    captureGroup = "node"
-	groupName    captureGroup = "name"
 )
 
 type (
 	// captureGroup is the name of a reqular expression capture group.
 	captureGroup string
 )
+
+func addZone(addr string) string {
+	ip, port, _ := net.SplitHostPort(addr)
+	match := zoneregex.FindStringSubmatch(ip)
+	if match != nil { // strip the zone index from the ipv6 link local address
+		ip = match[1] + match[4]
+		if zone, ok := zones[match[3]]; ok {
+			ip += "%" + zone
+		}
+	} else if zone, ok := zones[ip]; ok {
+		ip += "%" + zone
+	}
+	return net.JoinHostPort(ip, port)
+}
 
 // lsofCommand starts the lsof command to capture process connections.
 func lsofCommand() error {
@@ -76,105 +114,118 @@ func lsofCommand() error {
 		return core.Error("start failed", err)
 	}
 
+	core.LogInfo(fmt.Errorf("start [%d] %q", cmd.Process.Pid, cmd.String()))
+
 	core.Register(func() {
 		cmd.Process.Kill()
 		cmd.Wait()
 	})
 
-	core.LogInfo(fmt.Errorf("start [%d] %q", cmd.Process.Pid, cmd.String()))
-
-	go parseOutput(stdout)
+	go parseLsof(stdout)
 
 	return nil
 }
 
-// parseOutput reads the stdout of the command.
-func parseOutput(stdout io.ReadCloser) {
-	epm := map[Pid]Connections{}
+// parseLsof parses each line of stdout from the command.
+func parseLsof(stdout io.ReadCloser) {
+	defer func() {
+		if r := recover(); r != nil {
+			buf := make([]byte, 4096)
+			n := runtime.Stack(buf, false)
+			buf = buf[:n]
+			core.LogError(fmt.Errorf("parseLsof() panicked, %v\n%s", r, buf))
+		}
+	}()
 
+	epm := map[Pid][]Connection{}
+	var nameIndex int
 	sc := bufio.NewScanner(stdout)
 	for sc.Scan() {
-		match := regex.FindStringSubmatch(sc.Text())
-		if len(match) == 0 || match[0] == "" {
+		text := sc.Text()
+		if strings.HasPrefix(text, "COMMAND") {
+			nameIndex = strings.Index(text, "NAME")
 			continue
-		}
-		if header := match[rgxgroups[groupHeader]]; header != "" {
-			continue
-		}
-		if trailer := match[rgxgroups[groupTrailer]]; trailer != "" {
+		} else if strings.HasPrefix(text, "====") {
 			epLock.Lock()
 			epMap = epm
-			epm = map[Pid]Connections{}
+			epm = map[Pid][]Connection{}
 			epLock.Unlock()
 			continue
 		}
+		match := regex.FindStringSubmatch(text[:nameIndex])
+		if len(match) == 0 || match[0] == "" {
+			continue
+		}
 
-		command := match[rgxgroups[groupCommand]]
+		// command := match[rgxgroups[groupCommand]]
 		pid, _ := strconv.Atoi(match[rgxgroups[groupPid]])
-		fd, _ := strconv.Atoi(match[rgxgroups[groupFd]])
+		// fd, _ := strconv.Atoi(match[rgxgroups[groupFd]])
 		mode := match[rgxgroups[groupMode]][0]
 		fdType := match[rgxgroups[groupType]]
 		device := match[rgxgroups[groupDevice]]
 		node := match[rgxgroups[groupNode]]
-		name := match[rgxgroups[groupName]]
+		peer := text[nameIndex:]
 
-		var self, peer string
+		var self string
 
 		switch fdType {
 		case "REG":
-			if runtime.GOOS == "linux" && name != "" && pid != os.Getpid() {
-				log.Watch(name, pid)
+			if runtime.GOOS == "linux" && peer != "" && pid != os.Getpid() {
+				log.Watch(peer, pid)
 			}
-		case "BLK", "DIR", "LINK",
-			"CHAN", "FSEVENT", "KQUEUE", "NEXUS", "NPOLICY", "PSXSHM",
-			"ndrv", "unknown":
-		case "CHR":
-			if name == os.DevNull {
-				fdType = "NUL"
-			}
+		case "BLK", "CHR", "DIR", "LINK", "PSXSHM", "KQUEUE":
+		case "FSEVENT", "NEXUS", "NPOLICY", "ndrv", "systm", "unknown":
+		case "CHAN":
+			fdType = device
+		case "key", "PSXSEM":
+			peer = device
 		case "FIFO":
-			if mode == 'w' {
-				peer = name
-			} else {
-				self = name
+			if mode != 'w' {
+				self = peer
+				peer = ""
 			}
 		case "PIPE", "unix":
 			self = device
-			peer = name
 			if len(peer) > 2 && peer[:2] == "->" {
 				peer = peer[2:] // strip "->"
 			}
-			name = self + "->" + peer
 		case "IPv4", "IPv6":
 			fdType = node
-			split := strings.Split(name, " ")
+			split := strings.Split(peer, " ")
 			split = strings.Split(split[0], "->")
-			self = split[0]
 			if len(split) > 1 {
-				peer = split[1]
+				self = addZone(split[0])
+				peer = addZone(split[1])
+			} else {
+				self = device
+				peer = addZone((split[0]))
 			}
-		case "systm":
-			self = device
-		case "key":
-			name = device
-			self = device
-		case "PSXSEM":
-			self = device
-			peer = device
 		}
 
-		ep := Connection{
-			Descriptor: fd,
-			Type:       fdType,
-			Name:       name,
-			Direction:  accmode(mode),
-			Self:       self,
-			Peer:       peer,
+		if self == "" && peer == "" {
+			peer = fdType // treat like data connection
 		}
 
-		core.LogDebug(fmt.Errorf("endpoint %s:%s: %q[%d:%d] %s->%s", fdType, name, command, pid, fd, self, peer))
-
-		epm[Pid(pid)] = append(epm[Pid(pid)], ep)
+		if peer != os.DevNull {
+			epm[Pid(pid)] = append(epm[Pid(pid)],
+				Connection{
+					Type:      fdType,
+					Direction: accmode(mode),
+					Self:      Endpoint{Name: self, Pid: Pid(pid)},
+					Peer:      Endpoint{Name: peer},
+				},
+			)
+		}
+		if fdType == "unix" && peer[:2] != "0x" {
+			epm[Pid(pid)] = append(epm[Pid(pid)],
+				Connection{
+					Type:      fdType,
+					Direction: accmode(mode),
+					Self:      Endpoint{Pid: Pid(pid)},
+					Peer:      Endpoint{Name: peer},
+				},
+			)
+		}
 	}
 }
 
@@ -185,8 +236,6 @@ func accmode(mode byte) string {
 		return "<<--"
 	case 'w':
 		return "-->>"
-	case 'u':
-		return "<-->"
 	}
-	return ""
+	return "<-->"
 }

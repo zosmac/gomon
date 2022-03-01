@@ -177,7 +177,7 @@ func report(ready map[int]*os.File) {
 				pid, _ := strconv.Atoi(match[groups[groupPid]])
 				messageChan <- &observation{
 					Header: message.Observation(timestamp, logSource(l.Name()), level),
-					Id: id{
+					Id: Id{
 						Pid: pid,
 					},
 					Message: match[groups[groupMessage]],

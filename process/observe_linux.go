@@ -23,7 +23,7 @@ var (
 )
 
 type (
-	ids map[Pid]id
+	ids map[Pid]Id
 
 	// handle contains netlink descriptors
 	handle struct {

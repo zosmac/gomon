@@ -16,7 +16,7 @@ func Measure(ps process.ProcStats) message.Content {
 	mem, swap := memory()
 	return &measurement{
 		Header: hdr,
-		Props: Props{
+		Properties: Properties{
 			Uname:    uname(),
 			Boottime: core.Boottime,
 		},

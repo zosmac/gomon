@@ -53,11 +53,11 @@ func filesystems() ([]message.Request, error) {
 			func() []message.Content {
 				return []message.Content{
 					&measurement{
-						Id: id{
+						Id: Id{
 							Mount: f[0],
 							Path:  f[1],
 						},
-						Props: Props{
+						Properties: Properties{
 							Type:    f[2],
 							Options: f[3],
 						},

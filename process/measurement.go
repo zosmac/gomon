@@ -24,9 +24,9 @@ type (
 
 	// CommandLine contains a process' command line arguments.
 	CommandLine struct {
-		Exec string   `json:"exec" gomon:"property"`
-		Args []string `json:"args" gomon:"property"`
-		Envs []string `json:"envs" gomon:"property"`
+		Executable string   `json:"executable" gomon:"property"`
+		Args       []string `json:"args" gomon:"property"`
+		Envs       []string `json:"envs" gomon:"property"`
 	}
 
 	// Directories reports the process' root and current working directories.
@@ -35,8 +35,8 @@ type (
 		Root string `json:"root" gomon:"property"`
 	}
 
-	// Props defines measurement properties.
-	Props struct {
+	// Properties defines measurement properties.
+	Properties struct {
 		Ppid        Pid    `json:"ppid" gomon:"property"`
 		Pgid        int    `json:"pgid,omitempty" gomon:"property,,!windows"`
 		Tgid        int    `json:"tgid,omitempty" gomon:"property,,linux"`
@@ -82,28 +82,30 @@ type (
 		Io                          `gomon:""`
 	}
 
-	// Connection represents a process connection to a data source.
-	Connection struct {
-		Descriptor int    `json:"descriptor" gomon:"property"`
-		Type       string `json:"type" gomon:"property"`
-		Name       string `json:"name" gomon:"property"`
-		Direction  string `json:"direction" gomon:"property"`
-		Self       string `json:"self" gomon:"property"`
-		Peer       string `json:"peer" gomon:"property"`
+	Endpoint struct {
+		Name string `json:"name" gomon:"property"`
+		Pid  Pid    `json:"pid" gomon:"property"`
 	}
 
-	// Connections records all the process' data connections.
-	Connections []Connection
+	// Connection represents an inter-process or host/data connection
+	Connection struct {
+		Type      string   `json:"type" gomon:"property"`
+		Direction string   `json:"direction" gomon:"property"`
+		Self      Endpoint `json:"self" gomon:"property"`
+		Peer      Endpoint `json:"peer" gomon:"property"`
+	}
 
 	// measurement for the message.
 	measurement struct {
-		ancestors      []Pid
+		Ancestors      []Pid
 		message.Header `gomon:""`
-		Id             id `json:"id" gomon:""`
-		Props          `gomon:""`
+		Id             `json:"id" gomon:""`
+		Properties     `gomon:""`
 		Metrics        `gomon:""`
-		Connections    `json:"connections" gomon:""`
+		Connections    []Connection `json:"connections" gomon:""`
 	}
+
+	Process = measurement
 )
 
 // String returns the source value of the message as a string.

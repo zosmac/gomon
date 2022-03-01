@@ -28,7 +28,7 @@ var (
 )
 
 // id gets the identifier of a process.
-func (pid Pid) id() (id, error) {
+func (pid Pid) id() (Id, error) {
 	var bsd C.struct_proc_bsdinfo
 	if n, err := C.proc_pidinfo(
 		C.int(pid),
@@ -37,7 +37,7 @@ func (pid Pid) id() (id, error) {
 		unsafe.Pointer(&bsd),
 		C.int(C.PROC_PIDTBSDINFO_SIZE),
 	); n != C.int(C.PROC_PIDTBSDINFO_SIZE) {
-		return id{Pid: pid}, core.Error("proc_pidinfo PROC_PIDTBSDINFO failed", err)
+		return Id{Pid: pid}, core.Error("proc_pidinfo PROC_PIDTBSDINFO failed", err)
 	}
 
 	name := C.GoString(&bsd.pbi_name[0])
@@ -45,7 +45,7 @@ func (pid Pid) id() (id, error) {
 		name = C.GoString(&bsd.pbi_comm[0])
 	}
 
-	return id{
+	return Id{
 		ppid: Pid(bsd.pbi_ppid),
 		Name: name,
 		Pid:  pid,
@@ -57,7 +57,7 @@ func (pid Pid) id() (id, error) {
 }
 
 // metrics captures the metrics for a process.
-func (pid Pid) metrics() (id, Props, Metrics) {
+func (pid Pid) metrics() (Id, Properties, Metrics) {
 	var tai C.struct_proc_taskallinfo
 	if n := C.proc_pidinfo(
 		C.int(pid),
@@ -66,7 +66,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 		unsafe.Pointer(&tai),
 		C.int(C.PROC_PIDTASKALLINFO_SIZE),
 	); n != C.int(C.PROC_PIDTASKALLINFO_SIZE) {
-		return id{Pid: pid}, Props{}, Metrics{}
+		return Id{Pid: pid}, Properties{}, Metrics{}
 	}
 
 	name := C.GoString(&tai.pbsd.pbi_name[0])
@@ -77,7 +77,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 	user += time.Duration(tai.ptinfo.pti_total_user + tai.ptinfo.pti_threads_user)
 	system += time.Duration(tai.ptinfo.pti_total_system + tai.ptinfo.pti_threads_system)
 
-	return id{
+	return Id{
 			ppid: Pid(tai.pbsd.pbi_ppid),
 			Name: name,
 			Pid:  pid,
@@ -86,7 +86,7 @@ func (pid Pid) metrics() (id, Props, Metrics) {
 				int64(tai.pbsd.pbi_start_tvusec)*int64(time.Microsecond),
 			),
 		},
-		Props{
+		Properties{
 			Ppid:        Pid(tai.pbsd.pbi_ppid),
 			Pgid:        int(tai.pbsd.pbi_pgid),
 			Tty:         fmt.Sprintf("%#.8X", tai.pbsd.e_tdev),
@@ -193,11 +193,11 @@ func (pid Pid) commandLine() CommandLine {
 
 	l := int(*(*uint32)(unsafe.Pointer(&buf[0])))
 	ss := bytes.FieldsFunc(buf[4:size], func(r rune) bool { return r == 0 })
-	var exec string
+	var executable string
 	var args, envs []string
 	for i, s := range ss {
 		if i == 0 {
-			exec = string(s)
+			executable = string(s)
 		} else if i <= l {
 			args = append(args, string(s))
 		} else {
@@ -206,9 +206,9 @@ func (pid Pid) commandLine() CommandLine {
 	}
 
 	cl = CommandLine{
-		Exec: exec,
-		Args: args,
-		Envs: envs,
+		Executable: executable,
+		Args:       args,
+		Envs:       envs,
 	}
 	clLock.Lock()
 	clMap[pid] = cl
