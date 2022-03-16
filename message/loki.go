@@ -17,19 +17,13 @@ import (
 )
 
 type (
-	// labels type defined for generating Loki log entries.
-	labels map[string]string
-
-	// label type defined for formatting Loki log entry labels.
-	label [2]string
-
-	// value type defined for formatting Loki log entry values.
-	value [2]string
+	// tuple type defines a string pair for formatting Loki log entry labels and values.
+	tuple [2]string
 
 	// stream type defined for generating Loki log entries.
 	stream struct {
-		Stream labels  `json:"stream"`
-		Values []value `json:"values"`
+		Stream map[string]string `json:"stream"`
+		Values []tuple           `json:"values"`
 	}
 
 	// streams type defined for generating Loki log entries.
@@ -54,24 +48,24 @@ func lokiTest() bool {
 func lokiFormatter(name, tag string, val reflect.Value) interface{} {
 	if strings.HasPrefix(tag, "property") {
 		if val.Kind() == reflect.String {
-			return label{name, val.String()}
+			return tuple{name, val.String()}
 		} else if val.Type().ConvertibleTo(reflect.TypeOf(time.Time{})) {
 			t := val.Convert(reflect.TypeOf(time.Time{})).Interface().(time.Time)
 			if name == "timestamp" {
-				return label{name, strconv.FormatInt(t.UnixNano(), 10)}
+				return tuple{name, strconv.FormatInt(t.UnixNano(), 10)}
 			} else {
-				return label{name, t.Format("2006-01-02 15:04:05.999")}
+				return tuple{name, t.Format("2006-01-02 15:04:05.999")}
 			}
 		} else if s, ok := val.Interface().(fmt.Stringer); ok {
-			return label{name, s.String()}
+			return tuple{name, s.String()}
 		} else {
 			switch val.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				return label{name, strconv.FormatInt(val.Int(), 10)}
+				return tuple{name, strconv.FormatInt(val.Int(), 10)}
 			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				return label{name, strconv.FormatUint(val.Uint(), 10)}
+				return tuple{name, strconv.FormatUint(val.Uint(), 10)}
 			case reflect.Float32, reflect.Float64:
-				return label{name, strconv.FormatFloat(val.Float(), 'e', -1, 64)}
+				return tuple{name, strconv.FormatFloat(val.Float(), 'e', -1, 64)}
 			}
 		}
 		core.LogError(fmt.Errorf("lokiMessage property type not recognized %s %v", name, val.Interface()))
@@ -85,7 +79,7 @@ func lokiEncode(os []Content) bool {
 	for _, o := range os {
 		ls := map[string]string{}
 		for _, l := range core.Format("", "", reflect.ValueOf(o), lokiFormatter) {
-			l := l.(label)
+			l := l.(tuple)
 			ls[l[0]] = l[1]
 		}
 
@@ -101,7 +95,7 @@ func lokiEncode(os []Content) bool {
 
 		s.Streams = append(s.Streams, stream{
 			Stream: labels,
-			Values: []value{
+			Values: []tuple{
 				{
 					timestamp,
 					message,

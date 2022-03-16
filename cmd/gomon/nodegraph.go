@@ -305,7 +305,7 @@ func NodeGraph(req *http.Request) []byte {
 	} else {
 		label = "Remote Hosts and Inter-Process Connections for "
 	}
-	label += core.HostName + time.Now().Local().Format(", Mon Jan 02 2006 at 03:04:05PM MST")
+	label += core.Hostname + time.Now().Local().Format(", Mon Jan 02 2006 at 03:04:05PM MST")
 
 	return dot(`digraph "` + label + `" {
   id="\G"

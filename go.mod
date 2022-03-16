@@ -1,12 +1,12 @@
 module github.com/zosmac/gomon
 
-go 1.17
+go 1.18
 
 require (
 	github.com/StackExchange/wmi v1.2.1
-	github.com/prometheus/client_golang v1.12.0
-	golang.org/x/net v0.0.0-20220121210141-e204ce36a2ba
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
+	github.com/prometheus/client_golang v1.12.1
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	golang.org/x/sys v0.0.0-20220315194320-039c03cc5b86
 	gopkg.in/yaml.v2 v2.4.0
 )
 

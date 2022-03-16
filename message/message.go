@@ -67,7 +67,7 @@ func (vs ValidValues) Index(vv ValidValue) int {
 func Observation(t time.Time, source ValidValue, event ValidValue) Header {
 	return Header{
 		Timestamp: t,
-		Host:      core.HostName,
+		Host:      core.Hostname,
 		Source:    source,
 		Event:     event,
 	}
@@ -98,7 +98,7 @@ func (measureEvent) ValidValues() ValidValues {
 func Measurement(source ValidValue) Header {
 	return Header{
 		Timestamp: time.Now(),
-		Host:      core.HostName,
+		Host:      core.Hostname,
 		Source:    source,
 		Event:     measure,
 	}

@@ -15,8 +15,8 @@ import (
 //go:generate ./generate.sh
 
 var (
-	// HostName identifies the host.
-	HostName, _ = os.Hostname()
+	// Hostname identifies the host.
+	Hostname, _ = os.Hostname()
 
 	// executable identifies the full command path.
 	executable, _ = os.Executable()
