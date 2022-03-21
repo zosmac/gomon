@@ -12,7 +12,7 @@ import (
 
 // Measure captures the system's metrics.
 func Measure(ps process.ProcStats) message.Content {
-	hdr := message.Measurement(sourceSystem)
+	hdr := message.Measurement()
 	mem, swap := memory()
 	return &measurement{
 		Header: hdr,

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zosmac/gomon/log"
+	"github.com/zosmac/gomon/logs"
 	"github.com/zosmac/gomon/message"
 )
 
@@ -78,7 +78,7 @@ func Measure() (ProcStats, []message.Content) {
 	}
 	clLock.Unlock()
 
-	log.Remove(pids)
+	logs.Remove(pids)
 
 	oldTimes = newTimes
 
@@ -104,7 +104,7 @@ func BuildTable() Table {
 		id, props, metrics := pid.metrics()
 		pt[pid] = &measurement{
 			Ancestors:   []Pid{},
-			Header:      message.Measurement(sourceProcess),
+			Header:      message.Measurement(),
 			Id:          id,
 			Properties:  props,
 			Metrics:     metrics,

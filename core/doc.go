@@ -11,7 +11,7 @@ Package core implements functionality used by the "gomon" command. Functions sup
 The core package defines the following command line flags:
  * -version:  to report the current version of Gomon
  * -document: to document the output that Gomon produces
- * -port:     to set the port for requesting the process connections nodegraph, for Prometheus metric collection, and for profiling (default 1234)
+ * -port:     to set the port for requesting the process connections nodegraph, for Prometheus metric collection, Loki log collection, and for profiling (default 1234)
  * -sample:   to specify the sampling interval for measurements (default 15s)
 */
 package core

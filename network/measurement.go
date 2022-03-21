@@ -10,22 +10,7 @@ func init() {
 	message.Document(&measurement{})
 }
 
-const (
-	// measurement sources.
-	sourceNetwork networkSource = "network"
-)
-
-var (
-	// networkSources valid source values for messages.
-	networkSources = message.ValidValues{
-		sourceNetwork,
-	}
-)
-
 type (
-	// networkSource type.
-	networkSource string
-
 	// Id identifies the message.
 	Id struct {
 		Name string `json:"name" gomon:"property"`
@@ -73,21 +58,6 @@ type (
 		Metrics        `gomon:""`
 	}
 )
-
-// String returns the source value of the message as a string.
-func (so networkSource) String() string {
-	return string(so)
-}
-
-// ValidValues returns the valid source values for the message.
-func (networkSource) ValidValues() message.ValidValues {
-	return networkSources
-}
-
-// Sources returns the list of acceptable Source values for this message.
-func (*measurement) Sources() []string {
-	return networkSources.Values()
-}
 
 // Events returns the list of acceptable Event values for this message.
 func (*measurement) Events() []string {

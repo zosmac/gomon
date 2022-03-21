@@ -43,7 +43,7 @@ func Observer() error {
 // notify assembles a message and queues it.
 func notify(id *Id, ev processEvent, msg string) {
 	messageChan <- &observation{
-		Header:  message.Observation(time.Now(), sourceProcess, ev),
+		Header:  message.Observation(time.Now(), ev),
 		Id:      *id,
 		Message: msg,
 	}

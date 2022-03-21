@@ -4,6 +4,7 @@ package message
 
 import (
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -37,7 +38,8 @@ func Document(m Content) {
 			return documentField(m, name, tag)
 		},
 	)
-	k := strings.Join(append(m.Sources(), m.Events()...), "|")
+	src := filepath.Base(reflect.ValueOf(m).Elem().Type().PkgPath())
+	k := src + " |" + strings.Join(m.Events(), "|")
 	Messages[k] = make([]field, len(fs))
 	for i, f := range fs {
 		Messages[k][i] = f.(field)
@@ -47,7 +49,7 @@ func Document(m Content) {
 
 // field records the attributes of a field for documenting.
 type field struct {
-	Content
+	key      string
 	Name     string
 	Property bool   // true if field is a property
 	Type     string // metric type
@@ -57,10 +59,8 @@ type field struct {
 // document the messages when the document flag specified on the command line.
 func document() {
 	sort.SliceStable(fields, func(i, j int) bool {
-		ki := strings.Join(append(fields[i].Content.Sources(), fields[i].Content.Events()...), "|")
-		kj := strings.Join(append(fields[j].Content.Sources(), fields[j].Content.Events()...), "|")
-		if ki != kj {
-			return ki < kj
+		if fields[i].key != fields[j].key {
+			return fields[i].key < fields[j].key
 		}
 		if fields[i].Property {
 			return !fields[j].Property
@@ -94,7 +94,7 @@ func document() {
 	firstMetric := true
 
 	for _, f := range fields {
-		if k := strings.Join(append(f.Content.Sources(), f.Content.Events()...), "|"); k != prevMessage {
+		if f.key != prevMessage {
 			if !firstProperty || !firstMetric {
 				if firstMetric {
 					fmt.Println(footers[0]) // finish previous table
@@ -102,11 +102,12 @@ func document() {
 					fmt.Println(footers[1]) // finish previous table
 				}
 			}
-			fmt.Printf("Sources: %s\nEvents: %+v\n",
-				f.Content.Sources(),
-				f.Content.Events(),
+			key := strings.Split(f.key, " |")
+			fmt.Printf("Source: %s\nEvents: %+v\n",
+				key[0],
+				strings.Split(key[1], "|"),
 			)
-			prevMessage = k
+			prevMessage = f.key
 			firstProperty = true
 			firstMetric = true
 		}
@@ -156,9 +157,11 @@ func documentField(m Content, name, tag string) field {
 		u = s[1]
 	}
 
+	key := filepath.Base(reflect.ValueOf(m).Elem().Type().PkgPath()) + " |" + strings.Join(m.Events(), "|")
+
 	if t == "property" {
 		return field{
-			Content:  m,
+			key:      key,
 			Name:     name,
 			Property: true,
 		}
@@ -172,9 +175,9 @@ func documentField(m Content, name, tag string) field {
 	}
 
 	return field{
-		Content: m,
-		Name:    name,
-		Type:    t,
-		Unit:    u,
+		key:  key,
+		Name: name,
+		Type: t,
+		Unit: u,
 	}
 }

@@ -195,7 +195,7 @@ func taskstats() {
 				case unix.TASKSTATS_TYPE_PID, unix.TASKSTATS_TYPE_TGID:
 				case unix.TASKSTATS_TYPE_STATS:
 					ts := tsMeasurement{
-						Header: message.Measurement(processSource("taskstats")),
+						Header: message.Measurement(),
 					}
 					buf := &bytes.Buffer{}
 					buf.Write(data[i+syscall.NLA_HDRLEN : i+int(attr.Len)])

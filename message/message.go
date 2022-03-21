@@ -4,6 +4,9 @@ package message
 
 import (
 	"fmt"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/zosmac/gomon/core"
@@ -22,17 +25,24 @@ type (
 	Header struct {
 		Timestamp time.Time  `json:"timestamp" gomon:"property"`
 		Host      string     `json:"host" gomon:"property"`
-		Source    ValidValue `json:"source" gomon:"property"`
+		Source    string     `json:"source" gomon:"property"`
 		Event     ValidValue `json:"event" gomon:"property"`
 	}
 
 	// Content interface methods for all messages.
 	Content interface {
-		Sources() []string
 		Events() []string
 		ID() string
 	}
 )
+
+func source() string {
+	pc := []uintptr{0}
+	runtime.Callers(3, pc)
+	fs := runtime.CallersFrames(pc)
+	f, _ := fs.Next()
+	return strings.Split(filepath.Base(f.Function), ".")[0]
+}
 
 // Values returns an ordered list of valid values for the type.
 func (vs ValidValues) Values() []string {
@@ -64,11 +74,11 @@ func (vs ValidValues) Index(vv ValidValue) int {
 }
 
 // Observation initializes message header for observation.
-func Observation(t time.Time, source ValidValue, event ValidValue) Header {
+func Observation(t time.Time, event ValidValue) Header {
 	return Header{
 		Timestamp: t,
 		Host:      core.Hostname,
-		Source:    source,
+		Source:    source(),
 		Event:     event,
 	}
 }
@@ -85,21 +95,22 @@ var (
 	}
 )
 
-// String returns the source value of the message as a string.
+// String returns the event value of the message as a string.
 func (ev measureEvent) String() string {
 	return string(ev)
 }
 
+// ValidValues returns the valid event values for the message.
 func (measureEvent) ValidValues() ValidValues {
 	return MeasureEvents
 }
 
 // Measurement initializes message header for Measurement.
-func Measurement(source ValidValue) Header {
+func Measurement() Header {
 	return Header{
 		Timestamp: time.Now(),
 		Host:      core.Hostname,
-		Source:    source,
+		Source:    source(),
 		Event:     measure,
 	}
 }

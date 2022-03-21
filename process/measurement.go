@@ -108,21 +108,6 @@ type (
 	Process = measurement
 )
 
-// String returns the source value of the message as a string.
-func (so processSource) String() string {
-	return string(so)
-}
-
-// ValidValues returns the valid source values for the message.
-func (processSource) ValidValues() message.ValidValues {
-	return processSources
-}
-
-// Sources returns the list of acceptable Source values for this message.
-func (*measurement) Sources() []string {
-	return processSources.Values()
-}
-
 // Events returns the list of acceptable Event values for this message.
 func (*measurement) Events() []string {
 	return message.MeasureEvents.Values()

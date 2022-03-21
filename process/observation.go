@@ -2,7 +2,9 @@
 
 package process
 
-import "github.com/zosmac/gomon/message"
+import (
+	"github.com/zosmac/gomon/message"
+)
 
 func init() {
 	message.Document(&observation{})
@@ -40,7 +42,7 @@ type (
 	}
 )
 
-// String returns the source value of the message as a string.
+// String returns the event value of the message as a string.
 func (ev processEvent) String() string {
 	return string(ev)
 }
@@ -48,11 +50,6 @@ func (ev processEvent) String() string {
 // ValidValues returns the valid event values for the message.
 func (processEvent) ValidValues() message.ValidValues {
 	return processEvents
-}
-
-// Sources returns the list of acceptable Source values for this message.
-func (*observation) Sources() []string {
-	return processSources.Values()
 }
 
 // Events returns the list of acceptable Event values for this message.

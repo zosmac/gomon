@@ -1,6 +1,6 @@
 // Copyright © 2021 The Gomon Project.
 
-package log
+package logs
 
 /*
 #include <libproc.h>
@@ -10,7 +10,6 @@ import "C"
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -23,16 +22,16 @@ import (
 )
 
 const (
-	// log record regular expressions named capture groups.
-	groupTimestamp captureGroup = "timestamp"
-	groupLevel     captureGroup = "level"
-	groupHost      captureGroup = "host"
-	groupProcess   captureGroup = "process"
-	groupPid       captureGroup = "pid"
-	groupThread    captureGroup = "thread"
-	groupSender    captureGroup = "sender"
-	groupSubCat    captureGroup = "subcat"
-	groupMessage   captureGroup = "message"
+	// log record regular expressions capture group names.
+	groupTimestamp = "timestamp"
+	groupLevel     = "level"
+	groupHost      = "host"
+	groupProcess   = "process"
+	groupPid       = "pid"
+	groupThread    = "thread"
+	groupSender    = "sender"
+	groupSubCat    = "subcat"
+	groupMessage   = "message"
 )
 
 var (
@@ -55,6 +54,31 @@ var (
 		levelError: "3", // Error, Critical
 		levelFatal: "1", // Alert, Emergency
 	}
+
+	// logRegex for parsing output from the syslog -w -T utc.3 command.
+	logRegex = regexp.MustCompile(
+		`^(?P<timestamp>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d[+-]\d\d\d\d) ` +
+			`(?P<thread>[^ ]+)[ ]+` +
+			`(?P<level>[^ ]+)[ ]+` +
+			`(?P<activity>[^ ]+)[ ]+` +
+			`(?P<pid>\d+)[ ]+` +
+			`(?P<ttl>\d+)[ ]+` +
+			`(?P<process>[^:]+): ` +
+			`\((?P<sender>[^\)]+)\) ` +
+			`(?:\[(?P<subcat>[^\]]+)\] |)` +
+			`(?P<message>.*)$`,
+	)
+
+	// syslogRegex for parsing output from the syslog -w -T utc.3 command.
+	syslogRegex = regexp.MustCompile(
+		`^(?P<timestamp>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\dZ) ` +
+			`(?P<host>[^ ]+) ` +
+			`(?P<process>[^\[]+)\[` +
+			`(?P<pid>\d+)\] ` +
+			`(?:\((?P<sender>(?:\[[\d]+\]|)[^\)]+|)\) |)` +
+			`<(?P<level>[A-Z][a-z]*)>: ` +
+			`(?P<message>.*)$`,
+	)
 )
 
 // open obtains a watch handle for observer.
@@ -70,74 +94,40 @@ func observe() {
 
 // logCommand starts the log command to capture OSLog entries (using OSLogStore API directly is MUCH slower)
 func logCommand() {
-	// regex for parsing log entries from macOS log command
-	regex := regexp.MustCompile(
-		`^(?P<timestamp>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d[+-]\d\d\d\d) ` +
-			`(?P<thread>[^ ]+)[ ]+` +
-			`(?P<level>[^ ]+)[ ]+` +
-			`(?P<activity>[^ ]+)[ ]+` +
-			`(?P<pid>\d+)[ ]+` +
-			`(?P<ttl>\d+)[ ]+` +
-			`(?P<process>[^:]+): ` +
-			`\((?P<sender>[^\)]+)\) ` +
-			`(?:\[(?P<subcat>[^\]]+)\] |)` +
-			`(?P<message>.*)$`)
-
-	// groups maps names of capture groups to indices
-	groups := func() map[captureGroup]int {
-		g := map[captureGroup]int{}
-		for _, name := range regex.SubexpNames() {
-			g[captureGroup(name)] = regex.SubexpIndex(name)
-		}
-		return g
-	}()
-
 	predicate := fmt.Sprintf(
 		"(eventType == 'logEvent') AND (messageType >= %d) AND (NOT eventMessage BEGINSWITH[cd] '%s')",
 		osLogLevels[flags.logLevel],
 		"System Policy: gomon",
 	)
 
-	stdout, err := startCommand(append(strings.Fields("log stream --predicate"), predicate))
+	sc, err := startCommand(append(strings.Fields("log stream --predicate"), predicate))
 	if err != nil {
 		core.LogError(err)
 		return
 	}
 
-	go parseLog(stdout, regex, groups, "2006-01-02 15:04:05Z0700", sourceOSLog)
+	sc.Scan() // ignore first output line from log command
+	sc.Text() //  (it just echoes the filter)
+	sc.Scan() // ignore second output line
+	sc.Text() //  (it is column headers)
+
+	go parseLog(sc, logRegex, "2006-01-02 15:04:05Z0700")
 }
 
 // syslogCommand starts the syslog command to capture syslog entries
 func syslogCommand() {
-	// regex for parsing output from the syslog -w -T utc.3 command
-	regex := regexp.MustCompile(
-		`^(?P<timestamp>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\dZ) ` +
-			`(?P<host>[^ ]+) ` +
-			`(?P<process>[^\[]+)\[` +
-			`(?P<pid>\d+)\] ` +
-			`(?:\((?P<sender>(?:\[[\d]+\]|)[^\)]+|)\) |)` +
-			`<(?P<level>[A-Z][a-z]*)>: ` +
-			`(?P<message>.*)$`)
-
-	// groups maps names of capture groups to indices
-	groups := func() map[captureGroup]int {
-		g := map[captureGroup]int{}
-		for _, name := range regex.SubexpNames() {
-			g[captureGroup(name)] = regex.SubexpIndex(name)
-		}
-		return g
-	}()
-
-	stdout, err := startCommand(append(strings.Fields("syslog -w 0 -T utc.3 -k Level Nle"), syslogLevels[flags.logLevel]))
+	sc, err := startCommand(append(strings.Fields("syslog -w 0 -T utc.3 -k Level Nle"),
+		syslogLevels[flags.logLevel]),
+	)
 	if err != nil {
 		core.LogError(err)
 		return
 	}
 
-	go parseLog(stdout, regex, groups, "2006-01-02 15:04:05Z", sourceSyslog)
+	go parseLog(sc, syslogRegex, "2006-01-02 15:04:05Z")
 }
 
-func startCommand(cmdline []string) (io.ReadCloser, error) {
+func startCommand(cmdline []string) (*bufio.Scanner, error) {
 	cmd := exec.Command(cmdline[0], cmdline[1:]...)
 
 	// ensure that no open descriptors propagate to child
@@ -167,17 +157,17 @@ func startCommand(cmdline []string) (io.ReadCloser, error) {
 
 	core.LogInfo(fmt.Errorf("start [%d] %q", cmd.Process.Pid, cmd.String()))
 
-	return stdout, nil
+	return bufio.NewScanner(stdout), nil
 }
 
-func parseLog(stdout io.ReadCloser, regex *regexp.Regexp, groups map[captureGroup]int, format string, source logSource) {
-	sc := bufio.NewScanner(stdout)
-	if source == sourceOSLog {
-		sc.Scan() // ignore first output line from log command
-		sc.Text() //  (it just echoes the filter)
-		sc.Scan() // ignore second output line
-		sc.Text() //  (it is column headers)
-	}
+func parseLog(sc *bufio.Scanner, regex *regexp.Regexp, format string) {
+	groups := func() map[string]int {
+		g := map[string]int{}
+		for _, name := range regex.SubexpNames() {
+			g[name] = regex.SubexpIndex(name)
+		}
+		return g
+	}()
 
 	for sc.Scan() {
 		match := regex.FindStringSubmatch(sc.Text())
@@ -194,7 +184,7 @@ func parseLog(stdout io.ReadCloser, regex *regexp.Regexp, groups map[captureGrou
 		}
 
 		messageChan <- &observation{
-			Header: message.Observation(t, source, levelMap[strings.ToLower(match[groups[groupLevel]])]),
+			Header: message.Observation(t, levelMap[strings.ToLower(match[groups[groupLevel]])]),
 			Id: Id{
 				Name:   match[groups[groupProcess]],
 				Pid:    pid,

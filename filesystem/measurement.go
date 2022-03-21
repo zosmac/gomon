@@ -10,22 +10,7 @@ func init() {
 	message.Document(&measurement{})
 }
 
-const (
-	// measurement sources.
-	sourceFilesystem filesystemSource = "filesystem"
-)
-
-var (
-	// filesystemSources valid source values for messages.
-	filesystemSources = message.ValidValues{
-		sourceFilesystem,
-	}
-)
-
 type (
-	// filesystemSource type.
-	filesystemSource string
-
 	// Id identifies the message.
 	Id struct {
 		Mount string `json:"mount" gomon:"property"`
@@ -58,21 +43,6 @@ type (
 		Metrics        `gomon:""`
 	}
 )
-
-// String returns the source value of the message as a string.
-func (so filesystemSource) String() string {
-	return string(so)
-}
-
-// ValidValues returns the valid source values for the message.
-func (filesystemSource) ValidValues() message.ValidValues {
-	return filesystemSources
-}
-
-// Sources returns the list of acceptable Source values for this message.
-func (*measurement) Sources() []string {
-	return filesystemSources.Values()
-}
 
 // Events returns the list of acceptable Event values for this message.
 func (*measurement) Events() []string {

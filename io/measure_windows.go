@@ -209,7 +209,7 @@ func Measure() (ms []message.Content) {
 		}
 
 		ms = append(ms, &measurement{
-			Header: message.Measurement(sourceIO),
+			Header: message.Measurement(),
 			Id: Id{
 				Device: windows.UTF16ToString(target[:l]),
 			},

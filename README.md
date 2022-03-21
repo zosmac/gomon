@@ -164,8 +164,8 @@ If *[Graphviz](https://graphviz.gitlab.io)* is installed, *Gomon* can render a v
 [<img src="assets/graphviz-process-nodegraph.png">](http://localhost:1234/gomon)
 To download and install *[Graphviz](https://graphviz.org/download/source/)*, select a stable release, download its tar file, and build and install it.
 ```zsh
-tar xzvf =(curl -L "https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/2.49.3/graphviz-2.49.3.tar.gz")
-cd graphviz-2.49.3
+tar xzvf =(curl -L "https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/3.0.0/graphviz-3.0.0.tar.gz")
+cd graphviz-3.0.0
 ./configure
 make
 sudo make install

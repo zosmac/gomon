@@ -14,7 +14,7 @@ import (
 	"github.com/zosmac/gomon/file"
 	"github.com/zosmac/gomon/filesystem"
 	"github.com/zosmac/gomon/io"
-	"github.com/zosmac/gomon/log"
+	"github.com/zosmac/gomon/logs"
 	"github.com/zosmac/gomon/message"
 	"github.com/zosmac/gomon/network"
 	"github.com/zosmac/gomon/process"
@@ -44,7 +44,7 @@ func Main() {
 		return
 	}
 
-	if err := log.Observer(); err != nil {
+	if err := logs.Observer(); err != nil {
 		core.LogError(err)
 		return
 	}

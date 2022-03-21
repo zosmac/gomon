@@ -12,22 +12,7 @@ func init() {
 	message.Document(&measurement{})
 }
 
-const (
-	// measurement sources.
-	sourceIO ioSource = "i/o"
-)
-
-var (
-	// ioSources valid source values for messages.
-	ioSources = message.ValidValues{
-		sourceIO,
-	}
-)
-
 type (
-	// ioSource type.
-	ioSource string
-
 	// Id identifies the message.
 	Id struct {
 		Device string `json:"device" gomon:"property"`
@@ -63,21 +48,6 @@ type (
 		Metrics        `gomon:""`
 	}
 )
-
-// String returns the source value of the message.
-func (so ioSource) String() string {
-	return string(so)
-}
-
-// ValidValues returns the valid source values for the message.
-func (ioSource) ValidValues() message.ValidValues {
-	return ioSources
-}
-
-// Sources returns the list of acceptable Source values for this message.
-func (*measurement) Sources() []string {
-	return ioSources.Values()
-}
 
 // Events returns the list of acceptable Event values for this message.
 func (*measurement) Events() []string {

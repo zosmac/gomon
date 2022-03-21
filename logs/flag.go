@@ -1,6 +1,6 @@
 // Copyright © 2021 The Gomon Project.
 
-package log
+package logs
 
 import (
 	"errors"

@@ -1,6 +1,6 @@
 // Copyright © 2021 The Gomon Project.
 
-package log
+package logs
 
 import (
 	"fmt"
@@ -27,31 +27,33 @@ var (
 	watched = map[int]map[int]*os.File{}
 	wLock   sync.Mutex
 
-	// regex for parsing log records
+	// regex for parsing log records.
 	regex = regexp.MustCompile(
 		`(?m:^ ?\[? ?(?P<timestamp>(?:\d{4}[\/-]\d\d[\/-]\d\d[ T]\d\d:\d\d:\d\d)(?:\.(?:\d\d\d\d\d\d|\d\d\d)|))` +
 			`(?:(?P<utc>Z)| ?(?P<tzoffset>[+-]\d\d:?\d\d)|)(?:(?P<timezone> [A-Z]{3})|)` +
 			`(?:(?: \[|: pid )(?P<pid>\d+)\]?|)` +
 			`(?: \[?(?P<level>err|log|[A-Za-z]{4,5}[1-9]?)\]?|)?[ :\]]+` +
 			`(?P<message>.*)$|\z)`)
-	groups = func() map[captureGroup]int {
-		g := map[captureGroup]int{}
+
+	// groups maps capture group names to indices.
+	groups = func() map[string]int {
+		g := map[string]int{}
 		for _, name := range regex.SubexpNames() {
-			g[captureGroup(name)] = regex.SubexpIndex(name)
+			g[string(name)] = regex.SubexpIndex(name)
 		}
 		return g
 	}()
 )
 
 const (
-	// log record regular expressions named capture groups
-	groupTimestamp captureGroup = "timestamp"
-	groupUtc       captureGroup = "utc"
-	groupTzoffset  captureGroup = "tzoffset"
-	groupTimezone  captureGroup = "timezone"
-	groupLevel     captureGroup = "level"
-	groupPid       captureGroup = "pid"
-	groupMessage   captureGroup = "message"
+	// log record regular expressions capture group names.
+	groupTimestamp = "timestamp"
+	groupUtc       = "utc"
+	groupTzoffset  = "tzoffset"
+	groupTimezone  = "timezone"
+	groupLevel     = "level"
+	groupPid       = "pid"
+	groupMessage   = "message"
 )
 
 // open obtains a watch handle for observer
@@ -176,7 +178,7 @@ func report(ready map[int]*os.File) {
 
 				pid, _ := strconv.Atoi(match[groups[groupPid]])
 				messageChan <- &observation{
-					Header: message.Observation(timestamp, logSource(l.Name()), level),
+					Header: message.Observation(timestamp, level),
 					Id: Id{
 						Pid: pid,
 					},

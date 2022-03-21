@@ -103,7 +103,7 @@ func notify(ev fileEvent, f file, oldname string) {
 		msg = f.name
 	}
 	messageChan <- &observation{
-		Header: message.Observation(time.Now(), sourceFile, ev),
+		Header: message.Observation(time.Now(), ev),
 		Id: Id{
 			Name: f.name,
 		},

@@ -13,22 +13,7 @@ func init() {
 	message.Document(&measurement{})
 }
 
-const (
-	// measurement sources.
-	sourceSystem systemSource = "system"
-)
-
-var (
-	// filesystemSources valid source values for messages.
-	systemSources = message.ValidValues{
-		sourceSystem,
-	}
-)
-
 type (
-	// systemSource type.
-	systemSource string
-
 	// Id identifies the message.
 	Id struct {
 	}
@@ -97,21 +82,6 @@ type (
 		Metrics        `gomon:""`
 	}
 )
-
-// String returns the source value of the message as a string.
-func (so systemSource) String() string {
-	return string(so)
-}
-
-// ValidValues returns the valid source values for the message.
-func (systemSource) ValidValues() message.ValidValues {
-	return systemSources
-}
-
-// Sources returns the list of acceptable Source valuses for this message.
-func (*measurement) Sources() []string {
-	return systemSources.Values()
-}
 
 // Events returns the list of acceptable Event values for this message.
 func (m *measurement) Events() []string {

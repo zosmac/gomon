@@ -1,6 +1,6 @@
 // Copyright © 2021 The Gomon Project.
 
-package log
+package logs
 
 import (
 	"strconv"
@@ -13,11 +13,6 @@ func init() {
 }
 
 const (
-	// message sources.
-	sourceLog    logSource = "log"
-	sourceOSLog  logSource = "oslog"
-	sourceSyslog logSource = "syslog"
-
 	// message events.
 	levelFatal logLevel = "fatal"
 	levelError logLevel = "error"
@@ -28,13 +23,6 @@ const (
 )
 
 var (
-	// logSources valid source values for messages.
-	logSources = message.ValidValues{
-		sourceLog,
-		sourceOSLog,
-		sourceSyslog,
-	}
-
 	// logLevels valid event values for messages, in severity order.
 	logLevels = message.ValidValues{
 		levelTrace,
@@ -47,9 +35,6 @@ var (
 )
 
 type (
-	// logSource type.
-	logSource string
-
 	// logLevel type.
 	logLevel string
 
@@ -68,17 +53,7 @@ type (
 	}
 )
 
-// String returns the source value of the message as a string.
-func (so logSource) String() string {
-	return string(so)
-}
-
-// ValidValues returns the valid source values for the message.
-func (logSource) ValidValues() message.ValidValues {
-	return logSources
-}
-
-// String returns the source value of the message as a string.
+// String returns the event value of the message as a string.
 // This method is already defined in flag.go.
 // func (ev logLevel) String() string {
 // 	return string(ev)
@@ -87,11 +62,6 @@ func (logSource) ValidValues() message.ValidValues {
 // ValidValues returns the valid event values for the message.
 func (logLevel) ValidValues() message.ValidValues {
 	return logLevels
-}
-
-// Sources returns the list of acceptable Source values for this message.
-func (*observation) Sources() []string {
-	return logSources.Values()
 }
 
 // Events returns the list of acceptable Event values for this message.

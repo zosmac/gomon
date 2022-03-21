@@ -11,7 +11,6 @@ import "C"
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -175,7 +174,7 @@ func flatTree(t processTree, indent int) []Pid {
 		}
 		p := pid.String()
 		pre := "      "[:6-len(p)] + "\033[36;40m" + p
-		fmt.Fprintf(os.Stderr, "%*s%s\033[m  %s\033[34m%s\033[35m%s\033[m\n", indent, "", pre, cmd, args, envs)
+		fmt.Printf("%*s%s\033[m  %s\033[34m%s\033[35m%s\033[m\n", indent, "", pre, cmd, args, envs)
 		flat = append(flat, flatTree(t[pid], indent+3)...)
 	}
 

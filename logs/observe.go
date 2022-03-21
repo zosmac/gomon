@@ -1,6 +1,6 @@
 // Copyright © 2021 The Gomon Project.
 
-package log
+package logs
 
 import (
 	"github.com/zosmac/gomon/core"
@@ -52,11 +52,6 @@ var (
 		"trace7":     levelTrace, // Apache
 		"trace8":     levelTrace, // Apache
 	}
-)
-
-type (
-	// captureGroup is the name of a reqular expression capture group.
-	captureGroup string
 )
 
 // Observer starts capture of log entries.

@@ -79,11 +79,6 @@ type (
 	}
 )
 
-// Sources returns the list of acceptable Source values for this message.
-func (*tsMeasurement) Sources() []string {
-	return processSources.Values()
-}
-
 // Events returns the list of acceptable Event values for this message.
 func (*tsMeasurement) Events() []string {
 	return []string{"taskstats"}

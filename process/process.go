@@ -5,8 +5,6 @@ package process
 import (
 	"strconv"
 	"time"
-
-	"github.com/zosmac/gomon/message"
 )
 
 // Pid is the identifier for a process.
@@ -16,22 +14,7 @@ func (pid Pid) String() string {
 	return strconv.Itoa(int(pid))
 }
 
-const (
-	// message sources.
-	sourceProcess processSource = "process"
-)
-
-var (
-	// processSources valid source values for messages.
-	processSources = message.ValidValues{
-		sourceProcess,
-	}
-)
-
 type (
-	//processSource type.
-	processSource string
-
 	// Id identifies the message.
 	Id struct {
 		ppid      Pid       // for observer
