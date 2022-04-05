@@ -4,8 +4,6 @@ package process
 
 import (
 	"fmt"
-	"math"
-	"net"
 	"runtime"
 
 	"github.com/zosmac/gomon/core"
@@ -45,9 +43,8 @@ func Connections(pt Table) {
 				continue // listener
 			}
 
-			if conn.Self.Name == "" { // data connection
-				p.Connections[i].Peer.Pid = hdpid + math.MaxInt32
-				continue
+			if conn.Self.Name == "" {
+				continue // data connection
 			}
 
 			rpid, ok := epm[[3]string{conn.Type, conn.Peer.Name, conn.Self.Name}]
@@ -63,8 +60,6 @@ func Connections(pt Table) {
 			}
 			if ok {
 				p.Connections[i].Peer.Pid = rpid // intra-process connection
-			} else if _, _, err := net.SplitHostPort(conn.Peer.Name); err == nil {
-				p.Connections[i].Peer.Pid = -hdpid // remote host connection
 			}
 		}
 		if p.Ppid > 0 {

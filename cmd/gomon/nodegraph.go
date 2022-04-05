@@ -14,7 +14,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -48,7 +47,7 @@ type (
 
 	// query from http request.
 	query struct {
-		Pid
+		pid Pid
 	}
 )
 
@@ -66,14 +65,14 @@ func NodeGraph(req *http.Request) []byte {
 	var (
 		clusterEdges string
 		hosts        string
-		hostNode     string
+		hostNode     Pid
 		hostEdges    string
 		processes    []string
-		processNodes []string
+		processNodes []Pid
 		processEdges []string
-		files        string
-		fileNode     string
-		fileEdges    string
+		datas        string
+		dataNode     Pid
+		dataEdges    string
 		include      = map[Pid]struct{}{} // record which processes have a connection to include in report
 	)
 
@@ -83,11 +82,11 @@ func NodeGraph(req *http.Request) []byte {
 	pt := process.BuildTable()
 	process.Connections(pt)
 
-	if query.Pid > 0 && pt[query.Pid] == nil {
-		query.Pid = 0 // reset to default
+	if query.pid > 0 && pt[query.pid] == nil {
+		query.pid = 0 // reset to default
 	}
-	if query.Pid > 0 { // build this process' "extended family"
-		ft = family(pt, query.Pid)
+	if query.pid > 0 { // build this process' "extended family"
+		ft = family(pt, query.pid)
 	} else { // only consider non-daemon and remote host connected processes
 		for pid, p := range pt {
 			if p.Ppid > 1 {
@@ -103,28 +102,14 @@ func NodeGraph(req *http.Request) []byte {
 		}
 	}
 
-	pids := make([]Pid, len(ft))
-	i := 0
-	for pid := range ft {
-		pids[i] = pid
-		i++
-	}
-	sort.Slice(pids, func(i, j int) bool {
-		return pids[i] < pids[j]
-	})
-	fs := make([]*process.Process, len(ft))
-	for i, pid := range pids {
-		fs[i] = ft[pid]
-	}
-
 	em := map[string]struct{}{}
 
-	for _, p := range fs {
+	for _, p := range ft {
 		for _, conn := range p.Connections {
 			if conn.Self.Pid == 0 || conn.Peer.Pid == 0 || // ignore kernel process
 				conn.Self.Pid == 1 || conn.Peer.Pid == 1 || // ignore launchd processes
 				conn.Self.Pid == conn.Peer.Pid || // ignore inter-process connections
-				query.Pid == 0 && conn.Peer.Pid > math.MaxInt32 { // ignore data connections for the "all process" query
+				query.pid == 0 && conn.Peer.Pid >= math.MaxInt32 { // ignore data connections for the "all process" query
 				continue
 			}
 
@@ -154,26 +139,26 @@ func NodeGraph(req *http.Request) []byte {
 				}
 
 				hosts += fmt.Sprintf(`
-    %q [color=%s width=1.5 height=0.5 shape=cds label="%s:%s\n%s"]`,
-					peer,
-					color,
+    %d [label="%s:%s\n%s" color=%s shape=cds height=0.5]`,
+					conn.Peer.Pid,
 					conn.Type,
 					port,
 					hostname(host),
+					color,
 				)
-				if hostNode == "" {
-					hostNode = peer
+				if hostNode == 0 {
+					hostNode = conn.Peer.Pid
 				}
 
 				hostEdges += fmt.Sprintf(`
-  %q -> %d [dir=%s  tooltip="%s\n%s"]`,
-					peer,
+  %d -> %d [tooltip="%s\n%s" dir=%s]`,
+					conn.Peer.Pid,
 					conn.Self.Pid,
-					dir,
 					peer+"->"+conn.Self.Name,
 					longname(pt, conn.Self.Pid),
+					dir,
 				)
-			} else if conn.Peer.Pid > math.MaxInt32 { // peer is data
+			} else if conn.Peer.Pid >= math.MaxInt32 { // peer is data
 				peer := conn.Type + ":" + conn.Peer.Name
 
 				var color string
@@ -186,33 +171,35 @@ func NodeGraph(req *http.Request) []byte {
 					color = "#99BBBB"
 				}
 
-				files += fmt.Sprintf(`
-    %q [color=%q shape=note]`,
+				datas += fmt.Sprintf(`
+    %d [label=%q color=%q shape=note]`,
+					conn.Peer.Pid,
 					peer,
 					color,
 				)
-				if fileNode == "" {
-					fileNode = peer
+				if dataNode == 0 {
+					dataNode = conn.Peer.Pid
 				}
 
-				fileEdges += fmt.Sprintf(`
-  %d -> %q [minlen=4 color=%q dir=%s tooltip="%s\n%[2]s"]`,
+				dataEdges += fmt.Sprintf(`
+  %d -> %d [tooltip="%s\n%s" dir=%s color=%q]`,
 					conn.Self.Pid,
-					peer,
-					color,
-					dir,
+					conn.Peer.Pid,
 					longname(pt, conn.Self.Pid),
+					peer,
+					dir,
+					color,
 				)
 			} else { // peer is process
 				include[conn.Peer.Pid] = struct{}{}
 
 				depth := len(pt[conn.Self.Pid].Ancestors)
 				for i := len(processNodes); i <= depth; i++ {
-					processNodes = append(processNodes, "")
+					processNodes = append(processNodes, 0)
 					processEdges = append(processEdges, "")
 				}
-				if processNodes[depth] == "" {
-					processNodes[depth] = conn.Self.Pid.String()
+				if processNodes[depth] == 0 {
+					processNodes[depth] = conn.Self.Pid
 				}
 
 				color := color(conn.Self.Pid)
@@ -221,24 +208,23 @@ func NodeGraph(req *http.Request) []byte {
 				}
 
 				// show bidirectional connection only once
-				key := fmt.Sprintf("%s->%s", conn.Self.Name, conn.Peer.Name)
-				yek := fmt.Sprintf("%s->%s", conn.Peer.Name, conn.Self.Name)
+				id := fmt.Sprintf("%d->%d", conn.Self.Pid, conn.Peer.Pid)
+				di := fmt.Sprintf("%d->%d", conn.Peer.Pid, conn.Self.Pid)
 
-				_, ok := em[key]
+				_, ok := em[id]
 				if !ok {
-					_, ok = em[yek]
+					_, ok = em[di]
 				}
 				if !ok {
-
 					processEdges[depth] += fmt.Sprintf(`
-  %d -> %d [color=%q dir=%s tooltip="%s\n%s\n%s"]`,
+  %d -> %d [tooltip="%s\n%s\n%s" dir=%s color=%q]`,
 						conn.Self.Pid,
 						conn.Peer.Pid,
-						color,
-						dir,
 						conn.Type+":"+conn.Self.Name+"->"+conn.Peer.Name,
 						shortname(pt, conn.Self.Pid),
 						shortname(pt, conn.Peer.Pid),
+						dir,
+						color,
 					)
 				}
 			}
@@ -258,11 +244,11 @@ func NodeGraph(req *http.Request) []byte {
 		}
 
 		node := fmt.Sprintf(`
-      %d [color=%q label=%q tooltip=%q URL="http://localhost:%d/gomon?pid=%[1]d"]`,
+      %d [label="%s\n%[1]d" tooltip=%[3]q color=%q URL="http://localhost:%d/gomon?pid=%[1]d" shape=rect style=rounded]`,
 			pid,
-			color(pid),
-			shortname(pt, pid),
+			filepath.Base(pt[pid].Executable),
 			longname(pt, pid),
+			color(pid),
 			core.Flags.Port,
 		)
 		processes[len(p.Ancestors)] += node
@@ -273,35 +259,35 @@ func NodeGraph(req *http.Request) []byte {
 	}
 
 	if len(processNodes) > 0 {
-		if hostNode != "" {
+		if hostNode != 0 {
 			clusterEdges += fmt.Sprintf(`
-  %q -> %s [style=invis ltail="cluster_hosts" lhead="cluster_processes_1"]`,
+  %d -> %d [style=invis ltail="cluster_hosts" lhead="cluster_processes_1"]`,
 				hostNode,
 				processNodes[0],
 			)
 		}
 		for i := range processNodes[:len(processNodes)-1] {
 			clusterEdges += fmt.Sprintf(`
-  %s -> %s [style=invis ltail="cluster_processes_%d" lhead="cluster_processes_%d"]`,
+  %d -> %d [style=invis ltail="cluster_processes_%d" lhead="cluster_processes_%d"]`,
 				processNodes[i],
 				processNodes[i+1],
 				i+1,
 				i+2,
 			)
 		}
-		if fileNode != "" {
+		if dataNode != 0 {
 			clusterEdges += fmt.Sprintf(`
-  %s -> %q [style=invis ltail="cluster_processes_%d" lhead="cluster_files"]`,
+  %d -> %d [style=invis ltail="cluster_processes_%d" lhead="cluster_files"]`,
 				processNodes[len(processNodes)-1],
-				fileNode,
+				dataNode,
 				len(processNodes),
 			)
 		}
 	}
 
 	var label string
-	if query.Pid > 0 {
-		label = fmt.Sprintf("Inter-Process Connections for Process %s on ", shortname(pt, query.Pid))
+	if query.pid > 0 {
+		label = fmt.Sprintf("Inter-Process Connections for Process %s on ", shortname(pt, query.pid))
 	} else {
 		label = "Remote Hosts and Inter-Process Connections for "
 	}
@@ -319,8 +305,8 @@ func NodeGraph(req *http.Request) []byte {
   remincross=false
   ordering=out
   nodesep=0.05
-  ranksep=2.0
-  node [shape=rect fontname=helvetica fontsize=7 width=1 height=0.1 style=rounded]
+  ranksep="2.0"
+  node [fontname=helvetica fontsize=7 height=0.2 width=1.5]
   edge [arrowsize=0.5]
   subgraph cluster_hosts {
     label="External Connections" rank=same fontsize=11 penwidth=3.0 pencolor="#BB5599"` +
@@ -331,13 +317,13 @@ func NodeGraph(req *http.Request) []byte {
 		strings.Join(processes, "") + `
   }
   subgraph cluster_files {
-    label="Open Files" rank=max fontsize=11 penwidth=3 pencolor="#99BB55"` +
-		files + `
+    label="Open Files" rank=max fontsize=11 penwidth=3.0 pencolor="#99BB55"` +
+		datas + `
   }` +
 		clusterEdges +
 		hostEdges +
 		strings.Join(processEdges, "") +
-		fileEdges + `
+		dataEdges + `
 }`)
 }
 
@@ -372,7 +358,7 @@ func parseQuery(r *http.Request) (query, error) {
 		pid, _ = strconv.Atoi(v[0])
 	}
 	return query{
-		Pid: Pid(pid),
+		pid: Pid(pid),
 	}, nil
 }
 

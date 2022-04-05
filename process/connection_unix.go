@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"os"
 	"regexp"
@@ -70,6 +71,10 @@ var (
 		}
 		return zm
 	}()
+
+	hostPid Pid = -1
+	dataPid Pid = math.MaxInt32
+	nodes       = map[string]Pid{}
 )
 
 const (
@@ -202,12 +207,27 @@ func parseLsof(stdout io.ReadCloser) {
 		}
 
 		if peer != os.DevNull {
+			var peerPid Pid
+			var ok bool
+			if self == "" {
+				if peerPid, ok = nodes[peer]; !ok {
+					peerPid = dataPid
+					nodes[peer] = dataPid
+					dataPid += 1
+				}
+			} else if _, _, err := net.SplitHostPort(peer); err == nil {
+				if peerPid, ok = nodes[peer]; !ok {
+					peerPid = hostPid
+					nodes[peer] = hostPid
+					hostPid -= 1
+				}
+			}
 			epm[Pid(pid)] = append(epm[Pid(pid)],
 				Connection{
 					Type:      fdType,
 					Direction: accmode(mode),
 					Self:      Endpoint{Name: self, Pid: Pid(pid)},
-					Peer:      Endpoint{Name: peer},
+					Peer:      Endpoint{Name: peer, Pid: peerPid},
 				},
 			)
 		}
