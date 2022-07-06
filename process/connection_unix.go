@@ -1,7 +1,6 @@
 // Copyright © 2021 The Gomon Project.
 
 //go:build !windows
-// +build !windows
 
 package process
 

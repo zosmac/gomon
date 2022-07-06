@@ -4,9 +4,9 @@ go 1.18
 
 require (
 	github.com/StackExchange/wmi v1.2.1
-	github.com/prometheus/client_golang v1.12.1
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
-	golang.org/x/sys v0.0.0-20220315194320-039c03cc5b86
+	github.com/prometheus/client_golang v1.12.2
+	golang.org/x/net v0.0.0-20220706163947-c90051bbdb60
+	golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e
 	gopkg.in/yaml.v2 v2.4.0
 )
 
