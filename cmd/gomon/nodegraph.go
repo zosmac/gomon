@@ -246,7 +246,7 @@ func NodeGraph(req *http.Request) []byte {
 		node := fmt.Sprintf(`
       %d [label="%s\n%[1]d" tooltip=%[3]q color=%q URL="http://localhost:%d/gomon?pid=%[1]d" shape=rect style=rounded]`,
 			pid,
-			filepath.Base(pt[pid].Executable),
+			pt[pid].Id.Name,
 			longname(pt, pid),
 			color(pid),
 			core.Flags.Port,
@@ -368,7 +368,8 @@ func family(pt process.Table, pid Pid) process.Table {
 	for pid := pt[pid].Ppid; pid > 1; pid = pt[pid].Ppid { // ancestors
 		ft[pid] = pt[pid]
 	}
-	pids := process.FlatTree(process.FindTree(process.BuildTree(pt), pid), 0) // descendants
+
+	pids := process.FlatTree(process.FindTree(process.BuildTree(pt), pid)) // descendants
 	for _, pid := range pids {
 		ft[pid] = pt[pid]
 	}

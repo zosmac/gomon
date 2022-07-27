@@ -156,7 +156,7 @@ func (pid Pid) commandLine() CommandLine {
 
 	cl.Executable, _ = os.Readlink(filepath.Join("/proc", pid.String(), "exe"))
 
-	if arg, err := os.ReadFile(filepath.Join("/proc", pid.String(), "cmdline")); err == nil {
+	if arg, err := os.ReadFile(filepath.Join("/proc", pid.String(), "cmdline")); err == nil && len(arg) > 2 {
 		cl.Args = strings.Split(string(arg[:len(arg)-2]), "\000")
 		cl.Args = cl.Args[1:]
 	}
@@ -192,7 +192,7 @@ func getPids() ([]Pid, error) {
 		return nil, core.Error("/proc", err)
 	}
 
-	pids := make([]Pid, 0, len(ns))
+	pids := make([]Pid, len(ns))
 	i := 0
 	for _, n := range ns {
 		if pid, err := strconv.Atoi(n); err == nil {
@@ -201,5 +201,5 @@ func getPids() ([]Pid, error) {
 		}
 	}
 
-	return pids, nil
+	return pids[:i], nil
 }

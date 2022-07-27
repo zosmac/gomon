@@ -11,6 +11,7 @@ import "C"
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -34,13 +35,13 @@ type (
 	}
 
 	// processTable defines a process table as a map of pids to processes.
-	processTable map[Pid]*measurement
+	processTable map[Pid]*process
 
 	// processTree organizes the process into a hierarchy
 	processTree map[Pid]processTree
 
-	// measurement for the message.
-	measurement struct {
+	// process info.
+	process struct {
 		ancestors []Pid
 		Pid
 		Ppid Pid
@@ -53,7 +54,13 @@ func (pid Pid) String() string {
 }
 
 func main() {
-	flatTree(buildTree(buildTable()), 0)
+	pid := 1
+	if len(os.Args) > 1 {
+		pid, _ = strconv.Atoi(os.Args[1])
+	}
+	pids := flatTree(findTree(buildTree(buildTable()), Pid(pid)))
+
+	fmt.Fprintf(os.Stderr, "%v\n", pids)
 }
 
 // getPids gets the list of active processes by pid.
@@ -87,7 +94,7 @@ func buildTable() processTable {
 		panic(fmt.Errorf("could not build process table %v", err))
 	}
 
-	pt = make(map[Pid]*measurement, len(pids))
+	pt = make(map[Pid]*process, len(pids))
 	for _, pid := range pids {
 
 		var bsi C.struct_proc_bsdshortinfo
@@ -101,7 +108,7 @@ func buildTable() processTable {
 			continue
 		}
 
-		pt[pid] = &measurement{
+		pt[pid] = &process{
 			ancestors:   []Pid{},
 			Pid:         pid,
 			Ppid:        Pid(bsi.pbsi_ppid),
@@ -112,7 +119,7 @@ func buildTable() processTable {
 	for pid, p := range pt {
 		p.ancestors = func() []Pid {
 			var pids []Pid
-			for pid = pt[pid].Ppid; pid > 1; pid = pt[pid].Ppid {
+			for pid := pt[pid].Ppid; pid > 0; pid = pt[pid].Ppid {
 				pids = append([]Pid{pid}, pids...)
 			}
 			return pids
@@ -142,15 +149,19 @@ func addPid(t processTree, ancestors []Pid) {
 	addPid(t[ancestors[0]], ancestors[1:])
 }
 
-func flatTree(t processTree, indent int) []Pid {
-	var flat []Pid
-	tab := fmt.Sprintf("\n\t%*s", indent, "")
+func flatTree(t processTree) []Pid {
+	return flatTreeIndent(t, 0)
+}
 
-	pids := make([]Pid, len(t))
-	var i int
+func flatTreeIndent(t processTree, indent int) []Pid {
+	if len(t) == 0 {
+		return nil
+	}
+	var flat []Pid
+
+	var pids []Pid
 	for pid := range t {
-		pids[i] = pid
-		i++
+		pids = append(pids, pid)
 	}
 
 	sort.Slice(pids, func(i, j int) bool {
@@ -159,28 +170,35 @@ func flatTree(t processTree, indent int) []Pid {
 		return dti > dtj ||
 			dti == dtj && pids[i] < pids[j]
 	})
+	fmt.Fprintf(os.Stderr, "pids: %v\n", pids)
 
 	for _, pid := range pids {
 		flat = append(flat, pid)
-		var cmd, args, envs string
-		if len(pt[pid].Args) > 0 {
-			cmd = pt[pid].Args[0]
-		}
-		if len(pt[pid].Args) > 1 {
-			args = tab + strings.Join(pt[pid].Args[1:], tab)
-		}
-		if len(pt[pid].Envs) > 0 {
-			envs = tab + strings.Join(pt[pid].Envs, tab)
-		}
-		p := pid.String()
-		pre := "      "[:6-len(p)] + "\033[36;40m" + p
-		fmt.Printf("%*s%s\033[m  %s\033[34m%s\033[35m%s\033[m\n", indent, "", pre, cmd, args, envs)
-		flat = append(flat, flatTree(t[pid], indent+3)...)
+		display(pid, indent)
+		flat = append(flat, flatTreeIndent(t[pid], indent+3)...)
 	}
 
 	return flat
 }
 
+func display(pid Pid, indent int) {
+	tab := fmt.Sprintf("\n\t%*s", indent, "")
+	var cmd, args, envs string
+	if len(pt[pid].Args) > 0 {
+		cmd = pt[pid].Args[0]
+	}
+	if len(pt[pid].Args) > 1 {
+		args = tab + strings.Join(pt[pid].Args[1:], tab)
+	}
+	if len(pt[pid].Envs) > 0 {
+		envs = tab + strings.Join(pt[pid].Envs, tab)
+	}
+	p := pid.String()
+	pre := "      "[:6-len(p)] + "\033[36;40m" + p
+	fmt.Printf("%*s%s\033[m  %s\033[34m%s\033[35m%s\033[m\n", indent, "", pre, cmd, args, envs)
+}
+
+// depthTree enables sort of deepest process trees first.
 func depthTree(t processTree) int {
 	depth := 0
 	for _, tree := range t {
@@ -192,12 +210,13 @@ func depthTree(t processTree) int {
 	return depth
 }
 
-func findTree(t processTree, pid Pid) processTree {
-	if t, ok := t[pid]; ok {
-		return t
-	}
-	for _, t := range t {
-		if findTree(t, pid) != nil {
+// findTree finds the process tree parented by a specific process.
+func findTree(t processTree, parent Pid) processTree {
+	for pid, t := range t {
+		if pid == parent {
+			return processTree{parent: t}
+		}
+		if t = findTree(t, parent); t != nil {
 			return t
 		}
 	}

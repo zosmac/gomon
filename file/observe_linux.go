@@ -4,7 +4,6 @@ package file
 
 import (
 	"bufio"
-	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -103,8 +102,8 @@ func observe() {
 
 			var abs string
 			if event.Len > 0 {
-				arr := (*[1024]byte)(unsafe.Add(unsafe.Pointer(event), syscall.SizeofInotifyEvent))
-				abs = string(abs[:bytes.IndexByte(arr[:], 0)])
+				arr := (*[1024]int8)(unsafe.Add(unsafe.Pointer(event), syscall.SizeofInotifyEvent))
+				abs = core.FromCString(arr[:event.Len])
 			}
 
 			// IN_DELETE_SELF evidently not sent to root, therefore test if its parent received IN_DELETE

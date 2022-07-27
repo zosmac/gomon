@@ -25,9 +25,7 @@ func init() {
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		f := strings.Split(sc.Text(), "\t")
-		if f[0] != "nodev" {
-			deviceTypes[f[1]] = struct{}{}
-		}
+		deviceTypes[f[1]] = struct{}{}
 	}
 }
 
@@ -43,9 +41,6 @@ func filesystems() ([]message.Request, error) {
 	sc := bufio.NewScanner(m)
 	for sc.Scan() {
 		f := strings.Fields(sc.Text())
-		if !strings.Contains(f[0], "tmpfs") {
-			continue
-		}
 		if _, ok := deviceTypes[f[2]]; !ok {
 			continue
 		}
@@ -53,6 +48,7 @@ func filesystems() ([]message.Request, error) {
 			func() []message.Content {
 				return []message.Content{
 					&measurement{
+						Header: message.Measurement(),
 						Id: Id{
 							Mount: f[0],
 							Path:  f[1],

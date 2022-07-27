@@ -145,14 +145,19 @@ func addPid(t Tree, ancestors []Pid) {
 	addPid(t[ancestors[0]], ancestors[1:])
 }
 
-func FlatTree(t Tree, indent int) []Pid {
+func FlatTree(t Tree) []Pid {
+	return flatTree(t, 0)
+}
+
+func flatTree(t Tree, indent int) []Pid {
+	if len(t) == 0 {
+		return nil
+	}
 	var flat []Pid
 
-	pids := make([]Pid, len(t))
-	var i int
+	var pids []Pid
 	for pid := range t {
-		pids[i] = pid
-		i++
+		pids = append(pids, pid)
 	}
 
 	sort.Slice(pids, func(i, j int) bool {
@@ -164,17 +169,35 @@ func FlatTree(t Tree, indent int) []Pid {
 
 	for _, pid := range pids {
 		flat = append(flat, pid)
-		// fmt.Fprintf(os.Stderr, "%*s%6d\n", indent, "", pid)
-		flat = append(flat, FlatTree(t[pid], indent+2)...)
+		// display(pid, indent)
+		flat = append(flat, flatTree(t[pid], indent+3)...)
 	}
 
 	return flat
 }
 
+// func display(pid Pid, indent int) {
+// 	tab := fmt.Sprintf("\n\t%*s", indent, "")
+// 	var cmd, args, envs string
+// 	if len(pt[pid].Args) > 0 {
+// 		cmd = pt[pid].Args[0]
+// 	}
+// 	if len(pt[pid].Args) > 1 {
+// 		args = tab + strings.Join(pt[pid].Args[1:], tab)
+// 	}
+// 	if len(pt[pid].Envs) > 0 {
+// 		envs = tab + strings.Join(pt[pid].Envs, tab)
+// 	}
+// 	p := pid.String()
+// 	pre := "      "[:6-len(p)] + "\033[36;40m" + p
+// 	fmt.Printf("%*s%s\033[m  %s\033[34m%s\033[35m%s\033[m\n", indent, "", pre, cmd, args, envs)
+// }
+
+// depthTree enables sort of deepest process trees first.
 func depthTree(t Tree) int {
 	depth := 0
-	for _, tree := range t {
-		dt := depthTree(tree) + 1
+	for _, t := range t {
+		dt := depthTree(t) + 1
 		if depth < dt {
 			depth = dt
 		}
@@ -182,12 +205,13 @@ func depthTree(t Tree) int {
 	return depth
 }
 
-func FindTree(t Tree, pid Pid) Tree {
-	if t, ok := t[pid]; ok {
-		return t
-	}
-	for _, t := range t {
-		if FindTree(t, pid) != nil {
+// FindTree finds the process tree parented by a specific process.
+func FindTree(t Tree, parent Pid) Tree {
+	for pid, t := range t {
+		if pid == parent {
+			return Tree{parent: t}
+		}
+		if t = FindTree(t, parent); t != nil {
 			return t
 		}
 	}

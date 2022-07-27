@@ -21,24 +21,43 @@ import (
 )
 
 var (
-	// lsofRegex for parsing lsof output lines from lsof command.
-	lsofRegex = regexp.MustCompile(
-		`^(?P<command>[^ ]+)[ ]+` +
-			`(?P<pid>\d+)[ ]+` +
-			`(?:\d+)[ ]+` + // USER
-			`(?:(?P<fd>\d+)|fp\.|mem|cwd|rtd)` +
-			`(?P<mode> |[rwu-][rwuNRWU]?)[ ]+` +
-			`(?P<type>(?:[^ ]+|))[ ]+` +
-			`(?P<device>(?:0x[0-9a-f]+|\d+,\d+|kpipe|upipe|))[ ]+` +
-			`(?:[^ ]+|)[ ]+` + // SIZE/OFF
-			`(?P<node>(?:[^ ]+|))`,
+	// headerRegex for parsing lsof header line of lsof command.
+	headerRegex = regexp.MustCompile(
+		`^(?P<command>COMMAND) ` +
+			`(?P<pid>[ ]*PID) ` +
+			`(?P<user>[ ]*USER) ` +
+			`(?P<fd>[ ]*FD)` +
+			`(?P<mode> )` +
+			`(?P<lock> ) ` +
+			`(?P<type>[ ]*TYPE) ` +
+			`(?P<device>[ ]*DEVICE) ` +
+			`(?P<sizeoff>[ ]*SIZE/OFF) ` +
+			`(?P<node>[ ]*NODE) ` +
+			`(?P<name>[ ]*NAME)[ ]*$`,
 	)
 
-	// lsofGroups maps capture group names to indices.
-	lsofGroups = func() map[string]int {
+	// headerGroups maps capture group names to indices.
+	headerGroups = func() map[string]int {
 		g := map[string]int{}
-		for _, name := range lsofRegex.SubexpNames() {
-			g[name] = lsofRegex.SubexpIndex(name)
+		for _, name := range headerRegex.SubexpNames() {
+			g[name] = headerRegex.SubexpIndex(name)
+		}
+		return g
+	}()
+
+	// nameRegex for parsing the lsof NAME field of Linux 'unix' type files.
+	nameRegex = regexp.MustCompile(
+		`^(?:(?P<name>[^ ]*) |)type=[A-Z]* (?:->INO=` +
+			`(?P<inode>\d*) ` +
+			`(?P<pid>\d*)|).*\(` +
+			`(?P<state>[A-Z]*)\)$`,
+	)
+
+	// nameGroups maps capture group names to indices.
+	nameGroups = func() map[string]int {
+		g := map[string]int{}
+		for _, name := range nameRegex.SubexpNames() {
+			g[name] = nameRegex.SubexpIndex(name)
 		}
 		return g
 	}()
@@ -77,14 +96,22 @@ var (
 )
 
 const (
-	// lsof output lines regular expression capture group names.
+	// lsof header line regular expression capture group names.
 	groupCommand = "command"
 	groupPid     = "pid"
+	groupUser    = "user"
 	groupFd      = "fd"
 	groupMode    = "mode"
+	groupLock    = "lock"
 	groupType    = "type"
 	groupDevice  = "device"
+	groupSizeOff = "sizeoff"
 	groupNode    = "node"
+	groupName    = "name"
+
+	// lsof NAME field regular expression capture group names for 'unix' type files.
+	groupInode = "inode"
+	groupState = "state"
 )
 
 func addZone(addr string) string {
@@ -137,12 +164,26 @@ func parseLsof(stdout io.ReadCloser) {
 	}()
 
 	epm := map[Pid][]Connection{}
-	var nameIndex int
+	var indexUser, indexFd, indexMode /* indexLock, */, indexType, indexDevice, indexSize, indexNode, indexName int
+
 	sc := bufio.NewScanner(stdout)
 	for sc.Scan() {
 		text := sc.Text()
 		if strings.HasPrefix(text, "COMMAND") {
-			nameIndex = strings.Index(text, "NAME")
+			// lsof header: COMMAND PID USER FDml TYPE DEVICE SIZE/OFF NODE NAME
+			indices := headerRegex.FindStringSubmatchIndex(text)
+			if indices == nil {
+				os.Exit(13)
+			}
+			indexUser = indices[headerGroups[groupUser]*2]
+			indexFd = indices[headerGroups[groupFd]*2]
+			indexMode = indices[headerGroups[groupMode]*2]
+			// indexLock = indices[headerGroups[groupLock]*2]
+			indexType = indices[headerGroups[groupType]*2]
+			indexDevice = indices[headerGroups[groupDevice]*2]
+			indexSize = indices[headerGroups[groupSizeOff]*2]
+			indexNode = indices[headerGroups[groupNode]*2]
+			indexName = indices[headerGroups[groupName]*2]
 			continue
 		} else if strings.HasPrefix(text, "====") {
 			epLock.Lock()
@@ -151,46 +192,105 @@ func parseLsof(stdout io.ReadCloser) {
 			epLock.Unlock()
 			continue
 		}
-		match := lsofRegex.FindStringSubmatch(text[:nameIndex])
-		if len(match) == 0 || match[0] == "" {
+
+		fd := strings.TrimSpace(text[indexFd:indexMode])
+		if _, err := strconv.Atoi(fd); err != nil {
 			continue
 		}
 
-		// command := match[lsofGroups[groupCommand]]
-		pid, _ := strconv.Atoi(match[lsofGroups[groupPid]])
-		// fd, _ := strconv.Atoi(match[lsofGroups[groupFd]])
-		mode := match[lsofGroups[groupMode]][0]
-		fdType := match[lsofGroups[groupType]]
-		device := match[lsofGroups[groupDevice]]
-		node := match[lsofGroups[groupNode]]
-		peer := text[nameIndex:]
+		// command := strings.Fields(text[:indexUser])[0]           // COMMAND and PID fields can be jammed together
+		pid, _ := strconv.Atoi(strings.Fields(text[:indexUser])[1]) // so read as one field and split
+		// user := strings.TrimSpace(text[indexUser:indexFd])
+		mode := text[indexMode]
+		// lock := text[indexLock]
+		fdType := strings.TrimSpace(text[indexType:indexDevice])
+		device := strings.TrimSpace(text[indexDevice:indexSize])
+		// size := strings.TrimSpace(text[indexSize:indexNode])
+		node := strings.TrimSpace(text[indexNode:indexName])
+		name := text[indexName:]
 
-		var self string
+		// fmt.Fprintf(os.Stderr, "%s\n%s %d %s %s %c %c %s %s %s %s %s\n", text, command, pid, user, fd, mode, lock, fdType, device, size, node, name)
+
+		var self, peer string
+		var peerPid Pid
+		var ok bool
 
 		switch fdType {
-		case "REG":
-			if runtime.GOOS == "linux" && peer != "" && pid != os.Getpid() {
-				logs.Watch(peer, pid)
+		case "REG", "CHAN":
+			if fdType == "REG" {
+				if runtime.GOOS == "linux" && name != "" && pid != os.Getpid() {
+					logs.Watch(name, pid)
+				}
+			} else { // "CHAN"
+				fdType += ":" + device
 			}
-		case "BLK", "CHR", "DIR", "LINK", "PSXSHM", "KQUEUE":
-		case "FSEVENT", "NEXUS", "NPOLICY", "ndrv", "systm", "unknown":
-		case "CHAN":
-			fdType = device
+			fallthrough
+		case "BLK", "CHR", "DIR", "LINK", "PSXSHM", "KQUEUE",
+			"FSEVENT", "NEXUS", "NPOLICY", "ndrv", "systm", "unknown",
+			"netlink", "a_inode":
+			peer = name
+			if peerPid, ok = nodes[peer]; !ok {
+				peerPid = dataPid
+				nodes[peer] = dataPid
+				dataPid += 1
+			}
 		case "key", "PSXSEM":
 			peer = device
-		case "FIFO":
-			if mode != 'w' {
-				self = peer
-				peer = ""
+			if peerPid, ok = nodes[peer]; !ok {
+				peerPid = dataPid
+				nodes[peer] = dataPid
+				dataPid += 1
 			}
-		case "PIPE", "unix":
+		case "FIFO":
+			switch runtime.GOOS {
+			case "darwin": // FIFO is only for named pipes
+				if mode != 'w' {
+					self = name
+					peer = node
+				} else {
+					self = node
+					peer = name
+				}
+			case "linux": // FIFO can be named or unnamed pipe
+				fields := strings.Fields(name)
+				if mode != 'w' {
+					self = fields[0]
+					peer = node
+				} else {
+					self = node
+					peer = fields[0]
+				}
+			}
+		case "PIPE": // darwin distinguishes unnamed pipe from FIFO
+			if len(name) < 2 || name[:2] != "->" {
+				continue
+			}
 			self = device
-			if len(peer) > 2 && peer[:2] == "->" {
-				peer = peer[2:] // strip "->"
+			peer = name[2:] // strip "->"
+		case "unix":
+			switch runtime.GOOS {
+			case "darwin":
+				self = device
+				if len(name) > 2 && name[:2] == "->" {
+					peer = name[2:] // strip "->"
+				} else {
+					peer = name // unix socket file
+				}
+			case "linux":
+				self = node
+				matches := nameRegex.FindStringSubmatch(name)
+				if peer = matches[nameGroups[groupInode]]; len(peer) == 0 {
+					peer = matches[nameGroups[groupName]]
+				}
+				pid, _ := strconv.Atoi(matches[nameGroups[groupPid]])
+				peerPid = Pid(pid)
+			}
+			if peer == "" {
+				continue
 			}
 		case "IPv4", "IPv6":
 			fdType = node
-			split := strings.Split(peer, " ")
+			split := strings.Split(name, " ")
 			split = strings.Split(split[0], "->")
 			if len(split) > 1 {
 				self = addZone(split[0])
@@ -199,28 +299,21 @@ func parseLsof(stdout io.ReadCloser) {
 				self = device
 				peer = addZone((split[0]))
 			}
-		}
-
-		if self == "" && peer == "" {
-			peer = fdType // treat like data connection
-		}
-
-		if peer != os.DevNull {
-			var peerPid Pid
-			var ok bool
-			if self == "" {
-				if peerPid, ok = nodes[peer]; !ok {
-					peerPid = dataPid
-					nodes[peer] = dataPid
-					dataPid += 1
-				}
-			} else if _, _, err := net.SplitHostPort(peer); err == nil {
+			if _, _, err := net.SplitHostPort(peer); err == nil { // host connection
+				var ok bool
 				if peerPid, ok = nodes[peer]; !ok {
 					peerPid = hostPid
 					nodes[peer] = hostPid
 					hostPid -= 1
 				}
 			}
+		}
+
+		if self == "" && peer == "" {
+			peer = fdType // treat like data connection
+		}
+
+		if name != os.DevNull {
 			epm[Pid(pid)] = append(epm[Pid(pid)],
 				Connection{
 					Type:      fdType,
@@ -230,13 +323,18 @@ func parseLsof(stdout io.ReadCloser) {
 				},
 			)
 		}
-		if fdType == "unix" && peer[:2] != "0x" {
+		if fdType == "unix" && peer[0] == '/' { // add unix socket file also as a data connection
+			if peerPid, ok = nodes[peer]; !ok {
+				peerPid = dataPid
+				nodes[peer] = dataPid
+				dataPid += 1
+			}
 			epm[Pid(pid)] = append(epm[Pid(pid)],
 				Connection{
 					Type:      fdType,
 					Direction: accmode(mode),
 					Self:      Endpoint{Pid: Pid(pid)},
-					Peer:      Endpoint{Name: peer},
+					Peer:      Endpoint{Name: peer, Pid: peerPid},
 				},
 			)
 		}

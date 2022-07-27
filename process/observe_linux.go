@@ -3,8 +3,6 @@
 package process
 
 import (
-	"bytes"
-	"encoding/binary"
 	"syscall"
 	"time"
 	"unsafe"
@@ -76,7 +74,13 @@ func (h *handle) close() {
 
 // observe events and notify observer's callbacks.
 func observe() {
+	// start the lsof command as a sub-process to list periodically all open files and network connections.
+	if err := lsofCommand(); err != nil {
+		core.LogError(err)
+	}
+
 	go taskstats()
+
 	defer h.close()
 
 	for {
@@ -181,40 +185,47 @@ func taskstats() {
 				errorChan <- core.Error("netlink", syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4]))))
 				break
 			}
-
 			data := m.Data[unix.GENL_HDRLEN:]
-			var attr *syscall.NlAttr
 
-			for i := 0; i < len(data); i += nlaAlignTo(int(attr.Len)) {
-				attr = (*syscall.NlAttr)(unsafe.Pointer(&data[i]))
-				switch attr.Type {
-				case unix.TASKSTATS_TYPE_AGGR_PID, unix.TASKSTATS_TYPE_AGGR_TGID:
-					i += syscall.NLA_HDRLEN
-					attr = (*syscall.NlAttr)(unsafe.Pointer(&data[i]))
-					fallthrough
-				case unix.TASKSTATS_TYPE_PID, unix.TASKSTATS_TYPE_TGID:
-				case unix.TASKSTATS_TYPE_STATS:
-					ts := tsMeasurement{
-						Header: message.Measurement(),
-					}
-					buf := &bytes.Buffer{}
-					buf.Write(data[i+syscall.NLA_HDRLEN : i+int(attr.Len)])
-					binary.Read(buf, core.HostEndian, (*unix.Taskstats)(unsafe.Pointer(&ts.Taskstats)))
-					ts.AcEtime *= time.Microsecond
-					ts.AcUtime *= time.Microsecond
-					ts.AcStime *= time.Microsecond
-					ts.AcUtimescaled *= time.Microsecond
-					ts.AcStimescaled *= time.Microsecond
-					ts.HiwaterRss *= 1000
-					ts.HiwaterVM += 1000
+			var tsMsg *struct {
+				attr1 syscall.NlAttr
+				attr2 syscall.NlAttr
+				pid   uint32
+				attr3 syscall.NlAttr
+				ts    unix.Taskstats
+			}
 
-					ts.Btime = time.Unix(int64(ts.AcBtime), 0)
-					ts.Command = core.FromCString((*(*[len(ts.AcComm)]int8)(unsafe.Pointer(&ts.AcComm[0])))[:])
-					ts.Uname = core.Username(int(ts.AcUID))
-					ts.Gname = core.Groupname(int(ts.AcGID))
-
-					message.Encode([]message.Content{&ts})
+			for i := 0; i < len(data); i += nlaAlignTo(int(tsMsg.attr1.Len)) {
+				*(*uintptr)(unsafe.Pointer(&tsMsg)) = uintptr(unsafe.Pointer(&data[i]))
+				if tsMsg.attr1.Type != unix.TASKSTATS_TYPE_AGGR_PID && tsMsg.attr1.Type != unix.TASKSTATS_TYPE_AGGR_TGID &&
+					tsMsg.attr2.Type != unix.TASKSTATS_TYPE_PID && tsMsg.attr2.Type != unix.TASKSTATS_TYPE_TGID &&
+					tsMsg.attr3.Type != unix.TASKSTATS_TYPE_STATS {
+					continue
 				}
+
+				ts := tsMeasurement{
+					Header: message.Observation(time.Now(), netlinkTaskstats),
+					Id: Id{
+						ppid:      Pid(tsMsg.ts.Ac_ppid),
+						Name:      core.FromCString((*(*[len(tsMsg.ts.Ac_comm)]int8)(unsafe.Pointer(&tsMsg.ts.Ac_comm[0])))[:]),
+						Pid:       Pid(tsMsg.pid),
+						Starttime: time.Unix(int64(tsMsg.ts.Ac_btime), 0),
+					},
+				}
+
+				ts.Taskstats = tsMsg.ts // *(*Taskstats)(unsafe.Pointer(&tsMsg.ts))
+				// ts.AcEtime *= time.Microsecond
+				// ts.AcUtime *= time.Microsecond
+				// ts.AcStime *= time.Microsecond
+				// ts.AcUtimescaled *= time.Microsecond
+				// ts.AcStimescaled *= time.Microsecond
+				// ts.HiwaterRss *= 1024
+				// ts.HiwaterVM *= 1024
+
+				ts.Uname = core.Username(int(ts.Ac_uid))
+				ts.Gname = core.Groupname(int(ts.Ac_gid))
+
+				message.Encode([]message.Content{&ts})
 			}
 		}
 	}
