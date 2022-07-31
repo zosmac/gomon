@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -102,7 +101,7 @@ func NodeGraph(req *http.Request) []byte {
 		}
 	}
 
-	em := map[string]struct{}{}
+	em := map[string]string{}
 
 	for _, p := range ft {
 		for _, conn := range p.Connections {
@@ -133,30 +132,32 @@ func NodeGraph(req *http.Request) []byte {
 
 				color := "black"
 				dir := "both"
-				if conn.Self.Name[0:2] == "0x" { // listen socket
+				// name for listen port is device inode: on linux decimal and on darwin hexadecimal
+				if _, err := strconv.Atoi(conn.Self.Name); err == nil || conn.Self.Name[0:2] == "0x" { // listen socket
 					color = "red"
 					dir = "forward"
 				}
 
 				hosts += fmt.Sprintf(`
-    %d [label="%s:%s\n%s" color=%s shape=cds height=0.5]`,
+    %d [shape=cds height=0.5 label="%s:%s\n%s"]`,
 					conn.Peer.Pid,
 					conn.Type,
 					port,
 					hostname(host),
-					color,
 				)
 				if hostNode == 0 {
 					hostNode = conn.Peer.Pid
 				}
 
 				hostEdges += fmt.Sprintf(`
-  %d -> %d [tooltip="%s\n%s" dir=%s]`,
+  %d -> %d [dir=%s color=%q tooltip="%s ‑> %s\n%s"]`, // non-breaking space/hyphen
 					conn.Peer.Pid,
 					conn.Self.Pid,
-					peer+"->"+conn.Self.Name,
-					longname(pt, conn.Self.Pid),
 					dir,
+					color,
+					peer,
+					conn.Self.Name,
+					longname(pt, conn.Self.Pid),
 				)
 			} else if conn.Peer.Pid >= math.MaxInt32 { // peer is data
 				peer := conn.Type + ":" + conn.Peer.Name
@@ -167,29 +168,36 @@ func NodeGraph(req *http.Request) []byte {
 					color = "#00FF00"
 				case "REG":
 					color = "#BBBB99"
+				case "unix":
+					color = "#0000FF"
 				default:
 					color = "#99BBBB"
 				}
 
 				datas += fmt.Sprintf(`
-    %d [label=%q color=%q shape=note]`,
+    %d [shape=note color=%q label=%q]`,
 					conn.Peer.Pid,
-					peer,
 					color,
+					peer,
 				)
 				if dataNode == 0 {
 					dataNode = conn.Peer.Pid
 				}
 
-				dataEdges += fmt.Sprintf(`
-  %d -> %d [tooltip="%s\n%s" dir=%s color=%q]`,
-					conn.Self.Pid,
-					conn.Peer.Pid,
-					longname(pt, conn.Self.Pid),
-					peer,
-					dir,
-					color,
-				)
+				// show edge for data connections only once
+				id := fmt.Sprintf("%d -> %d", conn.Self.Pid, conn.Peer.Pid)
+				if _, ok := em[id]; !ok {
+					em[id] = ""
+					dataEdges += fmt.Sprintf(`
+  %d -> %d [dir=%s color=%q tooltip="%s\n%s"]`,
+						conn.Self.Pid,
+						conn.Peer.Pid,
+						dir,
+						color,
+						longname(pt, conn.Self.Pid),
+						peer,
+					)
+				}
 			} else { // peer is process
 				include[conn.Peer.Pid] = struct{}{}
 
@@ -202,29 +210,41 @@ func NodeGraph(req *http.Request) []byte {
 					processNodes[depth] = conn.Self.Pid
 				}
 
-				color := color(conn.Self.Pid)
 				if conn.Type == "parent" {
-					color = "black"
-				}
-
-				// show bidirectional connection only once
-				id := fmt.Sprintf("%d->%d", conn.Self.Pid, conn.Peer.Pid)
-				di := fmt.Sprintf("%d->%d", conn.Peer.Pid, conn.Self.Pid)
-
-				_, ok := em[id]
-				if !ok {
-					_, ok = em[di]
-				}
-				if !ok {
 					processEdges[depth] += fmt.Sprintf(`
-  %d -> %d [tooltip="%s\n%s\n%s" dir=%s color=%q]`,
+  %d -> %d [dir=forward color=black tooltip="%s ‑> %s\n"]`, // non-breaking space/hyphen
 						conn.Self.Pid,
 						conn.Peer.Pid,
-						conn.Type+":"+conn.Self.Name+"->"+conn.Peer.Name,
 						shortname(pt, conn.Self.Pid),
 						shortname(pt, conn.Peer.Pid),
-						dir,
-						color,
+					)
+					continue
+				}
+
+				// show edge for inter-process connections only once
+				id := fmt.Sprintf("%d -> %d", conn.Self.Pid, conn.Peer.Pid)
+				di := fmt.Sprintf("%d -> %d", conn.Peer.Pid, conn.Self.Pid)
+
+				_, ok := em[id]
+				if ok {
+					em[id] += fmt.Sprintf("%s:%s ‑> %s\n", // non-breaking space/hyphen
+						conn.Type,
+						conn.Self.Name,
+						conn.Peer.Name,
+					)
+				} else if _, ok = em[di]; ok {
+					em[di] += fmt.Sprintf("%s:%s ‑> %s\n", // non-breaking space/hyphen
+						conn.Type,
+						conn.Peer.Name,
+						conn.Self.Name,
+					)
+				} else {
+					em[id] = fmt.Sprintf("%s ‑> %s\n%s:%s ‑> %s\n", // non-breaking space/hyphen
+						shortname(pt, conn.Self.Pid),
+						shortname(pt, conn.Peer.Pid),
+						conn.Type,
+						conn.Self.Name,
+						conn.Peer.Name,
 					)
 				}
 			}
@@ -244,14 +264,30 @@ func NodeGraph(req *http.Request) []byte {
 		}
 
 		node := fmt.Sprintf(`
-      %d [label="%s\n%[1]d" tooltip=%[3]q color=%q URL="http://localhost:%d/gomon?pid=%[1]d" shape=rect style=rounded]`,
-			pid,
+      %[2]d [shape=rect style=rounded dir=both color=%q URL="http://localhost:%d/gomon?pid=%[2]d" label="%[1]s\n%d" tooltip=%[5]q]`,
 			pt[pid].Id.Name,
-			longname(pt, pid),
+			pid,
 			color(pid),
 			core.Flags.Port,
+			longname(pt, pid),
 		)
 		processes[len(p.Ancestors)] += node
+
+		depth := len(pt[pid].Ancestors)
+
+		for edge, tooltip := range em {
+			if strings.Fields(edge)[0] == strconv.Itoa(int(pid)) {
+				if tooltip != "" {
+					processEdges[depth] += fmt.Sprintf(`
+%s [color=%q tooltip=%q]`,
+						edge,
+						color(pid),
+						tooltip,
+					)
+				}
+				delete(em, edge)
+			}
+		}
 	}
 
 	for i := range processes {
@@ -307,7 +343,7 @@ func NodeGraph(req *http.Request) []byte {
   nodesep=0.05
   ranksep="2.0"
   node [fontname=helvetica fontsize=7 height=0.2 width=1.5]
-  edge [arrowsize=0.5]
+  edge [penwidth=1.5 arrowsize=0.5]
   subgraph cluster_hosts {
     label="External Connections" rank=same fontsize=11 penwidth=3.0 pencolor="#BB5599"` +
 		hosts + `
@@ -378,12 +414,22 @@ func family(pt process.Table, pid Pid) process.Table {
 
 // longname formats the full Executable name and pid.
 func longname(pt process.Table, pid Pid) string {
-	return fmt.Sprintf("%s[%d]", pt[pid].Executable, pid)
+	if p, ok := pt[pid]; ok {
+		name := p.Executable
+		if name == "" {
+			name = p.Id.Name
+		}
+		return fmt.Sprintf("%s[%d]", name, pid)
+	}
+	return ""
 }
 
 // shortname formats the base Executable name and pid.
 func shortname(pt process.Table, pid Pid) string {
-	return fmt.Sprintf("%s[%d]", filepath.Base(pt[pid].Executable), pid)
+	if p, ok := pt[pid]; ok {
+		return fmt.Sprintf("%s[%d]", p.Id.Name, pid)
+	}
+	return ""
 }
 
 // hostname resolves the host name for an ip address.

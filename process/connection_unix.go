@@ -253,17 +253,18 @@ func parseLsof(stdout io.ReadCloser) {
 				}
 			case "linux": // FIFO can be named or unnamed pipe
 				fields := strings.Fields(name)
-				if mode != 'w' {
-					self = fields[0]
-					peer = node
+				self = node
+				peer = fields[0]
+				if len(fields) > 1 {
+					pid, _ := strconv.Atoi(strings.Split(fields[1], ",")[0])
+					peerPid = Pid(pid)
 				} else {
-					self = node
-					peer = fields[0]
+					continue // no connection
 				}
 			}
 		case "PIPE": // darwin distinguishes unnamed pipe from FIFO
 			if len(name) < 2 || name[:2] != "->" {
-				continue
+				continue // no connection
 			}
 			self = device
 			peer = name[2:] // strip "->"
@@ -286,7 +287,7 @@ func parseLsof(stdout io.ReadCloser) {
 				peerPid = Pid(pid)
 			}
 			if peer == "" {
-				continue
+				continue // no connection
 			}
 		case "IPv4", "IPv6":
 			fdType = node
@@ -295,9 +296,9 @@ func parseLsof(stdout io.ReadCloser) {
 			if len(split) > 1 {
 				self = addZone(split[0])
 				peer = addZone(split[1])
-			} else {
+			} else { // listen
 				self = device
-				peer = addZone((split[0]))
+				peer = addZone(split[0])
 			}
 			if _, _, err := net.SplitHostPort(peer); err == nil { // host connection
 				var ok bool
