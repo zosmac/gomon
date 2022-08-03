@@ -3,12 +3,24 @@
 package file
 
 /*
-#cgo CFLAGS: -x objective-c -std=gnu11 -fobjc-arc
+#cgo CFLAGS: -x objective-c -std=gnu11 -fobjc-arc -D__unix__
 #cgo LDFLAGS: -framework CoreServices
 #import <CoreServices/CoreServices.h>
+#include <dispatch/dispatch.h>
+
+// Evidently cannot use dispatch_queue_t type in Go code.
+// Therefore, define queue and dispatch FS stream here.
+static void
+QueueStream(FSEventStreamRef stream) {
+	dispatch_queue_t queue;
+	queue = dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0);
+	FSEventStreamSetDispatchQueue(stream, queue);
+	FSEventStreamStart(stream);
+}
 
 // callback handles events sent on stream
 extern void callback(ConstFSEventStreamRef, void *, size_t, char **, FSEventStreamEventFlags *, FSEventStreamEventId *);
+
 */
 import "C"
 
@@ -17,6 +29,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"unsafe"
 
 	"github.com/zosmac/gomon/core"
@@ -40,11 +53,6 @@ func observe() {
 	defer obs.close()
 	runtime.LockOSThread() // tie this goroutine to an OS thread
 	defer runtime.UnlockOSThread()
-
-	runloop := C.CFRunLoopGetCurrent()
-	defer func() {
-		C.CFRunLoopStop(runloop)
-	}()
 
 	cname := core.CreateCFString(flags.fileDirectory + "\x00")
 	defer C.CFRelease(C.CFTypeRef(cname))
@@ -79,9 +87,13 @@ func observe() {
 	// )
 	// fmt.Fprintf(os.Stderr, "top level path is %s\n", C.GoString(&buf[0]))
 
-	C.FSEventStreamScheduleWithRunLoop(stream, runloop, C.kCFRunLoopDefaultMode)
-	C.FSEventStreamStart(stream)
-	C.CFRunLoopRun() // start watching
+	var wg sync.WaitGroup
+	wg.Add(1)
+	core.Register(func() {
+		wg.Done()
+	})
+	C.QueueStream(stream)
+	wg.Wait()
 }
 
 // callback handles events sent on stream.
