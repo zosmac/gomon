@@ -317,10 +317,9 @@ func parseLsof(stdout io.ReadCloser) {
 		if name != os.DevNull {
 			epm[Pid(pid)] = append(epm[Pid(pid)],
 				Connection{
-					Type:      fdType,
-					Direction: accmode(mode),
-					Self:      Endpoint{Name: self, Pid: Pid(pid)},
-					Peer:      Endpoint{Name: peer, Pid: peerPid},
+					Type: fdType,
+					Self: Endpoint{Name: self, Pid: Pid(pid)},
+					Peer: Endpoint{Name: peer, Pid: peerPid},
 				},
 			)
 		}
@@ -332,23 +331,11 @@ func parseLsof(stdout io.ReadCloser) {
 			}
 			epm[Pid(pid)] = append(epm[Pid(pid)],
 				Connection{
-					Type:      fdType,
-					Direction: accmode(mode),
-					Self:      Endpoint{Pid: Pid(pid)},
-					Peer:      Endpoint{Name: peer, Pid: peerPid},
+					Type: fdType,
+					Self: Endpoint{Pid: Pid(pid)},
+					Peer: Endpoint{Name: peer, Pid: peerPid},
 				},
 			)
 		}
 	}
-}
-
-// accmode determines the I/O direction.
-func accmode(mode byte) string {
-	switch mode {
-	case 'r':
-		return "<<--"
-	case 'w':
-		return "-->>"
-	}
-	return "<-->"
 }

@@ -34,6 +34,9 @@ var (
 // color defines the color for graphviz nodes and edges
 func color(pid Pid) string {
 	color := "#000000"
+	if pid < 0 {
+		pid = -pid
+	}
 	if pid > 0 {
 		color = colors[(int(pid-1))%len(colors)]
 	}
@@ -112,30 +115,15 @@ func NodeGraph(req *http.Request) []byte {
 				continue
 			}
 
-			var dir string // graphviz arrow direction
-			switch conn.Direction {
-			case "-->>":
-				dir = "forward"
-			case "<<--":
-				dir = "back"
-			case "<-->":
-				dir = "both"
-			default:
-				dir = "none"
-			}
-
 			include[conn.Self.Pid] = struct{}{}
 
 			if conn.Peer.Pid < 0 { // peer is remote host or listener
 				host, port, _ := net.SplitHostPort(conn.Peer.Name)
-				peer := conn.Type + ":" + conn.Peer.Name
 
-				color := "black"
-				dir := "both"
+				dir := "forward"
 				// name for listen port is device inode: on linux decimal and on darwin hexadecimal
 				if _, err := strconv.Atoi(conn.Self.Name); err == nil || conn.Self.Name[0:2] == "0x" { // listen socket
-					color = "red"
-					dir = "forward"
+					dir = "back"
 				}
 
 				hosts += fmt.Sprintf(`
@@ -149,35 +137,24 @@ func NodeGraph(req *http.Request) []byte {
 					hostNode = conn.Peer.Pid
 				}
 
+				// TODO: host arrow on east/right edge
 				hostEdges += fmt.Sprintf(`
   %d -> %d [dir=%s color=%q tooltip="%s ‑> %s\n%s"]`, // non-breaking space/hyphen
 					conn.Peer.Pid,
 					conn.Self.Pid,
 					dir,
-					color,
-					peer,
+					color(conn.Self.Pid),
+					conn.Type+":"+conn.Peer.Name,
 					conn.Self.Name,
 					longname(pt, conn.Self.Pid),
 				)
 			} else if conn.Peer.Pid >= math.MaxInt32 { // peer is data
 				peer := conn.Type + ":" + conn.Peer.Name
 
-				var color string
-				switch conn.Type {
-				case "DIR":
-					color = "#00FF00"
-				case "REG":
-					color = "#BBBB99"
-				case "unix":
-					color = "#0000FF"
-				default:
-					color = "#99BBBB"
-				}
-
 				datas += fmt.Sprintf(`
     %d [shape=note color=%q label=%q]`,
 					conn.Peer.Pid,
-					color,
+					color(conn.Peer.Pid),
 					peer,
 				)
 				if dataNode == 0 {
@@ -189,11 +166,10 @@ func NodeGraph(req *http.Request) []byte {
 				if _, ok := em[id]; !ok {
 					em[id] = ""
 					dataEdges += fmt.Sprintf(`
-  %d -> %d [dir=%s color=%q tooltip="%s\n%s"]`,
+  %d -> %d [dir=forward color=%q tooltip="%s\n%s"]`,
 						conn.Self.Pid,
 						conn.Peer.Pid,
-						dir,
-						color,
+						color(conn.Peer.Pid),
 						longname(pt, conn.Self.Pid),
 						peer,
 					)
@@ -212,7 +188,7 @@ func NodeGraph(req *http.Request) []byte {
 
 				if conn.Type == "parent" {
 					processEdges[depth] += fmt.Sprintf(`
-  %d -> %d [dir=forward color=black tooltip="%s ‑> %s\n"]`, // non-breaking space/hyphen
+  %d -> %d [dir=forward tooltip="%s ‑> %s\n"]`, // non-breaking space/hyphen
 						conn.Self.Pid,
 						conn.Peer.Pid,
 						shortname(pt, conn.Self.Pid),
@@ -264,7 +240,7 @@ func NodeGraph(req *http.Request) []byte {
 		}
 
 		node := fmt.Sprintf(`
-      %[2]d [shape=rect style=rounded dir=both color=%q URL="http://localhost:%d/gomon?pid=%[2]d" label="%[1]s\n%d" tooltip=%[5]q]`,
+      %[2]d [shape=rect style=rounded color=%q URL="http://localhost:%d/gomon?pid=%[2]d" label="%[1]s\n%d" tooltip=%[5]q]`,
 			pt[pid].Id.Name,
 			pid,
 			color(pid),
@@ -279,7 +255,7 @@ func NodeGraph(req *http.Request) []byte {
 			if strings.Fields(edge)[0] == strconv.Itoa(int(pid)) {
 				if tooltip != "" {
 					processEdges[depth] += fmt.Sprintf(`
-%s [color=%q tooltip=%q]`,
+  %s [dir=both color=%q tooltip=%q]`, // TODO: arrow on left/west edge
 						edge,
 						color(pid),
 						tooltip,
@@ -424,7 +400,7 @@ func longname(pt process.Table, pid Pid) string {
 	return ""
 }
 
-// shortname formats the base Executable name and pid.
+// shortname formats process name and pid.
 func shortname(pt process.Table, pid Pid) string {
 	if p, ok := pt[pid]; ok {
 		return fmt.Sprintf("%s[%d]", p.Id.Name, pid)

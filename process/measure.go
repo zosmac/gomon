@@ -129,7 +129,11 @@ func BuildTree(pt Table) Tree {
 	t := Tree{}
 
 	for pid, p := range pt {
-		addPid(t, append(p.Ancestors, pid))
+		var ancestors []Pid
+		for pid := p.Ppid; pid > 1; pid = pt[pid].Ppid {
+			ancestors = append([]Pid{pid}, ancestors...)
+		}
+		addPid(t, append(ancestors, pid))
 	}
 
 	return t
