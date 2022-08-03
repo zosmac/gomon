@@ -89,10 +89,9 @@ type (
 
 	// Connection represents an inter-process or host/data connection
 	Connection struct {
-		Type      string   `json:"type" gomon:"property"`
-		Direction string   `json:"direction" gomon:"property"`
-		Self      Endpoint `json:"self" gomon:"property"`
-		Peer      Endpoint `json:"peer" gomon:"property"`
+		Type string   `json:"type" gomon:"property"`
+		Self Endpoint `json:"self" gomon:"property"`
+		Peer Endpoint `json:"peer" gomon:"property"`
 	}
 
 	// measurement for the message.
