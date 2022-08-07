@@ -13,25 +13,9 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/zosmac/gomon/core"
-	"github.com/zosmac/gomon/message"
-)
-
-const (
-	// log record regular expressions capture group names.
-	groupTimestamp = "timestamp"
-	groupLevel     = "level"
-	groupHost      = "host"
-	groupProcess   = "process"
-	groupPid       = "pid"
-	groupThread    = "thread"
-	groupSender    = "sender"
-	groupSubCat    = "subcat"
-	groupMessage   = "message"
 )
 
 var (
@@ -158,41 +142,6 @@ func startCommand(cmdline []string) (*bufio.Scanner, error) {
 	core.LogInfo(fmt.Errorf("start [%d] %q", cmd.Process.Pid, cmd.String()))
 
 	return bufio.NewScanner(stdout), nil
-}
-
-func parseLog(sc *bufio.Scanner, regex *regexp.Regexp, format string) {
-	groups := func() map[string]int {
-		g := map[string]int{}
-		for _, name := range regex.SubexpNames() {
-			g[name] = regex.SubexpIndex(name)
-		}
-		return g
-	}()
-
-	for sc.Scan() {
-		match := regex.FindStringSubmatch(sc.Text())
-		if len(match) == 0 || match[0] == "" {
-			continue
-		}
-
-		t, _ := time.Parse(format, match[groups[groupTimestamp]])
-		pid, _ := strconv.Atoi(match[groups[groupPid]])
-
-		sender := match[groups[groupSender]]
-		if cg, ok := groups[groupSubCat]; ok {
-			sender = match[cg] + ":" + sender
-		}
-
-		messageChan <- &observation{
-			Header: message.Observation(t, levelMap[strings.ToLower(match[groups[groupLevel]])]),
-			Id: Id{
-				Name:   match[groups[groupProcess]],
-				Pid:    pid,
-				Sender: sender,
-			},
-			Message: match[groups[groupMessage]],
-		}
-	}
 }
 
 // Watch adds a process' logs to watch to the observer, which is a noop for Darwin.

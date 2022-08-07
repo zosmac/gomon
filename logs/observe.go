@@ -3,8 +3,31 @@
 package logs
 
 import (
+	"bufio"
+	"regexp"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/zosmac/gomon/core"
 	"github.com/zosmac/gomon/message"
+)
+
+const (
+	// log record regular expressions capture group names.
+	groupTimestamp = "timestamp"
+	groupUtc       = "utc"
+	groupTzoffset  = "tzoffset"
+	groupTimezone  = "timezone"
+	groupLevel     = "level"
+	groupHost      = "host"
+	groupProcess   = "process"
+	groupPid       = "pid"
+	groupThread    = "thread"
+	groupSender    = "sender"
+	groupSubCat    = "subcat"
+	groupMessage   = "message"
 )
 
 var (
@@ -74,4 +97,58 @@ func Observer() error {
 	}()
 
 	return nil
+}
+
+func parseLog(sc *bufio.Scanner, regex *regexp.Regexp, format string) {
+	groups := func() map[string]int {
+		g := map[string]int{}
+		for _, name := range regex.SubexpNames() {
+			g[name] = regex.SubexpIndex(name)
+		}
+		return g
+	}()
+
+	for sc.Scan() {
+		match := regex.FindStringSubmatch(sc.Text())
+		if len(match) == 0 || match[0] == "" {
+			continue
+		}
+
+		if runtime.GOOS == "linux" {
+			level := levelMap[strings.ToLower(match[groups[groupLevel]])]
+			if !logLevels.IsValid(string(level)) || logLevels.Index(level) < logLevels.Index(flags.logLevel) {
+				continue
+			}
+
+			match[groups[groupTimestamp]] = strings.Replace(match[groups[groupTimestamp]], "/", "-", 2) // replace '/' with '-' in date
+			match[groups[groupTimestamp]] = strings.Replace(match[groups[groupTimestamp]], "T", " ", 1) // replace 'T' with ' ' between date and time
+
+			if match[groups[groupUtc]] == "Z" || match[groups[groupTzoffset]] != "" {
+				format = "2006-01-02 15:04:05Z07:00"
+			} else if match[groups[groupTimezone]] != "" {
+				format = "2006-01-02 15:04:05 MST"
+			}
+		}
+
+		queue(groups, format, match)
+	}
+}
+
+func queue(groups map[string]int, format string, match []string) {
+	t, _ := time.Parse(format, match[groups[groupTimestamp]])
+	pid, _ := strconv.Atoi(match[groups[groupPid]])
+	sender := match[groups[groupSender]]
+	if cg, ok := groups[groupSubCat]; ok {
+		sender = match[cg] + ":" + sender
+	}
+
+	messageChan <- &observation{
+		Header: message.Observation(t, levelMap[strings.ToLower(match[groups[groupLevel]])]),
+		Id: Id{
+			Name:   match[groups[groupProcess]],
+			Pid:    pid,
+			Sender: sender,
+		},
+		Message: match[groups[groupMessage]],
+	}
 }

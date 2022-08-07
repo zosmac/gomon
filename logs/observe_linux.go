@@ -3,20 +3,18 @@
 package logs
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 	"unsafe"
 
 	"github.com/zosmac/gomon/core"
-	"github.com/zosmac/gomon/message"
 )
 
 var (
@@ -29,11 +27,11 @@ var (
 
 	// regex for parsing log records.
 	regex = regexp.MustCompile(
-		`(?m:^ ?\[? ?(?P<timestamp>(?:\d{4}[\/-]\d\d[\/-]\d\d[ T]\d\d:\d\d:\d\d)(?:\.(?:\d\d\d\d\d\d|\d\d\d)|))` +
-			`(?:(?P<utc>Z)| ?(?P<tzoffset>[+-]\d\d:?\d\d)|)(?:(?P<timezone> [A-Z]{3})|)` +
+		`^ ?\[? ?(?P<timestamp>(?:\d{4}[\/-]\d\d[\/-]\d\d[ T]\d\d:\d\d:\d\d)(?:\.(?:\d\d\d\d\d\d|\d\d\d)|)` +
+			`(?:(?P<utc>Z)| ?(?P<tzoffset>[+-]\d\d:?\d\d)|)(?:(?P<timezone> [A-Z]{3})|))` +
 			`(?:(?: \[|: pid )(?P<pid>\d+)\]?|)` +
 			`(?: \[?(?P<level>err|log|[A-Za-z]{4,5}[1-9]?)\]?|)?[ :\]]+` +
-			`(?P<message>.*)$|\z)`)
+			`(?P<message>.*)$`)
 
 	// groups maps capture group names to indices.
 	groups = func() map[string]int {
@@ -43,17 +41,6 @@ var (
 		}
 		return g
 	}()
-)
-
-const (
-	// log record regular expressions capture group names.
-	groupTimestamp = "timestamp"
-	groupUtc       = "utc"
-	groupTzoffset  = "tzoffset"
-	groupTimezone  = "timezone"
-	groupLevel     = "level"
-	groupPid       = "pid"
-	groupMessage   = "message"
 )
 
 // open obtains a watch handle for observer
@@ -150,41 +137,10 @@ func report(ready map[int]*os.File) {
 				l.Seek(int64(offset), io.SeekCurrent)
 				continue
 			}
-			buf := make([]byte, offset)
-			n, _ := l.Read(buf)
-			matches := regex.FindAllStringSubmatch(string(buf[:n]), -1)
-			for _, match := range matches {
-				if len(match) == 0 || match[0] == "" {
-					continue
-				}
 
-				level := levelMap[strings.ToLower(match[groups[groupLevel]])]
-				if !logLevels.IsValid(string(level)) || logLevels.Index(level) < logLevels.Index(flags.logLevel) {
-					continue
-				}
+			sc := bufio.NewScanner(l)
 
-				var timestamp time.Time
-				t := match[groups[groupTimestamp]]
-				t = strings.Replace(t, "/", "-", 2) // replace '/' with '-' in date
-				t = strings.Replace(t, "T", " ", 1) // replace 'T' with ' ' between date and time
-
-				if match[groups[groupUtc]] == "Z" || match[groups[groupTzoffset]] != "" {
-					t += match[groups[groupUtc]] + match[groups[groupTzoffset]]
-					timestamp, _ = time.Parse("2006-01-02 15:04:05Z07:00", t)
-				} else if match[groups[groupTimezone]] != "" {
-					t += match[groups[groupTimezone]]
-					timestamp, _ = time.Parse("2006-01-02 15:04:05 MST", t)
-				}
-
-				pid, _ := strconv.Atoi(match[groups[groupPid]])
-				messageChan <- &observation{
-					Header: message.Observation(timestamp, level),
-					Id: Id{
-						Pid: pid,
-					},
-					Message: match[groups[groupMessage]],
-				}
-			}
+			go parseLog(sc, regex, "")
 		}
 	}
 }
