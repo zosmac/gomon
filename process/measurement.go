@@ -82,12 +82,13 @@ type (
 		Io                          `gomon:""`
 	}
 
+	// Endpoint identifies one end of a connection.
 	Endpoint struct {
 		Name string `json:"name" gomon:"property"`
 		Pid  Pid    `json:"pid" gomon:"property"`
 	}
 
-	// Connection represents an inter-process or host/data connection
+	// Connection represents an inter-process or host/data connection.
 	Connection struct {
 		Type string   `json:"type" gomon:"property"`
 		Self Endpoint `json:"self" gomon:"property"`
