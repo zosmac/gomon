@@ -39,7 +39,7 @@ var (
 		levelFatal: "1", // Alert, Emergency
 	}
 
-	// logRegex for parsing output from the syslog -w -T utc.3 command.
+	// logRegex for parsing output from the log stream --predicate command.
 	logRegex = regexp.MustCompile(
 		`^(?P<timestamp>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d[+-]\d\d\d\d) ` +
 			`(?P<thread>[^ ]+)[ ]+` +
@@ -72,8 +72,8 @@ func open() error {
 
 // observe starts the macOS log and syslog commands as sub-processes to stream log entries.
 func observe() {
-	logCommand()
-	syslogCommand()
+	go logCommand()
+	go syslogCommand()
 }
 
 // logCommand starts the log command to capture OSLog entries (using OSLogStore API directly is MUCH slower)
@@ -95,7 +95,7 @@ func logCommand() {
 	sc.Scan() // ignore second output line
 	sc.Text() //  (it is column headers)
 
-	go parseLog(sc, logRegex, "2006-01-02 15:04:05Z0700")
+	parseLog(sc, logRegex, "2006-01-02 15:04:05Z0700")
 }
 
 // syslogCommand starts the syslog command to capture syslog entries
@@ -108,7 +108,7 @@ func syslogCommand() {
 		return
 	}
 
-	go parseLog(sc, syslogRegex, "2006-01-02 15:04:05Z")
+	parseLog(sc, syslogRegex, "2006-01-02 15:04:05Z")
 }
 
 func startCommand(cmdline []string) (*bufio.Scanner, error) {
@@ -134,12 +134,12 @@ func startCommand(cmdline []string) (*bufio.Scanner, error) {
 		return nil, core.Error("start failed", err)
 	}
 
+	core.LogInfo(fmt.Errorf("start [%d] %q", cmd.Process.Pid, cmd.String()))
+
 	core.Register(func() {
 		cmd.Process.Kill()
 		cmd.Wait()
 	})
-
-	core.LogInfo(fmt.Errorf("start [%d] %q", cmd.Process.Pid, cmd.String()))
 
 	return bufio.NewScanner(stdout), nil
 }
