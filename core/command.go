@@ -3,18 +3,24 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
 	"syscall"
+	"time"
 )
 
 // go generate creates version.go to set vmmp and package dependencies for version.
 //go:generate ./generate.sh
 
 var (
+	// Context is canceled on exit.
+	Context context.Context
+	Cancel  context.CancelFunc
+
 	// Hostname identifies the host.
 	Hostname, _ = os.Hostname()
 
@@ -50,12 +56,13 @@ Copyright © 2021 The Gomon Project.
 
 // Init called by main() to initialize core.
 func Init() {
+	Context, Cancel = context.WithCancel(context.Background())
 }
 
 // Main drives the show.
-func Main(fn func()) {
+func Main(fn func(context.Context)) {
 	// set up profiling if requested
-	profile()
+	profile(Context)
 
 	if !parse(os.Args[1:]) {
 		return
@@ -89,23 +96,16 @@ func Main(fn func()) {
 		}
 	}()
 
-	go fn()
+	go fn(Context)
 
 	wg.Wait()
 }
 
-// cleanuproutines contains the functions registered for resource cleanup.
-var cleanuproutines []func()
-
-// Register enables registration of cleanup routines to run prior to exit.
-func Register(fn func()) {
-	cleanuproutines = append(cleanuproutines, fn)
-}
-
 // Exit calls cleanup and sets gomon's return code.
 func Exit() {
-	for _, fn := range cleanuproutines {
-		fn()
-	}
+	Cancel() // signal all service routines to cleanup and exit
+
+	<-time.After(2 * time.Second) // wait a bit for all resource cleanup to complete
+
 	os.Exit(exitCode)
 }

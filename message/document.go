@@ -103,7 +103,8 @@ func document() {
 				}
 			}
 			key := strings.Split(f.key, " |")
-			fmt.Printf("Source: %s\nEvents: %+v\n",
+			fmt.Printf(
+				"Source: %s\nEvents: %+v\n",
 				key[0],
 				strings.Split(key[1], "|"),
 			)

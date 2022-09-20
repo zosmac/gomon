@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -29,7 +30,7 @@ func main() {
 }
 
 // Main called from core.Main.
-func Main() {
+func Main(ctx context.Context) {
 	cmd, err := os.Executable()
 	if err != nil {
 		cmd = os.Args[0]
@@ -37,24 +38,24 @@ func Main() {
 	if len(os.Args) > 1 {
 		cmd += " " + strings.Join(os.Args[1:], " ")
 	}
-	core.LogInfo(fmt.Errorf("start [%d] %q", os.Getpid(), cmd))
+	core.LogInfo(fmt.Errorf("start %q[%d]", cmd, os.Getpid()))
 
-	if err := message.Encoder(); err != nil {
+	if err := message.Encoder(ctx); err != nil {
 		core.LogError(err)
 		return
 	}
 
-	if err := logs.Observer(); err != nil {
+	if err := logs.Observer(ctx); err != nil {
 		core.LogError(err)
 		return
 	}
 
-	if err := file.Observer(); err != nil {
+	if err := file.Observer(ctx); err != nil {
 		core.LogError(err)
 		return
 	}
 
-	if err := process.Observer(); err != nil {
+	if err := process.Observer(ctx); err != nil {
 		core.LogError(err)
 		return
 	}

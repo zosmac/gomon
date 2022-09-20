@@ -3,6 +3,7 @@
 package file
 
 import (
+	"context"
 	"os"
 	"runtime"
 	"syscall"
@@ -69,68 +70,73 @@ func owner(info os.FileInfo) (string, string) {
 }
 
 // observe events and notify observer's callbacks.
-func observe() {
-	defer obs.close()
-	runtime.LockOSThread() // tie this goroutine to an OS thread
-	defer runtime.UnlockOSThread()
+func observe(ctx context.Context) error {
+	go func() {
+		defer obs.close()
+		runtime.LockOSThread() // tie this goroutine to an OS thread
+		defer runtime.UnlockOSThread()
 
-	// Because of file caching, windows.FILE_NOTIFY_CHANGE_SIZE may not be timely.
-	// So poll files with GetFileAttributesEx to trigger writes to disk.
-	// See the poll() function below.
-	go poll()
+		// Because of file caching, windows.FILE_NOTIFY_CHANGE_SIZE may not be timely.
+		// So poll files with GetFileAttributesEx to trigger writes to disk.
+		// See the poll() function below.
+		go poll()
 
-	filter := uint32(windows.FILE_NOTIFY_CHANGE_LAST_WRITE |
-		windows.FILE_NOTIFY_CHANGE_SIZE |
-		windows.FILE_NOTIFY_CHANGE_ATTRIBUTES |
-		windows.FILE_NOTIFY_CHANGE_FILE_NAME |
-		windows.FILE_NOTIFY_CHANGE_DIR_NAME)
+		filter := uint32(windows.FILE_NOTIFY_CHANGE_LAST_WRITE |
+			windows.FILE_NOTIFY_CHANGE_SIZE |
+			windows.FILE_NOTIFY_CHANGE_ATTRIBUTES |
+			windows.FILE_NOTIFY_CHANGE_FILE_NAME |
+			windows.FILE_NOTIFY_CHANGE_DIR_NAME,
+		)
 
-	for {
-		events := make([]byte, 65536)
-		var n uint32
-		if err := windows.ReadDirectoryChanges(
-			obs.Handle,
-			&events[0],
-			uint32(len(events)),
-			true,
-			filter,
-			&n,
-			nil,
-			0,
-		); err != nil {
-			windows.Close(obs.Handle)
-			obs.Handle = windows.InvalidHandle
-			errorChan <- core.Error("ReadDirectoryChanges", err)
-			return
-		}
+		for {
+			events := make([]byte, 65536)
+			var n uint32
+			if err := windows.ReadDirectoryChanges(
+				obs.Handle,
+				&events[0],
+				uint32(len(events)),
+				true,
+				filter,
+				&n,
+				nil,
+				0,
+			); err != nil {
+				windows.Close(obs.Handle)
+				obs.Handle = windows.InvalidHandle
+				errorChan <- core.Error("ReadDirectoryChanges", err)
+				return
+			}
 
-		var event *windows.FileNotifyInformation
-		for i := 0; i < int(n); i += int(event.NextEntryOffset) {
-			event = (*windows.FileNotifyInformation)(unsafe.Pointer(&events[i]))
-			name := windows.UTF16ToString((*[1024]uint16)(unsafe.Pointer(&event.FileName))[:event.FileNameLength/2])
+			var event *windows.FileNotifyInformation
+			for i := 0; i < int(n); i += int(event.NextEntryOffset) {
+				event = (*windows.FileNotifyInformation)(unsafe.Pointer(&events[i]))
+				name := windows.UTF16ToString((*[1024]uint16)(unsafe.Pointer(&event.FileName))[:event.FileNameLength/2])
 
-			switch event.Action {
-			case windows.FILE_ACTION_ADDED, windows.FILE_ACTION_RENAMED_NEW_NAME:
-				if info, err := os.Stat(name); err != nil {
-					continue
-				} else if info.IsDir() {
-					watchDir(name)
-				} else {
-					if f, err := add(name, false); err == nil {
-						notify(fileCreate, f, "")
+				switch event.Action {
+				case windows.FILE_ACTION_ADDED, windows.FILE_ACTION_RENAMED_NEW_NAME:
+					if info, err := os.Stat(name); err != nil {
+						continue
+					} else if info.IsDir() {
+						watchDir(name)
+					} else {
+						if f, err := add(name, false); err == nil {
+							notify(fileCreate, f, "")
+						}
 					}
+				case windows.FILE_ACTION_MODIFIED:
+					notify(fileUpdate, obs.watched[name], "")
+				case windows.FILE_ACTION_REMOVED, windows.FILE_ACTION_RENAMED_OLD_NAME:
+					remove(obs.watched[name])
 				}
-			case windows.FILE_ACTION_MODIFIED:
-				notify(fileUpdate, obs.watched[name], "")
-			case windows.FILE_ACTION_REMOVED, windows.FILE_ACTION_RENAMED_OLD_NAME:
-				remove(obs.watched[name])
-			}
 
-			if event.NextEntryOffset == 0 {
-				break
+				if event.NextEntryOffset == 0 {
+					break
+				}
 			}
 		}
-	}
+	}()
+
+	return nil
 }
 
 // poll invokes os.Stat to flush cached files to disk. On Windows, files are not

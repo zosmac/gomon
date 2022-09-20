@@ -25,11 +25,11 @@ extern void callback(ConstFSEventStreamRef, void *, size_t, char **, FSEventStre
 import "C"
 
 import (
+	"context"
 	"errors"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"unsafe"
 
 	"github.com/zosmac/gomon/core"
@@ -49,54 +49,56 @@ func (h *handle) close() {
 }
 
 // observe events and notify observer's callbacks.
-func observe() {
-	defer obs.close()
-	runtime.LockOSThread() // tie this goroutine to an OS thread
-	defer runtime.UnlockOSThread()
+func observe(ctx context.Context) error {
+	go func() {
+		defer obs.close()
+		runtime.LockOSThread() // tie this goroutine to an OS thread
+		defer runtime.UnlockOSThread()
 
-	cname := core.CreateCFString(flags.fileDirectory + "\x00")
-	defer C.CFRelease(C.CFTypeRef(cname))
-	context := C.malloc(C.sizeof_struct_FSEventStreamContext)
-	defer C.free(context)
-	C.memset(context, 0, C.sizeof_struct_FSEventStreamContext)
+		cname := core.CreateCFString(flags.fileDirectory + "\x00")
+		defer C.CFRelease(C.CFTypeRef(cname))
+		context := C.malloc(C.sizeof_struct_FSEventStreamContext)
+		defer C.free(context)
+		C.memset(context, 0, C.sizeof_struct_FSEventStreamContext)
 
-	stream := C.FSEventStreamCreate(
-		0,
-		(*[0]byte)(C.callback),
-		(*C.FSEventStreamContext)(context),
-		C.CFArrayCreate(0, &cname, 1, nil),
-		C.kFSEventStreamEventIdSinceNow,
-		C.CFTimeInterval(1.0),
-		C.kFSEventStreamCreateFlagFileEvents|C.kFSEventStreamCreateFlagWatchRoot, // |C.kFSEventStreamCreateFlagNoDefer,
-	)
-	defer func() {
-		C.FSEventStreamStop(stream)
-		C.FSEventStreamInvalidate(stream)
-		C.FSEventStreamRelease(stream)
+		stream := C.FSEventStreamCreate(
+			0,
+			(*[0]byte)(C.callback),
+			(*C.FSEventStreamContext)(context),
+			C.CFArrayCreate(0, &cname, 1, nil),
+			C.kFSEventStreamEventIdSinceNow,
+			C.CFTimeInterval(1.0),
+			C.kFSEventStreamCreateFlagFileEvents|C.kFSEventStreamCreateFlagWatchRoot, // |C.kFSEventStreamCreateFlagNoDefer,
+		)
+		defer func() {
+			C.FSEventStreamStop(stream)
+			C.FSEventStreamInvalidate(stream)
+			C.FSEventStreamRelease(stream)
+		}()
+
+		// NOTE: KEEP THIS AS A USEFUL EXAMPLE
+		// paths := C.FSEventStreamCopyPathsBeingWatched(stream)
+		// defer C.CFRelease(C.CFTypeRef(paths))
+		// var buf [1024]C.char
+		// C.CFStringGetCString(
+		// 	C.CFStringRef(C.CFArrayGetValueAtIndex(paths, 0)),
+		// 	&buf[0],
+		// 	C.CFIndex(len(buf)),
+		// 	C.kCFStringEncodingUTF8,
+		// )
+		// fmt.Fprintf(os.Stderr, "top level path is %s\n", C.GoString(&buf[0]))
+
+		C.QueueStream(stream)
+
+		<-ctx.Done()
+		core.LogInfo(core.Error("observer()", ctx.Err()))
 	}()
 
-	// NOTE: KEEP THIS AS A USEFUL EXAMPLE
-	// paths := C.FSEventStreamCopyPathsBeingWatched(stream)
-	// defer C.CFRelease(C.CFTypeRef(paths))
-	// var buf [1024]C.char
-	// C.CFStringGetCString(
-	// 	C.CFStringRef(C.CFArrayGetValueAtIndex(paths, 0)),
-	// 	&buf[0],
-	// 	C.CFIndex(len(buf)),
-	// 	C.kCFStringEncodingUTF8,
-	// )
-	// fmt.Fprintf(os.Stderr, "top level path is %s\n", C.GoString(&buf[0]))
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-	core.Register(func() {
-		wg.Done()
-	})
-	C.QueueStream(stream)
-	wg.Wait()
+	return nil
 }
 
 // callback handles events sent on stream.
+//
 //export callback
 func callback(stream C.ConstFSEventStreamRef, _ unsafe.Pointer, count C.size_t, paths **C.char, flags *C.FSEventStreamEventFlags, ids *C.FSEventStreamEventId) {
 	var oldname string

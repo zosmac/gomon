@@ -34,16 +34,32 @@ var (
 // init initializes the command line flags.
 func init() {
 	s := strings.Join(logLevels.Values(), "|")
-	core.Flags.Var(&flags.logLevel, "loglevel", "[-loglevel "+s+"]",
-		"Filter out log entries below this logging level threshold `"+s+"`")
+	core.Flags.Var(
+		&flags.logLevel,
+		"loglevel",
+		"[-loglevel "+s+"]",
+		"Filter out log entries below this logging level threshold `"+s+"`",
+	)
 
 	if runtime.GOOS == "linux" {
-		core.Flags.Var(&flags.logDirectory, "logdirectory", "[-logdirectory <path>]",
-			"The `path` to the top of a directory hierarchy of log files to tail with names matching -logregex")
-		core.Flags.Var(&flags.logRegex, "logregex", "[-logregex <expression>]",
-			"A regular `expression` for selecting log files from the directory hierarchy to watch")
-		core.Flags.Var(&flags.logRegexExclude, "logregexexclude", "[-logregexexclude <expression>]",
-			"A regular `expression` for excluding log files from the directory hierarchy to watch")
+		core.Flags.Var(
+			&flags.logDirectory,
+			"logdirectory",
+			"[-logdirectory <path>]",
+			"The `path` to the top of a directory hierarchy of log files to tail with names matching -logregex",
+		)
+		core.Flags.Var(
+			&flags.logRegex,
+			"logregex",
+			"[-logregex <expression>]",
+			"A regular `expression` for selecting log files from the directory hierarchy to watch",
+		)
+		core.Flags.Var(
+			&flags.logRegexExclude,
+			"logregexexclude",
+			"[-logregexexclude <expression>]",
+			"A regular `expression` for excluding log files from the directory hierarchy to watch",
+		)
 	}
 }
 

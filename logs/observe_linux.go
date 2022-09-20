@@ -4,6 +4,7 @@ package logs
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -84,48 +85,52 @@ func close() error {
 	return nil
 }
 
-// observe inotify events and notify observer's callbacks
-func observe() {
-	defer close()
+// observe inotify events and notify observer's callbacks.
+func observe(ctx context.Context) error {
+	go func() {
+		defer close()
 
-	for {
-		events := make([]byte, 16384)
-		n, err := syscall.Read(nd, events)
-		if err != nil {
-			errorChan <- core.Error("read", err)
-			return
-		}
-
-		ready := map[int]*os.File{}
-		var event *syscall.InotifyEvent
-		for i := 0; i < n; i += syscall.SizeofInotifyEvent + int(event.Len) {
-			event = (*syscall.InotifyEvent)(unsafe.Pointer(&events[i]))
-
-			if event.Mask&syscall.IN_IGNORED != 0 {
-				continue
+		for {
+			events := make([]byte, 16384)
+			n, err := syscall.Read(nd, events)
+			if err != nil {
+				errorChan <- core.Error("read", err)
+				return
 			}
 
-			// verify log file still being watched
-			var l *os.File
-			var ok bool
-			for _, wds := range watched {
-				if l, ok = wds[int(event.Wd)]; ok {
-					break
+			ready := map[int]*os.File{}
+			var event *syscall.InotifyEvent
+			for i := 0; i < n; i += syscall.SizeofInotifyEvent + int(event.Len) {
+				event = (*syscall.InotifyEvent)(unsafe.Pointer(&events[i]))
+
+				if event.Mask&syscall.IN_IGNORED != 0 {
+					continue
+				}
+
+				// verify log file still being watched
+				var l *os.File
+				var ok bool
+				for _, wds := range watched {
+					if l, ok = wds[int(event.Wd)]; ok {
+						break
+					}
+				}
+				if !ok {
+					delete(ready, int(event.Wd))
+					syscall.InotifyRmWatch(nd, uint32(event.Wd))
+					continue
+				}
+
+				if event.Mask&syscall.IN_MODIFY != 0 {
+					ready[int(event.Wd)] = l
 				}
 			}
-			if !ok {
-				delete(ready, int(event.Wd))
-				syscall.InotifyRmWatch(nd, uint32(event.Wd))
-				continue
-			}
 
-			if event.Mask&syscall.IN_MODIFY != 0 {
-				ready[int(event.Wd)] = l
-			}
+			report(ready)
 		}
+	}()
 
-		report(ready)
-	}
+	return nil
 }
 
 func report(ready map[int]*os.File) {

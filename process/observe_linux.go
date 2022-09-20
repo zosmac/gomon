@@ -3,6 +3,7 @@
 package process
 
 import (
+	"context"
 	"syscall"
 	"time"
 	"unsafe"
@@ -36,27 +37,29 @@ func open() error {
 	// enable the netlink process connector
 	fd, err := nlProcess()
 	if err != nil {
-		return err
+		return core.Error("nlProcess()", err)
 	}
 
 	// enable the netlink generic connector
 	gd, err := nlGeneric()
 	if err != nil {
 		syscall.Close(fd)
-		return err
+		return core.Error("nlGeneric()", err)
 	}
+
 	// determine the taskstats family id
 	id, err := genlFamily(gd, unix.TASKSTATS_GENL_NAME)
 	if err != nil {
 		syscall.Close(fd)
 		syscall.Close(gd)
-		return err
+		return core.Error("genlFamily()", err)
 	}
+
 	// start observing taskstats responses
 	if err = nlGenericObserve(gd, id, true); err != nil {
 		syscall.Close(fd)
 		syscall.Close(gd)
-		return err
+		return core.Error("nlGenericObserve()", err)
 	}
 
 	h = handle{fd: fd, gd: gd, id: id}
@@ -73,100 +76,99 @@ func (h *handle) close() {
 }
 
 // observe events and notify observer's callbacks.
-func observe() {
-	// start the lsof command as a sub-process to list periodically all open files and network connections.
-	if err := lsofCommand(); err != nil {
-		core.LogError(err)
-	}
-
+func observe(ctx context.Context) error {
 	go taskstats()
 
-	defer h.close()
+	go func() {
+		defer h.close()
 
-	for {
-		nlMsg := make([]byte, connectorMaxMessageSize)
-		n, _, err := syscall.Recvfrom(h.fd, nlMsg, 0)
-		if err != nil {
-			errorChan <- core.Error("recvfrom", err)
-			return
-		}
-		msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
-
-		for _, m := range msgs {
-			if m.Header.Type == syscall.NLMSG_ERROR {
-				errorChan <- core.Error("netlink", syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4]))))
-				break
+		for {
+			nlMsg := make([]byte, connectorMaxMessageSize)
+			n, _, err := syscall.Recvfrom(h.fd, nlMsg, 0)
+			if err != nil {
+				errorChan <- core.Error("Recvfrom()", err)
+				return
 			}
+			msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
-			if m.Header.Type != syscall.NLMSG_DONE {
-				continue
-			}
-
-			hdr := (*procEvent)(unsafe.Pointer(&m.Data[unsafe.Sizeof(cnMsg{})]))
-			ev := unsafe.Pointer(&m.Data[unsafe.Sizeof(cnMsg{})+unsafe.Sizeof(procEvent{})])
-
-			switch hdr.what {
-			case procEventFork:
-				event := (*forkProcEvent)(ev)
-				ppid := Pid(event.parentTgid)
-				pid := Pid(event.childTgid)
-				id := pid.id()
-				id.ppid = ppid // preserve in case child reassigned to init process
-				youth[id.Pid] = id
-				id.fork()
-
-			case procEventExec:
-				event := (*execProcEvent)(ev)
-				pid := Pid(event.processTgid)
-				id := pid.id() // get new name
-				if i, ok := youth[pid]; ok {
-					id.ppid = i.ppid // preserve in case child reassigned to init process
-				}
-				youth[pid] = id
-				id.exec()
-
-			case procEventExit:
-				event := (*exitProcEvent)(ev)
-				pid := Pid(event.processTgid)
-				if id, ok := youth[pid]; ok {
-					delete(youth, pid)
-					id.exit()
+			for _, m := range msgs {
+				if m.Header.Type == syscall.NLMSG_ERROR {
+					errorChan <- core.Error("netlink", syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4]))))
+					break
 				}
 
-			case procEventUID:
-				event := (*uidProcEvent)(ev)
-				pid := Pid(event.processTgid)
-				id, ok := youth[pid]
-				if !ok {
-					id = pid.id()
+				if m.Header.Type != syscall.NLMSG_DONE {
+					continue
+				}
+
+				hdr := (*procEvent)(unsafe.Pointer(&m.Data[unsafe.Sizeof(cnMsg{})]))
+				ev := unsafe.Pointer(&m.Data[unsafe.Sizeof(cnMsg{})+unsafe.Sizeof(procEvent{})])
+
+				switch hdr.what {
+				case procEventFork:
+					event := (*forkProcEvent)(ev)
+					ppid := Pid(event.parentTgid)
+					pid := Pid(event.childTgid)
+					id := pid.id()
+					id.ppid = ppid // preserve in case child reassigned to init process
+					youth[id.Pid] = id
+					id.fork()
+
+				case procEventExec:
+					event := (*execProcEvent)(ev)
+					pid := Pid(event.processTgid)
+					id := pid.id() // get new name
+					if i, ok := youth[pid]; ok {
+						id.ppid = i.ppid // preserve in case child reassigned to init process
+					}
 					youth[pid] = id
+					id.exec()
+
+				case procEventExit:
+					event := (*exitProcEvent)(ev)
+					pid := Pid(event.processTgid)
+					if id, ok := youth[pid]; ok {
+						delete(youth, pid)
+						id.exit()
+					}
+
+				case procEventUID:
+					event := (*uidProcEvent)(ev)
+					pid := Pid(event.processTgid)
+					id, ok := youth[pid]
+					if !ok {
+						id = pid.id()
+						youth[pid] = id
+					}
+					id.setuid(int(event.uid))
+
+				case procEventGID:
+					event := (*gidProcEvent)(ev)
+					pid := Pid(event.processTgid)
+					id, ok := youth[pid]
+					if !ok {
+						id = pid.id()
+						youth[pid] = id
+					}
+					id.setgid(int(event.gid))
+
+				case procEventSID:
+					// event := (*sidProcEvent)(ev)
+					// if id, ok := youth[Pid(event.processTgid)]; ok {
+					// 	fmt.Fprintf(os.Stderr, "SID ========== %+v\n", event)
+					// }
+
+				case procEventComm:
+					// event := (*commProcEvent)(ev)
+					// if id, ok := youth[Pid(event.processTgid)]; ok {
+					// 	fmt.Fprintf(os.Stderr, "COMM ========== %+v\n", event)
+					// }
 				}
-				id.setuid(int(event.uid))
-
-			case procEventGID:
-				event := (*gidProcEvent)(ev)
-				pid := Pid(event.processTgid)
-				id, ok := youth[pid]
-				if !ok {
-					id = pid.id()
-					youth[pid] = id
-				}
-				id.setgid(int(event.gid))
-
-			case procEventSID:
-				// event := (*sidProcEvent)(ev)
-				// if id, ok := youth[Pid(event.processTgid)]; ok {
-				// 	fmt.Fprintf(os.Stderr, "SID ========== %+v\n", event)
-				// }
-
-			case procEventComm:
-				// event := (*commProcEvent)(ev)
-				// if id, ok := youth[Pid(event.processTgid)]; ok {
-				// 	fmt.Fprintf(os.Stderr, "COMM ========== %+v\n", event)
-				// }
 			}
 		}
-	}
+	}()
+
+	return nil
 }
 
 // taskstats reads netlink process metrics.
@@ -175,7 +177,7 @@ func taskstats() {
 		nlMsg := make([]byte, 1024)
 		n, _, err := syscall.Recvfrom(h.gd, nlMsg, 0)
 		if err != nil {
-			errorChan <- core.Error("recvfrom", err)
+			errorChan <- core.Error("Recvfrom()", err)
 			return
 		}
 		msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])

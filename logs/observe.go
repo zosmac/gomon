@@ -4,6 +4,7 @@ package logs
 
 import (
 	"bufio"
+	"context"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -77,13 +78,15 @@ var (
 	}
 )
 
-// Observer starts capture of log entries.
-func Observer() error {
+// Observer starts the log monitor.
+func Observer(ctx context.Context) error {
 	if err := open(); err != nil {
 		return core.Error("open", err)
 	}
 
-	go observe()
+	if err := observe(ctx); err != nil {
+		return core.Error("observe", err)
+	}
 
 	go func() {
 		for {

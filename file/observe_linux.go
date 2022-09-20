@@ -4,6 +4,7 @@ package file
 
 import (
 	"bufio"
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,8 +61,11 @@ func open(directory string) (*handle, error) {
 	}
 
 	// IN_DELETE_SELF evidently not sent to root directory, therefore watch its parent directory for IN_DELETE.
-	wd, err := syscall.InotifyAddWatch(fd, filepath.Join(directory, ".."),
-		syscall.IN_ONLYDIR|syscall.IN_MOVED_FROM|syscall.IN_DELETE)
+	wd, err := syscall.InotifyAddWatch(
+		fd,
+		filepath.Join(directory, ".."),
+		syscall.IN_ONLYDIR|syscall.IN_MOVED_FROM|syscall.IN_DELETE,
+	)
 	if err != nil {
 		return nil, core.Error("inotify_add_watch", err)
 	}
@@ -81,70 +85,74 @@ func (h *handle) close() error {
 }
 
 // observe inotify events and notify observer's callbacks.
-func observe() {
-	defer obs.close()
+func observe(ctx context.Context) error {
+	go func() {
+		defer obs.close()
 
-	for {
-		events := make([]byte, 16384)
-		n, err := syscall.Read(obs.fd, events)
-		if err != nil {
-			errorChan <- core.Error("read", err)
-			return
-		}
-
-		var event *syscall.InotifyEvent
-		for i := 0; i < n; i += syscall.SizeofInotifyEvent + int(event.Len) {
-			event = (*syscall.InotifyEvent)(unsafe.Pointer(&events[i]))
-
-			if event.Mask&syscall.IN_IGNORED != 0 {
-				continue
-			}
-
-			var abs string
-			if event.Len > 0 {
-				arr := (*[1024]int8)(unsafe.Add(unsafe.Pointer(event), syscall.SizeofInotifyEvent))
-				abs = core.FromCString(arr[:event.Len])
-			}
-
-			// IN_DELETE_SELF evidently not sent to root, therefore test if its parent received IN_DELETE
-			if int(event.Wd) == obs.wd &&
-				abs == obs.root &&
-				event.Mask&(syscall.IN_ISDIR|syscall.IN_DELETE) == (syscall.IN_ISDIR|syscall.IN_DELETE) {
+		for {
+			events := make([]byte, 16384)
+			n, err := syscall.Read(obs.fd, events)
+			if err != nil {
+				errorChan <- core.Error("read", err)
 				return
 			}
 
-			f, ok := obs.watched[obs.watches[int(event.Wd)]]
-			if ok {
-				abs = f.name
-			} else {
-				syscall.InotifyRmWatch(obs.fd, uint32(event.Wd))
-				continue
-			}
+			var event *syscall.InotifyEvent
+			for i := 0; i < n; i += syscall.SizeofInotifyEvent + int(event.Len) {
+				event = (*syscall.InotifyEvent)(unsafe.Pointer(&events[i]))
 
-			if event.Mask&(syscall.IN_CREATE|syscall.IN_MOVED_TO) != 0 {
-				if info, err := os.Stat(abs); err != nil {
+				if event.Mask&syscall.IN_IGNORED != 0 {
 					continue
-				} else if info.IsDir() {
-					rel, _ := filepath.Rel(obs.root, abs)
-					watchDir(rel)
+				}
+
+				var abs string
+				if event.Len > 0 {
+					arr := (*[1024]int8)(unsafe.Add(unsafe.Pointer(event), syscall.SizeofInotifyEvent))
+					abs = core.FromCString(arr[:event.Len])
+				}
+
+				// IN_DELETE_SELF evidently not sent to root, therefore test if its parent received IN_DELETE
+				if int(event.Wd) == obs.wd &&
+					abs == obs.root &&
+					event.Mask&(syscall.IN_ISDIR|syscall.IN_DELETE) == (syscall.IN_ISDIR|syscall.IN_DELETE) {
+					return
+				}
+
+				f, ok := obs.watched[obs.watches[int(event.Wd)]]
+				if ok {
+					abs = f.name
 				} else {
-					add(abs, false)
-					if info.Size() > 0 {
-						event.Mask |= syscall.IN_MODIFY
+					syscall.InotifyRmWatch(obs.fd, uint32(event.Wd))
+					continue
+				}
+
+				if event.Mask&(syscall.IN_CREATE|syscall.IN_MOVED_TO) != 0 {
+					if info, err := os.Stat(abs); err != nil {
+						continue
+					} else if info.IsDir() {
+						rel, _ := filepath.Rel(obs.root, abs)
+						watchDir(rel)
+					} else {
+						add(abs, false)
+						if info.Size() > 0 {
+							event.Mask |= syscall.IN_MODIFY
+						}
+						notify(fileCreate, f, "")
 					}
-					notify(fileCreate, f, "")
+				}
+
+				if event.Mask&syscall.IN_MODIFY != 0 {
+					notify(fileUpdate, f, "")
+				}
+
+				if event.Mask&(syscall.IN_DELETE|syscall.IN_MOVED_FROM) != 0 {
+					remove(f)
 				}
 			}
-
-			if event.Mask&syscall.IN_MODIFY != 0 {
-				notify(fileUpdate, f, "")
-			}
-
-			if event.Mask&(syscall.IN_DELETE|syscall.IN_MOVED_FROM) != 0 {
-				remove(f)
-			}
 		}
-	}
+	}()
+
+	return nil
 }
 
 // addDir adds host specific handling for a directory.

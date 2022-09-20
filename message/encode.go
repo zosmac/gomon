@@ -3,7 +3,9 @@
 package message
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +32,7 @@ type (
 func (writer) Write(buf []byte) (int, error) { return os.Stdout.Write(buf) }
 
 // Encoder configures the message encoder. Its Encode function marshals objects.
-func Encoder() error {
+func Encoder(ctx context.Context) error {
 	info, err := os.Stdout.Stat()
 	if err != nil {
 		return core.Error("Stat", err)
@@ -55,9 +57,7 @@ func Encoder() error {
 		jsonEncoder.SetIndent("", "  ")
 	}
 
-	go encode()
-
-	core.Register(func() { Close() })
+	go encode(ctx)
 
 	return nil
 }
@@ -69,7 +69,7 @@ func Encode(ms []Content) error {
 }
 
 // encode runs as a goroutine that receives messages and encodes or caches them.
-func encode() {
+func encode(ctx context.Context) {
 	var timer <-chan time.Time
 	if flags.rotate.interval > 0 {
 		tm := time.Now().UTC().Truncate(flags.rotate.interval)
@@ -99,6 +99,13 @@ func encode() {
 		case t := <-timer:
 			timer = time.NewTicker(flags.rotate.interval).C
 			Rotate(t)
+		case <-ctx.Done():
+			Close()
+			core.LogInfo(fmt.Errorf(
+				"Encoder() err=%w",
+				ctx.Err(),
+			))
+			return
 		}
 
 		loki = lokiTest()

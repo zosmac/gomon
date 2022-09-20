@@ -3,6 +3,8 @@
 package logs
 
 import (
+	"context"
+
 	"github.com/zosmac/gomon/core"
 	"github.com/zosmac/gomon/message"
 )
@@ -12,7 +14,8 @@ func open() error {
 	return core.Unsupported()
 }
 
-func observe() {
+func observe(ctx context.Context) error {
+	return nil
 }
 
 func report() []message.Content {

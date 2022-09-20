@@ -67,6 +67,10 @@ func init() {
 		flags.rotate.interval = time.Second
 	}
 	flags.rotate.Set(flags.rotate.interval.String())
-	core.Flags.Var(&flags.rotate, "rotate", "[-rotate <interval>]",
-		"Rotate output file at `interval`, specified in Go time.Duration string format"+def)
+	core.Flags.Var(
+		&flags.rotate,
+		"rotate",
+		"[-rotate <interval>]",
+		"Rotate output file at `interval`, specified in Go time.Duration string format"+def,
+	)
 }

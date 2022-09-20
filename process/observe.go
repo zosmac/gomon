@@ -3,6 +3,7 @@
 package process
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -19,12 +20,18 @@ var (
 )
 
 // Observer starts capture of process event observations.
-func Observer() error {
+func Observer(ctx context.Context) error {
 	if err := open(); err != nil {
 		return core.Error("process observer", err)
 	}
 
-	go observe()
+	if err := endpoints(ctx); err != nil {
+		return err
+	}
+
+	if err := observe(ctx); err != nil {
+		return err
+	}
 
 	go func() {
 		for {

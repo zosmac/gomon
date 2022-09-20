@@ -85,8 +85,12 @@ func init() {
 	if Flags.Sample < Sample(time.Second) {
 		Flags.Sample = Sample(time.Second)
 	}
-	Flags.Var(&Flags.Sample, "sample", "[-sample <interval>]",
-		"Sample metrics at `interval`, specified in Go time.Duration string format")
+	Flags.Var(
+		&Flags.Sample,
+		"sample",
+		"[-sample <interval>]",
+		"Sample metrics at `interval`, specified in Go time.Duration string format",
+	)
 
 	Flags.commandDescription = `Monitors the local host,
 	measuring state and usage of:

@@ -17,6 +17,10 @@ var (
 
 // init initializes the command line flags.
 func init() {
-	core.Flags.Var(&flags.fileDirectory, "filedirectory", "[-filedirectory <path>]",
-		"The `path` to the top of a directory hierarchy of files to monitor")
+	core.Flags.Var(
+		&flags.fileDirectory,
+		"filedirectory",
+		"[-filedirectory <path>]",
+		"The `path` to the top of a directory hierarchy of files to monitor",
+	)
 }

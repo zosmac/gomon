@@ -3,6 +3,7 @@
 package process
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -12,9 +13,9 @@ import (
 )
 
 // hostCommand builds a host specific command line for lsof.
-func hostCommand() *exec.Cmd {
+func hostCommand(ctx context.Context) *exec.Cmd {
 	cmdline := strings.Fields(fmt.Sprintf("lsof +E -Ki -l -n -P -d ^cwd,^mem,^rtd,^txt,^DEL -r%dm====%%T====", 10))
-	cmd := exec.Command(cmdline[0], cmdline[1:]...)
+	cmd := exec.CommandContext(ctx, cmdline[0], cmdline[1:]...)
 
 	dirname := filepath.Join("/proc", "self", "fd")
 	if dir, err := os.Open(dirname); err == nil {

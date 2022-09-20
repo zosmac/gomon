@@ -9,6 +9,7 @@ import "C"
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -71,22 +72,26 @@ func open() error {
 }
 
 // observe starts the macOS log and syslog commands as sub-processes to stream log entries.
-func observe() {
-	go logCommand()
-	go syslogCommand()
+func observe(ctx context.Context) error {
+	go logCommand(ctx)
+	go syslogCommand(ctx)
+	return nil
 }
 
 // logCommand starts the log command to capture OSLog entries (using OSLogStore API directly is MUCH slower)
-func logCommand() {
+func logCommand(ctx context.Context) {
 	predicate := fmt.Sprintf(
 		"(eventType == 'logEvent') AND (messageType >= %d) AND (NOT eventMessage BEGINSWITH[cd] '%s')",
 		osLogLevels[flags.logLevel],
 		"System Policy: gomon",
 	)
 
-	sc, err := startCommand(append(strings.Fields("log stream --predicate"), predicate))
+	sc, err := startCommand(ctx, append(strings.Fields("log stream --predicate"), predicate))
 	if err != nil {
-		core.LogError(err)
+		core.LogError(fmt.Errorf(
+			"startCommand(log stream) err=%q",
+			err,
+		))
 		return
 	}
 
@@ -99,20 +104,23 @@ func logCommand() {
 }
 
 // syslogCommand starts the syslog command to capture syslog entries
-func syslogCommand() {
-	sc, err := startCommand(append(strings.Fields("syslog -w 0 -T utc.3 -k Level Nle"),
+func syslogCommand(ctx context.Context) {
+	sc, err := startCommand(ctx, append(strings.Fields("syslog -w 0 -T utc.3 -k Level Nle"),
 		syslogLevels[flags.logLevel]),
 	)
 	if err != nil {
-		core.LogError(err)
+		core.LogError(fmt.Errorf(
+			"startCommand(syslog) err=%q",
+			err,
+		))
 		return
 	}
 
 	parseLog(sc, syslogRegex, "2006-01-02 15:04:05Z")
 }
 
-func startCommand(cmdline []string) (*bufio.Scanner, error) {
-	cmd := exec.Command(cmdline[0], cmdline[1:]...)
+func startCommand(ctx context.Context, cmdline []string) (*bufio.Scanner, error) {
+	cmd := exec.CommandContext(ctx, cmdline[0], cmdline[1:]...)
 
 	// ensure that no open descriptors propagate to child
 	if n := C.proc_pidinfo(
@@ -127,19 +135,30 @@ func startCommand(cmdline []string) (*bufio.Scanner, error) {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, core.Error("stdout pipe failed", err)
+		return nil, core.Error("StdoutPipe()", err)
 	}
 	cmd.Stderr = nil // sets to /dev/null
 	if err := cmd.Start(); err != nil {
-		return nil, core.Error("start failed", err)
+		return nil, core.Error("Start()", err)
 	}
 
-	core.LogInfo(fmt.Errorf("start [%d] %q", cmd.Process.Pid, cmd.String()))
+	core.LogInfo(fmt.Errorf(
+		"Start() command=%q pid=%d",
+		cmd.String(),
+		cmd.Process.Pid,
+	))
 
-	core.Register(func() {
-		cmd.Process.Kill()
-		cmd.Wait()
-	})
+	go func() {
+		state, err := cmd.Process.Wait()
+		core.LogInfo(fmt.Errorf(
+			"Wait() command=%q pid=%d err=%v rc=%d usage=%+v",
+			cmd.String(),
+			cmd.Process.Pid,
+			err,
+			state.ExitCode(),
+			state.SysUsage(),
+		))
+	}()
 
 	return bufio.NewScanner(stdout), nil
 }

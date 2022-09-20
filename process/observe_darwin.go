@@ -9,6 +9,7 @@ package process
 import "C"
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"syscall"
@@ -48,99 +49,96 @@ func watch(kd int, pid Pid) error {
 }
 
 // observe events and notify observer's callbacks.
-func observe() {
-	// start the lsof command as a sub-process to list periodically all open files and network connections.
-	if err := lsofCommand(); err != nil {
-		core.LogError(err)
+func observe(ctx context.Context) error {
+	pids, err := getPids()
+	if err != nil {
+		return core.Error("getPids", err)
 	}
 
 	kd, err := syscall.Kqueue()
 	if err != nil {
-		errorChan <- core.Error("Kqueue", err)
-		return
-	}
-	defer syscall.Close(kd)
-
-	pids, err := getPids()
-	if err != nil {
-		errorChan <- core.Error("getPids", err)
-		return
+		return core.Error("Kqueue", err)
 	}
 
-	for _, pid := range pids {
-		families[pid] = children(pid)
-	}
-	for ppid, pids := range families {
-		for pid := range pids {
-			id, err := pid.id()
-			if err != nil {
-				errorChan <- core.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
-				continue
-			}
-			if err := watch(kd, pid); err != nil {
-				errorChan <- core.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
-				continue
-			}
-			id.ppid = ppid // preserve in case child reassigned to init process
-			families[ppid][pid] = id
+	go func() {
+		defer syscall.Close(kd)
+
+		for _, pid := range pids {
+			families[pid] = children(pid)
 		}
-	}
-
-	for {
-		events := make([]syscall.Kevent_t, 10)
-		n, err := syscall.Kevent(kd, nil, events, nil)
-		if err != nil {
-			if errors.Is(err, syscall.EINTR) {
-				continue
-			}
-			errorChan <- core.Error("Kevent", err)
-			return
-		}
-
-		for _, event := range events[:n] {
-			pid := Pid(event.Ident)
-			if event.Flags&syscall.EV_ERROR != 0 {
-				errorChan <- core.Error("Kevent", fmt.Errorf("pid: %d, %#v", pid, event))
-				continue
-			}
-
-			if event.Fflags&syscall.NOTE_FORK != 0 {
-				newKids(kd, pid)
-				continue
-			}
-
-			var id Id
-			var ok bool
-			var ppid Pid
-			var youth ids
-			for ppid, youth = range families {
-				if id, ok = youth[pid]; ok {
-					break
-				}
-			}
-
-			if event.Fflags&syscall.NOTE_EXEC != 0 {
-				if id, err = pid.id(); err != nil {
-					errorChan <- core.Error("Kevent", fmt.Errorf("exec pid: %d, err: %w", pid, err))
-					if ok {
-						delete(youth, pid)
-					}
+		for ppid, pids := range families {
+			for pid := range pids {
+				id, err := pid.id()
+				if err != nil {
+					errorChan <- core.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
 					continue
 				}
-				if ok {
-					id.ppid = ppid
+				if err := watch(kd, pid); err != nil {
+					errorChan <- core.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
+					continue
 				}
-				families[id.ppid][pid] = id
-				id.exec()
-			}
-			if event.Fflags&syscall.NOTE_EXIT != 0 { // | syscall.NOTE_EXITSTATUS | syscall.NOTE_EXIT_DETAIL:
-				delete(families[id.ppid], pid)
-				delete(families, pid)
-				id.Pid = pid
-				id.exit()
+				id.ppid = ppid // preserve in case child reassigned to init process
+				families[ppid][pid] = id
 			}
 		}
-	}
+		for {
+			events := make([]syscall.Kevent_t, 10)
+			n, err := syscall.Kevent(kd, nil, events, nil)
+			if err != nil {
+				if errors.Is(err, syscall.EINTR) {
+					continue
+				}
+				errorChan <- core.Error("Kevent()", err)
+				return
+			}
+
+			for _, event := range events[:n] {
+				pid := Pid(event.Ident)
+				if event.Flags&syscall.EV_ERROR != 0 {
+					errorChan <- core.Error("Kevent()", fmt.Errorf("pid: %d, %#v", pid, event))
+					continue
+				}
+
+				if event.Fflags&syscall.NOTE_FORK != 0 {
+					newKids(kd, pid)
+					continue
+				}
+
+				var id Id
+				var ok bool
+				var ppid Pid
+				var youth ids
+				for ppid, youth = range families {
+					if id, ok = youth[pid]; ok {
+						break
+					}
+				}
+
+				if event.Fflags&syscall.NOTE_EXEC != 0 {
+					if id, err = pid.id(); err != nil {
+						errorChan <- core.Error("Kevent", fmt.Errorf("exec pid: %d, err: %w", pid, err))
+						if ok {
+							delete(youth, pid)
+						}
+						continue
+					}
+					if ok {
+						id.ppid = ppid
+					}
+					families[id.ppid][pid] = id
+					id.exec()
+				}
+				if event.Fflags&syscall.NOTE_EXIT != 0 { // | syscall.NOTE_EXITSTATUS | syscall.NOTE_EXIT_DETAIL:
+					delete(families[id.ppid], pid)
+					delete(families, pid)
+					id.Pid = pid
+					id.exit()
+				}
+			}
+		}
+	}()
+
+	return nil
 }
 
 // newKids identifies new kids of process and recreates existing kids list.
@@ -158,7 +156,7 @@ func newKids(kd int, ppid Pid) {
 		}
 		if err != nil {
 			if !errors.Is(err, syscall.ESRCH) {
-				errorChan <- core.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
+				errorChan <- core.Error("Kevent()", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
 			}
 			continue
 		}

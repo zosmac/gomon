@@ -11,9 +11,6 @@ import (
 )
 
 var (
-	// Boottime contains the system boottime.
-	Boottime = boottime()
-
 	// users caches user names for uids.
 	users = names{
 		lookup: func(id int) string {
@@ -37,6 +34,9 @@ var (
 		},
 		names: map[int]string{},
 	}
+
+	// Boottime contains the system boottime.
+	Boottime = boottime()
 )
 
 type (
@@ -62,6 +62,16 @@ func (ns *names) name(id int) string {
 	return name
 }
 
+// Username retrieves and caches user name for uid.
+func Username(uid int) string {
+	return users.name(uid)
+}
+
+// Groupname retrieves and caches group name for gid.
+func Groupname(gid int) string {
+	return groups.name(gid)
+}
+
 // MsToTime converts Unix era milliseconds to Go time.Time.
 func MsToTime(ms uint64) time.Time {
 	var s, n int64
@@ -75,14 +85,4 @@ func MsToTime(ms uint64) time.Time {
 	}
 
 	return time.Unix(s, n)
-}
-
-// Username retrieves and caches user name for uid.
-func Username(uid int) string {
-	return users.name(uid)
-}
-
-// Groupname retrieves and caches group name for gid.
-func Groupname(gid int) string {
-	return groups.name(gid)
 }

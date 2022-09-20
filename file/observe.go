@@ -3,6 +3,7 @@
 package file
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -41,7 +42,7 @@ type (
 )
 
 // Observer starts capture of file update observations.
-func Observer() error {
+func Observer(ctx context.Context) error {
 	var err error
 	if flags.fileDirectory, err = filepath.Abs(flags.fileDirectory); err != nil {
 		return core.Error("Abs", err)
@@ -67,7 +68,9 @@ func Observer() error {
 
 	core.LogInfo(fmt.Errorf("observing files in %s", flags.fileDirectory))
 
-	go observe()
+	if err := observe(ctx); err != nil {
+		return core.Error("observer()", err)
+	}
 
 	go func() {
 		for {

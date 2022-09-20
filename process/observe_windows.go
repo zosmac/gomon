@@ -3,6 +3,8 @@
 package process
 
 import (
+	"context"
+
 	"github.com/zosmac/gomon/core"
 )
 
@@ -23,8 +25,13 @@ func (h *handle) close() {
 }
 
 // observe for events and notify observer's callbacks.
-func observe() {
-	core.LogInfo(core.Unsupported())
+func endpoints(ctx context.Context) error {
+	return core.Unsupported()
+}
+
+// observe for events and notify observer's callbacks.
+func observe(ctx context.Context) error {
+	return core.Unsupported()
 }
 
 // userGroup determines user name and group for a running process

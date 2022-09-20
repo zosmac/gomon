@@ -6,6 +6,7 @@ package process
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"math"
@@ -114,38 +115,36 @@ const (
 	groupState = "state"
 )
 
-func addZone(addr string) string {
-	ip, port, _ := net.SplitHostPort(addr)
-	match := zoneregex.FindStringSubmatch(ip)
-	if match != nil { // strip the zone index from the ipv6 link local address
-		ip = match[1] + match[4]
-		if zone, ok := zones[match[3]]; ok {
-			ip += "%" + zone
-		}
-	} else if zone, ok := zones[ip]; ok {
-		ip += "%" + zone
-	}
-	return net.JoinHostPort(ip, port)
-}
-
-// lsofCommand starts the lsof command to capture process connections.
-func lsofCommand() error {
-	cmd := hostCommand() // perform OS specific customizations for command
+// endpoints starts the lsof command to capture process connections.
+func endpoints(ctx context.Context) error {
+	cmd := hostCommand(ctx) // perform OS specific customizations for command
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return core.Error("stdout pipe failed", err)
+		return core.Error("StdoutPipe()", err)
 	}
 	cmd.Stderr = nil // sets to /dev/null
-	if err := cmd.Start(); err != nil {
-		return core.Error("start failed", err)
+
+	if err = cmd.Start(); err != nil {
+		return core.Error("Start()", err)
 	}
 
-	core.LogInfo(fmt.Errorf("start [%d] %q", cmd.Process.Pid, cmd.String()))
+	core.LogInfo(fmt.Errorf(
+		"Start() command=%q pid=%d",
+		cmd.String(),
+		cmd.Process.Pid),
+	)
 
-	core.Register(func() {
-		cmd.Process.Kill()
-		cmd.Wait()
-	})
+	go func() {
+		state, err := cmd.Process.Wait()
+		core.LogInfo(fmt.Errorf(
+			"Wait() command=%q pid=%d err=%v rc=%d usage=%+v",
+			cmd.String(),
+			cmd.Process.Pid,
+			err,
+			state.ExitCode(),
+			state.SysUsage(),
+		))
+	}()
 
 	go parseLsof(stdout)
 
@@ -209,25 +208,22 @@ func parseLsof(stdout io.ReadCloser) {
 		node := strings.TrimSpace(text[indexNode:indexName])
 		name := text[indexName:]
 
-		// fmt.Fprintf(os.Stderr, "%s\n%s %d %s %s %c %c %s %s %s %s %s\n", text, command, pid, user, fd, mode, lock, fdType, device, size, node, name)
-
 		var self, peer string
 		var peerPid Pid
 		var ok bool
 
 		switch fdType {
-		case "REG", "CHAN":
+		case "CHAN":
+			fdType += ":" + device
+			fallthrough
+		case "REG", "BLK", "CHR", "DIR", "LINK", "PSXSHM", "KQUEUE",
+			"FSEVENT", "NEXUS", "NPOLICY", "ndrv", "systm", "unknown",
+			"netlink", "a_inode":
 			if fdType == "REG" {
 				if runtime.GOOS == "linux" && name != "" && pid != os.Getpid() {
 					logs.Watch(name, pid)
 				}
-			} else { // "CHAN"
-				fdType += ":" + device
 			}
-			fallthrough
-		case "BLK", "CHR", "DIR", "LINK", "PSXSHM", "KQUEUE",
-			"FSEVENT", "NEXUS", "NPOLICY", "ndrv", "systm", "unknown",
-			"netlink", "a_inode":
 			peer = name
 			if peerPid, ok = nodes[peer]; !ok {
 				peerPid = dataPid
@@ -338,4 +334,18 @@ func parseLsof(stdout io.ReadCloser) {
 			)
 		}
 	}
+}
+
+func addZone(addr string) string {
+	ip, port, _ := net.SplitHostPort(addr)
+	match := zoneregex.FindStringSubmatch(ip)
+	if match != nil { // strip the zone index from the ipv6 link local address
+		ip = match[1] + match[4]
+		if zone, ok := zones[match[3]]; ok {
+			ip += "%" + zone
+		}
+	} else if zone, ok := zones[ip]; ok {
+		ip += "%" + zone
+	}
+	return net.JoinHostPort(ip, port)
 }
