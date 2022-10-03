@@ -45,7 +45,7 @@ To set up *Gomon*, first download and install *[Go](https://golang.org/dl/)*. Th
 ```zsh
 git clone https://github.com/zosmac/gomon
 cd gomon
-go mod tidy
+go mod init github.com/zosmac/gomon
 go generate ./...
 go install ./...
 ```

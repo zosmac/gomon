@@ -24,15 +24,6 @@ var (
 	// Hostname identifies the host.
 	Hostname, _ = os.Hostname()
 
-	// executable identifies the full command path.
-	executable, _ = os.Executable()
-
-	// buildDate sets the build date for the command.
-	buildDate = func() string {
-		info, _ := os.Stat(executable)
-		return info.ModTime().UTC().Format("2006-01-02 15:04:05 UTC")
-	}()
-
 	// commandName is the base name of the executable.
 	commandName = filepath.Base(executable)
 

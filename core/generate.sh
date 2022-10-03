@@ -26,10 +26,6 @@ EOF
    mv $file ../LICENSE
 }
 
-if [ ! -f ../go.mod ]; then
-   go mod init "github.com/zosmac/gomon"
-fi
-
 go mod tidy
 license
 
@@ -40,13 +36,16 @@ dependencies=$(go list -m -f='{{.Dir}} {{.Path}} {{.Version}}' all | while read 
 echo -n \
 $'// Copyright © 2021 The Gomon Project.
 
-package main
+package core
 
 import (
 \t"os"
 )
 
 var (
+\t// srcpath to strip from source file path in log messages.
+\tsrcpath = \"$srcpath\"
+
 \t// executable identifies the full command path.
 \texecutable, _ = os.Executable()
 

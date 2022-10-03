@@ -84,7 +84,7 @@ func NodeGraph(req *http.Request) []byte {
 	pt := process.BuildTable()
 	process.Connections(pt)
 
-	if query.pid > 0 && pt[query.pid] == nil {
+	if query.pid != 0 && pt[query.pid] == nil {
 		query.pid = 0 // reset to default
 	}
 	if query.pid > 0 { // build this process' "extended family"
