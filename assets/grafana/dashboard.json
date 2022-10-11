@@ -4,7 +4,10 @@
          "list" : [
             {
                "builtIn" : 1,
-               "datasource" : "-- Grafana --",
+               "datasource" : {
+                  "type" : "datasource",
+                  "uid" : "grafana"
+               },
                "enable" : true,
                "hide" : true,
                "iconColor" : "rgba(0, 211, 255, 1)",
@@ -24,14 +27,16 @@
       "description" : "Display system measurements and observations captured by Gomon",
       "editable" : true,
       "fiscalYearStartMonth" : 0,
-      "gnetId" : null,
-      "graphTooltip" : 1,
+      "graphTooltip" : 0,
       "id" : null,
       "links" : [],
       "liveNow" : false,
       "panels" : [
          {
-            "datasource" : "Prometheus",
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "5L6f3JVVk"
+            },
             "description" : "",
             "fieldConfig" : {
                "defaults" : {
@@ -64,7 +69,7 @@
             "gridPos" : {
                "h" : 1,
                "w" : 5,
-               "x" : 5,
+               "x" : 4,
                "y" : 0
             },
             "id" : 14,
@@ -84,9 +89,14 @@
                },
                "textMode" : "value_and_name"
             },
-            "pluginVersion" : "8.2.4",
+            "pluginVersion" : "9.2.0-beta.1",
             "targets" : [
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "editorMode" : "code",
                   "exemplar" : true,
                   "expr" : "(time()-gomon_system_uptime_seconds)*1000",
                   "format" : "time_series",
@@ -96,12 +106,13 @@
                   "refId" : "A"
                }
             ],
-            "timeFrom" : null,
-            "timeShift" : null,
             "type" : "stat"
          },
          {
-            "datasource" : "Prometheus",
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "5L6f3JVVk"
+            },
             "description" : "",
             "fieldConfig" : {
                "defaults" : {
@@ -124,8 +135,8 @@
             },
             "gridPos" : {
                "h" : 1,
-               "w" : 3,
-               "x" : 10,
+               "w" : 4,
+               "x" : 9,
                "y" : 0
             },
             "id" : 12,
@@ -147,9 +158,13 @@
                },
                "textMode" : "value_and_name"
             },
-            "pluginVersion" : "8.2.4",
+            "pluginVersion" : "9.2.0-beta.1",
             "targets" : [
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
                   "exemplar" : true,
                   "expr" : "gomon_system_uptime_seconds",
                   "format" : "time_series",
@@ -158,12 +173,13 @@
                   "refId" : "A"
                }
             ],
-            "timeFrom" : null,
-            "timeShift" : null,
             "type" : "stat"
          },
          {
-            "datasource" : "Prometheus",
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "5L6f3JVVk"
+            },
             "description" : "",
             "fieldConfig" : {
                "defaults" : {
@@ -209,9 +225,13 @@
                },
                "textMode" : "value_and_name"
             },
-            "pluginVersion" : "8.2.4",
+            "pluginVersion" : "9.2.0-beta.1",
             "targets" : [
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
                   "exemplar" : true,
                   "expr" : "gomon_system_cpu_count",
                   "interval" : "",
@@ -219,151 +239,87 @@
                   "refId" : "A"
                }
             ],
-            "timeFrom" : null,
-            "timeShift" : null,
             "type" : "stat"
          },
          {
-            "datasource" : "Prometheus",
-            "description" : "",
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "5L6f3JVVk"
+            },
             "fieldConfig" : {
                "defaults" : {
                   "color" : {
-                     "mode" : "palette-classic"
+                     "mode" : "thresholds"
                   },
-                  "custom" : {
-                     "axisLabel" : "",
-                     "axisPlacement" : "right",
-                     "barAlignment" : 0,
-                     "drawStyle" : "line",
-                     "fillOpacity" : 0,
-                     "gradientMode" : "none",
-                     "hideFrom" : {
-                        "graph" : false,
-                        "legend" : false,
-                        "tooltip" : false,
-                        "viz" : false
-                     },
-                     "lineInterpolation" : "linear",
-                     "lineWidth" : 1,
-                     "pointSize" : 3,
-                     "scaleDistribution" : {
-                        "log" : 2,
-                        "type" : "log"
-                     },
-                     "showPoints" : "always",
-                     "spanNulls" : true,
-                     "stacking" : {
-                        "group" : "A",
-                        "mode" : "none"
-                     },
-                     "thresholdsStyle" : {
-                        "mode" : "off"
-                     }
-                  },
+                  "displayName" : "Memory",
                   "mappings" : [],
                   "thresholds" : {
                      "mode" : "absolute",
                      "steps" : [
                         {
-                           "color" : "green",
+                           "color" : "dark-blue",
                            "value" : null
                         }
                      ]
                   },
-                  "unit" : "binBps"
+                  "unit" : "gbytes"
                },
-               "overrides" : [
-                  {
-                     "matcher" : {
-                        "id" : "byRegexp",
-                        "options" : "(receive|transmit).*"
-                     },
-                     "properties" : [
-                        {
-                           "id" : "custom.lineStyle",
-                           "value" : {
-                              "fill" : "dash"
-                           }
-                        }
-                     ]
-                  }
-               ]
+               "overrides" : []
             },
             "gridPos" : {
-               "h" : 8,
-               "w" : 8,
+               "h" : 1,
+               "w" : 3,
                "x" : 16,
                "y" : 0
             },
-            "id" : 4,
+            "id" : 24,
             "options" : {
-               "graph" : {},
-               "legend" : {
-                  "calcs" : [],
-                  "displayMode" : "hidden",
-                  "placement" : "bottom"
+               "colorMode" : "background",
+               "graphMode" : "none",
+               "justifyMode" : "auto",
+               "orientation" : "auto",
+               "reduceOptions" : {
+                  "calcs" : [
+                     "lastNotNull"
+                  ],
+                  "fields" : "",
+                  "values" : false
                },
-               "tooltip" : {
-                  "mode" : "single"
-               }
+               "text" : {
+                  "titleSize" : 12,
+                  "valueSize" : 12
+               },
+               "textMode" : "value_and_name"
             },
-            "pluginVersion" : "8.2.4",
+            "pluginVersion" : "9.2.0-beta.1",
             "targets" : [
                {
-                  "exemplar" : true,
-                  "expr" : "rate(gomon_io_read_bytes[1m])/60",
-                  "interval" : "",
-                  "legendFormat" : "I/O read",
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "editorMode" : "builder",
+                  "expr" : "gomon_system_memory_total_bytes",
+                  "legendFormat" : "__auto",
+                  "range" : true,
                   "refId" : "A"
-               },
-               {
-                  "exemplar" : true,
-                  "expr" : "rate(gomon_io_write_bytes[1m])/60",
-                  "interval" : "",
-                  "legendFormat" : "I/O write",
-                  "refId" : "B"
-               },
-               {
-                  "exemplar" : true,
-                  "expr" : "rate(gomon_network_receive_bytes{id='en0'}[1m])/60",
-                  "interval" : "",
-                  "legendFormat" : "receive {{id}}",
-                  "refId" : "C"
-               },
-               {
-                  "exemplar" : true,
-                  "expr" : "rate(gomon_network_transmit_bytes{id='en0'}[1m])/60",
-                  "interval" : "",
-                  "legendFormat" : "transmit {{id}}",
-                  "refId" : "D"
-               },
-               {
-                  "expr" : "rate(gomon_system_interface_measure_receive_bytes{id='lo0'}[1m])/60",
-                  "interval" : "",
-                  "legendFormat" : "receive {{id}}",
-                  "refId" : "E"
-               },
-               {
-                  "expr" : "rate(gomon_system_interface_measure_transmit_bytes{id='lo0'}[1m])/60",
-                  "interval" : "",
-                  "legendFormat" : "transmit {{id}}",
-                  "refId" : "F"
                }
             ],
-            "timeFrom" : null,
-            "timeShift" : null,
-            "title" : "Network and Device I/O (log2)",
-            "type" : "timeseries"
+            "type" : "stat"
          },
          {
-            "datasource" : "Prometheus",
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "5L6f3JVVk"
+            },
             "fieldConfig" : {
                "defaults" : {
                   "color" : {
                      "mode" : "palette-classic"
                   },
                   "custom" : {
+                     "axisCenteredZero" : false,
+                     "axisColorMode" : "text",
                      "axisLabel" : "",
                      "axisPlacement" : "right",
                      "barAlignment" : 0,
@@ -420,15 +376,21 @@
                "legend" : {
                   "calcs" : [],
                   "displayMode" : "list",
-                  "placement" : "bottom"
+                  "placement" : "bottom",
+                  "showLegend" : true
                },
                "tooltip" : {
-                  "mode" : "single"
+                  "mode" : "single",
+                  "sort" : "none"
                }
             },
             "pluginVersion" : "8.2.4",
             "targets" : [
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
                   "exemplar" : true,
                   "expr" : "gomon_system_load_average_one_minute",
                   "interval" : "",
@@ -436,6 +398,10 @@
                   "refId" : "A"
                },
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
                   "exemplar" : true,
                   "expr" : "gomon_system_load_average_five_minute",
                   "interval" : "",
@@ -443,6 +409,10 @@
                   "refId" : "B"
                },
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
                   "exemplar" : true,
                   "expr" : "gomon_system_load_average_fifteen_minute",
                   "interval" : "",
@@ -450,13 +420,14 @@
                   "refId" : "C"
                }
             ],
-            "timeFrom" : null,
-            "timeShift" : null,
             "title" : "Load Average",
             "type" : "timeseries"
          },
          {
-            "datasource" : "Prometheus",
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "5L6f3JVVk"
+            },
             "description" : "",
             "fieldConfig" : {
                "defaults" : {
@@ -464,6 +435,8 @@
                      "mode" : "palette-classic"
                   },
                   "custom" : {
+                     "axisCenteredZero" : false,
+                     "axisColorMode" : "text",
                      "axisLabel" : "",
                      "axisPlacement" : "right",
                      "barAlignment" : 0,
@@ -519,23 +492,21 @@
                "legend" : {
                   "calcs" : [],
                   "displayMode" : "list",
-                  "placement" : "bottom"
+                  "placement" : "bottom",
+                  "showLegend" : true
                },
                "tooltip" : {
-                  "mode" : "multi"
+                  "mode" : "multi",
+                  "sort" : "none"
                }
             },
             "pluginVersion" : "8.2.4",
             "targets" : [
                {
-                  "exemplar" : true,
-                  "expr" : "gomon_system_memory_total_bytes",
-                  "hide" : false,
-                  "interval" : "",
-                  "legendFormat" : "memory total",
-                  "refId" : "C"
-               },
-               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
                   "exemplar" : true,
                   "expr" : "gomon_system_memory_used_actual_bytes",
                   "interval" : "",
@@ -543,6 +514,10 @@
                   "refId" : "A"
                },
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
                   "exemplar" : true,
                   "expr" : "gomon_system_swap_total_bytes",
                   "interval" : "",
@@ -550,6 +525,10 @@
                   "refId" : "B"
                },
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
                   "exemplar" : true,
                   "expr" : "gomon_system_swap_used_bytes",
                   "hide" : false,
@@ -558,19 +537,188 @@
                   "refId" : "D"
                }
             ],
-            "timeFrom" : null,
-            "timeShift" : null,
             "title" : "System Memory and Swap Used (log2)",
             "type" : "timeseries"
          },
          {
-            "datasource" : "Prometheus",
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "5L6f3JVVk"
+            },
+            "description" : "",
             "fieldConfig" : {
                "defaults" : {
                   "color" : {
                      "mode" : "palette-classic"
                   },
                   "custom" : {
+                     "axisCenteredZero" : false,
+                     "axisColorMode" : "text",
+                     "axisLabel" : "",
+                     "axisPlacement" : "right",
+                     "barAlignment" : 0,
+                     "drawStyle" : "line",
+                     "fillOpacity" : 0,
+                     "gradientMode" : "none",
+                     "hideFrom" : {
+                        "graph" : false,
+                        "legend" : false,
+                        "tooltip" : false,
+                        "viz" : false
+                     },
+                     "lineInterpolation" : "linear",
+                     "lineWidth" : 1,
+                     "pointSize" : 3,
+                     "scaleDistribution" : {
+                        "log" : 2,
+                        "type" : "log"
+                     },
+                     "showPoints" : "always",
+                     "spanNulls" : true,
+                     "stacking" : {
+                        "group" : "A",
+                        "mode" : "none"
+                     },
+                     "thresholdsStyle" : {
+                        "mode" : "off"
+                     }
+                  },
+                  "mappings" : [],
+                  "thresholds" : {
+                     "mode" : "absolute",
+                     "steps" : [
+                        {
+                           "color" : "green",
+                           "value" : null
+                        }
+                     ]
+                  },
+                  "unit" : "KBs"
+               },
+               "overrides" : [
+                  {
+                     "matcher" : {
+                        "id" : "byRegexp",
+                        "options" : "(receive|transmit).*"
+                     },
+                     "properties" : [
+                        {
+                           "id" : "custom.lineStyle",
+                           "value" : {
+                              "fill" : "dash"
+                           }
+                        }
+                     ]
+                  }
+               ]
+            },
+            "gridPos" : {
+               "h" : 7,
+               "w" : 8,
+               "x" : 16,
+               "y" : 1
+            },
+            "id" : 4,
+            "options" : {
+               "graph" : {},
+               "legend" : {
+                  "calcs" : [],
+                  "displayMode" : "list",
+                  "placement" : "bottom",
+                  "showLegend" : false
+               },
+               "tooltip" : {
+                  "mode" : "single",
+                  "sort" : "none"
+               }
+            },
+            "pluginVersion" : "8.2.4",
+            "targets" : [
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "editorMode" : "code",
+                  "exemplar" : true,
+                  "expr" : "rate(gomon_io_read_bytes[1m])/1024/60",
+                  "interval" : "",
+                  "legendFormat" : "I/O read",
+                  "range" : true,
+                  "refId" : "A"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "editorMode" : "code",
+                  "exemplar" : true,
+                  "expr" : "rate(gomon_io_write_bytes[1m])/1024/60",
+                  "interval" : "",
+                  "legendFormat" : "I/O write",
+                  "range" : true,
+                  "refId" : "B"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "exemplar" : true,
+                  "expr" : "rate(gomon_network_receive_bytes{id='en0'}[1m])/60",
+                  "interval" : "",
+                  "legendFormat" : "receive {{id}}",
+                  "refId" : "C"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "exemplar" : true,
+                  "expr" : "rate(gomon_network_transmit_bytes{id='en0'}[1m])/60",
+                  "interval" : "",
+                  "legendFormat" : "transmit {{id}}",
+                  "refId" : "D"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "expr" : "rate(gomon_system_interface_measure_receive_bytes{id='lo0'}[1m])/60",
+                  "interval" : "",
+                  "legendFormat" : "receive {{id}}",
+                  "refId" : "E"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "expr" : "rate(gomon_system_interface_measure_transmit_bytes{id='lo0'}[1m])/60",
+                  "interval" : "",
+                  "legendFormat" : "transmit {{id}}",
+                  "refId" : "F"
+               }
+            ],
+            "title" : "Network and Device I/O (log2)",
+            "type" : "timeseries"
+         },
+         {
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "5L6f3JVVk"
+            },
+            "fieldConfig" : {
+               "defaults" : {
+                  "color" : {
+                     "mode" : "palette-classic"
+                  },
+                  "custom" : {
+                     "axisCenteredZero" : false,
+                     "axisColorMode" : "text",
                      "axisLabel" : "",
                      "axisPlacement" : "right",
                      "barAlignment" : 0,
@@ -648,16 +796,22 @@
                "graph" : {},
                "legend" : {
                   "calcs" : [],
-                  "displayMode" : "hidden",
-                  "placement" : "bottom"
+                  "displayMode" : "list",
+                  "placement" : "bottom",
+                  "showLegend" : false
                },
                "tooltip" : {
-                  "mode" : "single"
+                  "mode" : "single",
+                  "sort" : "none"
                }
             },
             "pluginVersion" : "8.2.4",
             "targets" : [
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
                   "exemplar" : true,
                   "expr" : "rate(gomon_system_cpu_total_seconds[1m])",
                   "interval" : "",
@@ -666,6 +820,10 @@
                   "refId" : "A"
                },
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
                   "exemplar" : false,
                   "expr" : "topk(5, (rate(gomon_process_total_seconds[1m])))",
                   "instant" : false,
@@ -674,13 +832,14 @@
                   "refId" : "B"
                }
             ],
-            "timeFrom" : null,
-            "timeShift" : null,
             "title" : "System and Top5 Process CPU Usage (log2)",
             "type" : "timeseries"
          },
          {
-            "datasource" : "Prometheus",
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "5L6f3JVVk"
+            },
             "description" : "",
             "fieldConfig" : {
                "defaults" : {
@@ -688,6 +847,8 @@
                      "mode" : "palette-classic"
                   },
                   "custom" : {
+                     "axisCenteredZero" : false,
+                     "axisColorMode" : "text",
                      "axisLabel" : "",
                      "axisPlacement" : "right",
                      "barAlignment" : 0,
@@ -727,7 +888,7 @@
                         }
                      ]
                   },
-                  "unit" : "bytes"
+                  "unit" : "decmbytes"
                },
                "overrides" : [
                   {
@@ -757,43 +918,60 @@
                "graph" : {},
                "legend" : {
                   "calcs" : [],
-                  "displayMode" : "hidden",
-                  "placement" : "bottom"
+                  "displayMode" : "list",
+                  "placement" : "bottom",
+                  "showLegend" : false
                },
                "tooltip" : {
-                  "mode" : "single"
+                  "mode" : "single",
+                  "sort" : "none"
                }
             },
             "pluginVersion" : "8.2.4",
             "targets" : [
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "editorMode" : "code",
                   "exemplar" : true,
-                  "expr" : "topk(5, gomon_process_size_bytes)",
+                  "expr" : "topk(5, gomon_process_size_bytes/1024/1024)",
                   "interval" : "",
                   "legendFormat" : "virtual {{id}}",
+                  "range" : true,
                   "refId" : "A"
                },
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "editorMode" : "code",
                   "exemplar" : true,
-                  "expr" : "topk(5, gomon_process_resident_bytes)",
+                  "expr" : "topk(5, gomon_process_resident_bytes/1024/1024)",
                   "interval" : "",
                   "legendFormat" : "resident {{id}}",
+                  "range" : true,
                   "refId" : "B"
                }
             ],
-            "timeFrom" : null,
-            "timeShift" : null,
             "title" : "Top5 Process Res. and Virt. Memory Usage (log2)",
             "type" : "timeseries"
          },
          {
-            "datasource" : "Prometheus",
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "5L6f3JVVk"
+            },
             "fieldConfig" : {
                "defaults" : {
                   "color" : {
                      "mode" : "palette-classic"
                   },
                   "custom" : {
+                     "axisCenteredZero" : false,
+                     "axisColorMode" : "text",
                      "axisLabel" : "",
                      "axisPlacement" : "right",
                      "barAlignment" : 0,
@@ -833,7 +1011,7 @@
                         }
                      ]
                   },
-                  "unit" : "binBps"
+                  "unit" : "KBs"
                },
                "overrides" : [
                   {
@@ -871,37 +1049,52 @@
                "graph" : {},
                "legend" : {
                   "calcs" : [],
-                  "displayMode" : "hidden",
-                  "placement" : "bottom"
+                  "displayMode" : "list",
+                  "placement" : "bottom",
+                  "showLegend" : false
                },
                "tooltip" : {
-                  "mode" : "single"
+                  "mode" : "single",
+                  "sort" : "none"
                }
             },
             "pluginVersion" : "8.2.4",
             "targets" : [
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "editorMode" : "code",
                   "exemplar" : true,
-                  "expr" : "topk(5, (rate(gomon_io_read_bytes[1m])+rate(gomon_io_write_bytes[1m])))/60",
+                  "expr" : "topk(5, (rate(gomon_io_read_bytes[1m])+rate(gomon_io_write_bytes[1m])))/1024/60",
                   "interval" : "",
                   "legendFormat" : "system",
+                  "range" : true,
                   "refId" : "A"
                },
                {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "5L6f3JVVk"
+                  },
+                  "editorMode" : "code",
                   "exemplar" : true,
-                  "expr" : "topk(5, (rate(gomon_process_read_actual_bytes[1m])+rate(gomon_process_write_actual_bytes[1m])))/60",
+                  "expr" : "topk(5, (rate(gomon_process_read_actual_bytes[1m])+rate(gomon_process_write_actual_bytes[1m])))/1024/60",
                   "interval" : "",
                   "legendFormat" : "process {{id}}",
+                  "range" : true,
                   "refId" : "B"
                }
             ],
-            "timeFrom" : null,
-            "timeShift" : null,
             "title" : "System and Top5 Process I/O (log2)",
             "type" : "timeseries"
          },
          {
-            "datasource" : "Loki",
+            "datasource" : {
+               "type" : "loki",
+               "uid" : "5Um8qJVVk"
+            },
             "gridPos" : {
                "h" : 24,
                "w" : 24,
@@ -922,18 +1115,21 @@
             "pluginVersion" : "8.2.4",
             "targets" : [
                {
+                  "datasource" : {
+                     "type" : "loki",
+                     "uid" : "5Um8qJVVk"
+                  },
                   "expr" : "{source=~\"(file|log|oslog|syslog|process)\"}",
                   "legendFormat" : "",
                   "refId" : "A"
                }
             ],
-            "timeFrom" : null,
-            "timeShift" : null,
             "title" : "File, Log, and Process Event Stream",
             "type" : "logs"
          }
       ],
       "refresh" : "15s",
+      "schemaVersion" : 37,
       "style" : "light",
       "tags" : [
          "gomon",
@@ -962,13 +1158,31 @@
       },
       "timezone" : "",
       "title" : "Gomon Dashboard",
-      "version" : 0
+      "uid" : "g-Il9JVVz",
+      "version" : 3,
+      "weekStart" : ""
    },
    "meta" : {
+      "annotationsPermissions" : {
+         "dashboard" : {
+            "canAdd" : true,
+            "canDelete" : true,
+            "canEdit" : true
+         },
+         "organization" : {
+            "canAdd" : true,
+            "canDelete" : true,
+            "canEdit" : true
+         }
+      },
       "canAdmin" : true,
+      "canDelete" : true,
       "canEdit" : true,
       "canSave" : true,
       "canStar" : true,
+      "created" : "2022-10-03T10:38:46-04:00",
+      "createdBy" : "admin",
+      "expires" : "0001-01-01T00:00:00Z",
       "folderId" : 0,
       "folderTitle" : "General",
       "folderUid" : "",
@@ -977,11 +1191,14 @@
       "isFolder" : false,
       "provisioned" : false,
       "provisionedExternalId" : "",
+      "publicDashboardAccessToken" : "",
+      "publicDashboardEnabled" : false,
+      "publicDashboardUid" : "",
       "slug" : "gomon-dashboard",
       "type" : "db",
-      "version" : 0
-   },
-
-   "message" : "Initialize gomon dashboard",
-   "overwrite" : true
+      "updated" : "2022-10-10T20:18:17-04:00",
+      "updatedBy" : "admin",
+      "url" : "/d/g-Il9JVVz/gomon-dashboard",
+      "version" : 3
+   }
 }
