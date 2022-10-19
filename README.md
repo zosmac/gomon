@@ -105,22 +105,21 @@ To install *Grafana*, select an appropriate binary from the [Grafana download pa
 
 ## *[Add data sources](http://localhost:3000/datasources/new)* for *Prometheus* and *Loki* to *Grafana*
 
-<img src="assets/grafana/prometheus-add.png" width="500"><br>
-<img src="assets/grafana/loki-add.png" width="500">
+<img src="assets/grafana/datasource-add.png" width="500"><br>
 
 ## Configure the *Prometheus* data source
 
 *Note that while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field. Then, scroll down and select* **Save & test.**
 
-<img src="assets/grafana/prometheus-settings.png" width="500"><br>
-<img src="assets/grafana/saventest.png" width="500">
+<img src="assets/grafana/prometheus-config-1.png" width="500"><br>
+<img src="assets/grafana/prometheus-config-2.png" width="500">
 
 ## Configure the *Loki* data source
 
 *Note that while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field. Then, scroll down and select* **Save & test.**
 
-<img src="assets/grafana/loki-settings.png" width="500"><br>
-<img src="assets/grafana/saventest.png" width="500">
+<img src="assets/grafana/loki-config-1.png" width="500"><br>
+<img src="assets/grafana/loki-config-2.png" width="500">
 
 ## Install the *[Gomon Dashboard](assets/grafana/dashboard.json)* to *Grafana*
 ```zsh
