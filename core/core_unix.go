@@ -5,10 +5,21 @@
 package core
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 )
+
+var (
+	// euid gets the executable's owner id.
+	euid = os.Geteuid()
+)
+
+// init sets the process owner to user. When a datasource instance is created it cannot be running as root.
+func init() {
+	Setuid()
+}
 
 // signalChannel returns channel on which OS signals are delivered.
 func signalChannel() <-chan os.Signal {
@@ -16,4 +27,24 @@ func signalChannel() <-chan os.Signal {
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM) // , syscall.SIGSEGV)
 	signal.Ignore(syscall.SIGWINCH, syscall.SIGHUP, syscall.SIGTTIN, syscall.SIGTTOU)
 	return signalChan
+}
+
+// seteuid gomon-datasource to owner.
+func Seteuid() {
+	err := syscall.Seteuid(euid)
+	LogInfo(fmt.Errorf("Seteuid results, uid: %d, euid: %d, err: %v",
+		os.Getuid(),
+		os.Geteuid(),
+		err,
+	))
+}
+
+// setuid gomon-datasource to grafana user.
+func Setuid() {
+	err := syscall.Seteuid(os.Getuid())
+	LogInfo(fmt.Errorf("Setuid results, uid: %d, euid: %d, err: %v",
+		os.Getuid(),
+		os.Geteuid(),
+		err,
+	))
 }

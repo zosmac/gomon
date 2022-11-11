@@ -298,9 +298,9 @@ func parseLsof(stdout io.ReadCloser) {
 			}
 			if _, _, err := net.SplitHostPort(peer); err == nil { // host connection
 				var ok bool
-				if peerPid, ok = nodes[peer]; !ok {
+				if peerPid, ok = nodes[node+peer]; !ok {
 					peerPid = hostPid
-					nodes[peer] = hostPid
+					nodes[node+peer] = hostPid
 					hostPid -= 1
 				}
 			}

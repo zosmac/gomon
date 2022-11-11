@@ -104,7 +104,11 @@ type (
 )
 
 // GetCFString gets a Go string from a CFString
-func GetCFString(p C.CFStringRef) string {
+func GetCFString(p CFStringRef) string {
+	if p == 0 {
+		return ""
+	}
+
 	if s := C.CFStringGetCStringPtr(p, C.kCFStringEncodingUTF8); s != nil {
 		return C.GoString(s)
 	}
@@ -120,7 +124,7 @@ func GetCFString(p C.CFStringRef) string {
 }
 
 // GetCFNumber gets a Go numeric type from a CFNumber
-func GetCFNumber(n C.CFNumberRef) interface{} {
+func GetCFNumber(n CFNumberRef) interface{} {
 	var i int64
 	var f float64
 	t := C.CFNumberType(C.kCFNumberSInt64Type)
@@ -131,7 +135,7 @@ func GetCFNumber(n C.CFNumberRef) interface{} {
 		p = unsafe.Pointer(&f)
 		v = interface{}(&f)
 	}
-	C.CFNumberGetValue(C.CFNumberRef(n), t, p)
+	C.CFNumberGetValue(n, t, p)
 	if _, ok := v.(*int64); ok {
 		return i
 	}
@@ -139,12 +143,12 @@ func GetCFNumber(n C.CFNumberRef) interface{} {
 }
 
 // GetCFBoolean gets a Go bool from a CFBoolean
-func GetCFBoolean(b C.CFBooleanRef) bool {
+func GetCFBoolean(b CFBooleanRef) bool {
 	return C.CFBooleanGetValue(b) != 0
 }
 
 // GetCFArray gets a Go slice from a CFArray
-func GetCFArray(a C.CFArrayRef) []interface{} {
+func GetCFArray(a CFArrayRef) []interface{} {
 	c := C.CFArrayGetCount(a)
 	s := make([]interface{}, c)
 	vs := make([]unsafe.Pointer, c)
@@ -158,7 +162,7 @@ func GetCFArray(a C.CFArrayRef) []interface{} {
 }
 
 // GetCFDictionary gets a Go map from a CFDictionary
-func GetCFDictionary(d C.CFDictionaryRef) map[string]interface{} {
+func GetCFDictionary(d CFDictionaryRef) map[string]interface{} {
 	if d == 0 {
 		return nil
 	}
@@ -172,7 +176,7 @@ func GetCFDictionary(d C.CFDictionaryRef) map[string]interface{} {
 		if C.CFGetTypeID(C.CFTypeRef(ks[i])) != C.CFStringGetTypeID() {
 			continue
 		}
-		k := GetCFString(C.CFStringRef(ks[i]))
+		k := GetCFString(CFStringRef(ks[i]))
 		m[k] = GetCFValue(vs[i])
 	}
 
@@ -182,15 +186,15 @@ func GetCFDictionary(d C.CFDictionaryRef) map[string]interface{} {
 func GetCFValue(v unsafe.Pointer) interface{} {
 	switch id := C.CFGetTypeID(C.CFTypeRef(v)); id {
 	case C.CFStringGetTypeID():
-		return GetCFString(C.CFStringRef(v))
+		return GetCFString(CFStringRef(v))
 	case C.CFNumberGetTypeID():
-		return GetCFNumber(C.CFNumberRef(v))
+		return GetCFNumber(CFNumberRef(v))
 	case C.CFBooleanGetTypeID():
-		return GetCFBoolean(C.CFBooleanRef(v))
+		return GetCFBoolean(CFBooleanRef(v))
 	case C.CFDictionaryGetTypeID():
-		return GetCFDictionary(C.CFDictionaryRef(v))
+		return GetCFDictionary(CFDictionaryRef(v))
 	case C.CFArrayGetTypeID():
-		return GetCFArray(C.CFArrayRef(v))
+		return GetCFArray(CFArrayRef(v))
 	default:
 		d := C.CFCopyDescription(C.CFTypeRef(v))
 		t := GetCFString(d)

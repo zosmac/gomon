@@ -2,6 +2,113 @@
 
 package main
 
+/*
+#cgo CFLAGS: -x objective-c -std=gnu11 -fobjc-arc -D__unix__
+#cgo LDFLAGS: -framework CoreFoundation -framework AppKit -framework Foundation
+#import <CoreFoundation/CoreFoundation.h>
+#import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
+
+static CFTypeRef
+Observer() {
+	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+	NSLog(@"Center is %@", center);
+	NSOperationQueue *queue = [NSOperationQueue mainQueue];
+	NSLog(@"Queue is %@", queue);
+	fprintf(stderr, "===== here I am!!!\n");
+	NSObject *observer = [center addObserverForName: @"AppleInterfaceThemeChangedNotification"
+	// NSObject *observer = [center addObserverForName: NSSystemColorsDidChangeNotification
+	// NSObject *observer = [center addObserverForName: NSApplicationDidFinishLaunchingNotification
+		object: nil
+		queue: queue
+		usingBlock: ^(NSNotification *note) {
+			NSLog(@"Note is %@", note);
+			fprintf(stderr, "===== notification!!!!!!\n");
+		}
+	];
+	fprintf(stderr, "===== observer added!!!!!!\n");
+
+	return (__bridge_retained CFTypeRef)observer;
+}
+
+@interface MyView : NSView
+@end
+@implementation MyView
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    return self;
+}
+- (void)viewDidChangeEffectiveAppearance {
+	NSString *name = [[self effectiveAppearance] name];
+	NSLog(@"Changed Appearance is %@", name);
+}
+- (void)drawRect:(NSRect)rect
+{
+    // erase the background by drawing white
+    [[NSColor whiteColor] set];
+    [NSBezierPath fillRect:rect];
+}
+@end
+
+static CFTypeRef
+View() {
+	NSRect rect = NSMakeRect(100.0, 100.0, 100.0, 100.0);
+	MyView *view = [[MyView alloc] initWithFrame: rect];
+	return (__bridge_retained CFStringRef)view;
+}
+
+static CFTypeRef
+Window() {
+	[[NSOperationQueue mainQueue] addOperationWithBlock: ^() {
+
+	[NSApplication sharedApplication];
+	NSRect rect = NSMakeRect(100.0, 100.0, 100.0, 100.0);
+	NSWindow *window = [[NSWindow alloc]
+		initWithContentRect:rect
+                  styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable
+                    backing:NSBackingStoreBuffered
+                      defer:NO
+		];
+	}];
+	return nil; // (__bridge_retained CFStringRef)window;
+}
+
+static void
+Run() {
+	[NSApp run];
+}
+
+static BOOL
+DarkMode(CFTypeRef w) {
+	[[NSOperationQueue mainQueue] addOperationWithBlock: ^() {
+
+	NSArray *names = @[NSAppearanceNameAqua, NSAppearanceNameDarkAqua];
+	// MyView *view = (__bridge MyView *)v;
+	NSWindow *window = [NSApp mainWindow]; // (__bridge NSWindow *)w;
+	NSView *view = [window contentView];
+	// [view setNeedsDisplay: TRUE];
+	// NSOperationQueue *queue = [NSOperationQueue mainQueue];
+	// [queue addBarrierBlock: ^() {
+	// 		NSString *name = [[view effectiveAppearance] bestMatchFromAppearancesWithNames: names];
+	// 		NSLog(@"Appearance is %@", name);
+	// 	}
+	// ];
+	NSString *name = [[view effectiveAppearance] bestMatchFromAppearancesWithNames: names];
+	NSLog(@"Appearance is %@", name);
+	}];
+
+	return TRUE; // (name == NSAppearanceNameDarkAqua) ? TRUE : FALSE;
+
+	// NSString *osxMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"AppleInterfaceStyle"];
+	// if (osxMode == nil) {
+	// 	osxMode = @"Bright";
+	// }
+	// return (__bridge_retained CFStringRef)osxMode;
+}
+*/
+import "C"
+
 import (
 	"bufio"
 	"bytes"
@@ -27,21 +134,19 @@ var (
 	hnMap  = map[string]string{}
 	hnLock sync.Mutex
 
-	// graphviz colors for nodes and edges
-	colors = []string{"#7777DD", "#FF6666", "#00AA00", "#6688FF", "#00BBBB", "#BB44BB", "#AAAA00", "#448888", "#886688", "#888844"}
+	window C.CFTypeRef
+	view   C.CFTypeRef
+
+	// graphviz color attributes for nodes, edges
+	fgColor string
+	bgColor string
+	colors  []string
 )
 
-// color defines the color for graphviz nodes and edges
-func color(pid Pid) string {
-	color := "#000000"
-	if pid < 0 {
-		pid = -pid
-	}
-	if pid > 0 {
-		color = colors[(int(pid-1))%len(colors)]
-	}
-	return color
-}
+const (
+	// graphviz cluster attributes
+	cluster = `fontsize=11 penwidth=3.0 pencolor="#4488CC"`
+)
 
 type (
 	// Pid alias for Pid in process package.
@@ -52,6 +157,40 @@ type (
 		pid Pid
 	}
 )
+
+func init() {
+	// obs := C.Observer()
+	// fmt.Fprintf(os.Stderr, "observer is %v\n", obs)
+	// view = C.View()
+	go func() {
+		window = C.Window()
+		C.Run()
+	}()
+}
+
+func setMode() {
+	if C.DarkMode(window) {
+		fgColor = "#FFFFFF"
+		bgColor = "#000000"
+		colors = []string{"#FFFF33", "#FF33FF", "#33FFFF", "#FFCC66", "#CC66FF", "#66FFCC", "#CCCC99", "#CC99CC", "#99CCCC", "#FF66CC", "#66CC11", "#CCFF66"}
+	} else {
+		fgColor = "#000000"
+		bgColor = "#FFFFFF"
+		colors = []string{"#1111DD", "#11DD11", "#DD1111", "#1144AA", "#44AA11", "#AA1144", "#444477", "#447744", "#774444", "#11AA44", "#AA4411", "#4411AA"}
+	}
+}
+
+// color defines the color for graphviz nodes and edges
+func color(pid Pid) string {
+	color := fgColor
+	if pid < 0 {
+		pid = -pid
+	}
+	if pid > 0 {
+		color = colors[(int(pid-1))%len(colors)]
+	}
+	return color
+}
 
 // NodeGraph produces the process connections node graph.
 func NodeGraph(req *http.Request) []byte {
@@ -76,7 +215,10 @@ func NodeGraph(req *http.Request) []byte {
 		dataNode     Pid
 		dataEdges    string
 		include      = map[Pid]struct{}{} // record which processes have a connection to include in report
+		nodes        = map[Pid]struct{}{}
 	)
+
+	setMode()
 
 	query, _ := parseQuery(req)
 
@@ -126,13 +268,17 @@ func NodeGraph(req *http.Request) []byte {
 					dir = "back"
 				}
 
-				hosts += fmt.Sprintf(`
-    %d [shape=cds height=0.5 label="%s:%s\n%s"]`,
-					conn.Peer.Pid,
-					conn.Type,
-					port,
-					hostname(host),
-				)
+				if _, ok := nodes[conn.Peer.Pid]; !ok {
+					nodes[conn.Peer.Pid] = struct{}{}
+					hosts += fmt.Sprintf(`
+    %d [shape=cds height=0.6 fillcolor=%q label="%s:%s\n%s"]`,
+						conn.Peer.Pid,
+						color(conn.Peer.Pid),
+						conn.Type,
+						port,
+						hostname(host),
+					)
+				}
 				if hostNode == 0 {
 					hostNode = conn.Peer.Pid
 				}
@@ -143,16 +289,16 @@ func NodeGraph(req *http.Request) []byte {
 					conn.Peer.Pid,
 					conn.Self.Pid,
 					dir,
-					color(conn.Self.Pid),
+					color(conn.Peer.Pid)+";0.5:"+color(conn.Self.Pid),
 					conn.Type+":"+conn.Peer.Name,
 					conn.Self.Name,
-					longname(pt, conn.Self.Pid),
+					shortname(pt, conn.Self.Pid),
 				)
 			} else if conn.Peer.Pid >= math.MaxInt32 { // peer is data
 				peer := conn.Type + ":" + conn.Peer.Name
 
 				datas += fmt.Sprintf(`
-    %d [shape=note color=%q label=%q]`,
+    %d [shape=note fillcolor=%q label=%q]`,
 					conn.Peer.Pid,
 					color(conn.Peer.Pid),
 					peer,
@@ -169,8 +315,8 @@ func NodeGraph(req *http.Request) []byte {
   %d -> %d [dir=forward color=%q tooltip="%s\n%s"]`,
 						conn.Self.Pid,
 						conn.Peer.Pid,
-						color(conn.Peer.Pid),
-						longname(pt, conn.Self.Pid),
+						color(conn.Self.Pid)+";0.5:"+color(conn.Peer.Pid),
+						shortname(pt, conn.Self.Pid),
 						peer,
 					)
 				}
@@ -234,17 +380,18 @@ func NodeGraph(req *http.Request) []byte {
 
 		for i := len(processes); i <= len(p.Ancestors); i++ {
 			processes = append(processes, fmt.Sprintf(`
-    subgraph cluster_processes_%d {
-      label="Process depth %[1]d" rank=same fontsize=11 penwidth=3.0 pencolor="#5599BB"`,
-				i+1))
+    subgraph processes_%d {
+      cluster=true label="Process depth %[1]d" rank=same %s`,
+				i+1,
+				cluster))
 		}
 
 		node := fmt.Sprintf(`
-      %[2]d [shape=rect style=rounded color=%q URL="http://localhost:%d/gomon?pid=%[2]d" label="%[1]s\n%d" tooltip=%[5]q]`,
-			pt[pid].Id.Name,
+      %d [shape=rect style="rounded,filled" fillcolor=%q URL="http://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
 			pid,
 			color(pid),
 			core.Flags.Port,
+			pt[pid].Id.Name,
 			longname(pt, pid),
 		)
 		processes[len(p.Ancestors)] += node
@@ -252,12 +399,16 @@ func NodeGraph(req *http.Request) []byte {
 		depth := len(pt[pid].Ancestors)
 
 		for edge, tooltip := range em {
-			if strings.Fields(edge)[0] == strconv.Itoa(int(pid)) {
+			fields := strings.Fields(edge)
+			self, _ := strconv.Atoi(fields[0])
+			peer, _ := strconv.Atoi(fields[2])
+			// if strings.Fields(edge)[0] == strconv.Itoa(int(pid)) {
+			if Pid(self) == pid {
 				if tooltip != "" {
 					processEdges[depth] += fmt.Sprintf(`
-  %s [dir=both color=%q tooltip=%q]`, // TODO: arrow on left/west edge
+  %s [dir=both color=%q tooltip=%q]`,
 						edge,
-						color(pid),
+						color(Pid(self))+";0.5:"+color(Pid(peer)),
 						tooltip,
 					)
 				}
@@ -273,14 +424,14 @@ func NodeGraph(req *http.Request) []byte {
 	if len(processNodes) > 0 {
 		if hostNode != 0 {
 			clusterEdges += fmt.Sprintf(`
-  %d -> %d [style=invis ltail="cluster_hosts" lhead="cluster_processes_1"]`,
+  %d -> %d [style=invis ltail="hosts" lhead="processes_1"]`,
 				hostNode,
 				processNodes[0],
 			)
 		}
 		for i := range processNodes[:len(processNodes)-1] {
 			clusterEdges += fmt.Sprintf(`
-  %d -> %d [style=invis ltail="cluster_processes_%d" lhead="cluster_processes_%d"]`,
+  %d -> %d [style=invis ltail="processes_%d" lhead="processes_%d"]`,
 				processNodes[i],
 				processNodes[i+1],
 				i+1,
@@ -289,7 +440,7 @@ func NodeGraph(req *http.Request) []byte {
 		}
 		if dataNode != 0 {
 			clusterEdges += fmt.Sprintf(`
-  %d -> %d [style=invis ltail="cluster_processes_%d" lhead="cluster_files"]`,
+  %d -> %d [style=invis ltail="processes_%d" lhead="files"]`,
 				processNodes[len(processNodes)-1],
 				dataNode,
 				len(processNodes),
@@ -297,39 +448,59 @@ func NodeGraph(req *http.Request) []byte {
 		}
 	}
 
-	var label string
+	label := fmt.Sprintf(`
+<table href="http://localhost:%d/gomon?dark">
+  <tr>
+    <td align="left" colspan="2">
+      External and Inter-Process Connections
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+      Host: <b>%s</b>`, core.Flags.Port, core.Hostname)
 	if query.pid > 0 {
-		label = fmt.Sprintf("Inter-Process Connections for Process %s on ", shortname(pt, query.pid))
-	} else {
-		label = "Remote Hosts and Inter-Process Connections for "
+		label += fmt.Sprintf(`
+    </td>
+    <td align="left">
+      Process: <b>%s</b>`, shortname(pt, query.pid))
 	}
-	label += core.Hostname + time.Now().Local().Format(", Mon Jan 02 2006 at 03:04:05PM MST")
+	label += time.Now().Local().Format(`
+    </td>
+  </tr>
+  <tr>
+    <td align="left" colspan="2">
+      Mon Jan 02 2006 at 03:04:05PM MST
+    </td>
+  </tr>
+</table>`,
+	)
 
-	return dot(`digraph "` + label + `" {
-  id="\G"
-  label="\G"
+	return dot(`digraph "gomon process nodes" {
+  fontname=helvetica
+  fontcolor="` + fgColor + `"
+  bgcolor="` + bgColor + `"
+  label=<` + label + `>
   labelloc=t
   labeljust=l
   rankdir=LR
   newrank=true
   compound=true
   constraint=false
-  remincross=false
   ordering=out
   nodesep=0.05
   ranksep="2.0"
-  node [fontname=helvetica fontsize=7 height=0.2 width=1.5]
-  edge [penwidth=1.5 arrowsize=0.5]
-  subgraph cluster_hosts {
-    label="External Connections" rank=same fontsize=11 penwidth=3.0 pencolor="#BB5599"` +
+  node [fontsize=9 height=0.2 width=1.5 style=filled fontcolor="` + bgColor + `"]
+  edge [arrowsize=0.5 color="` + fgColor + `"]
+  subgraph hosts {
+    cluster=true label="External Connections" rank=same ` + cluster +
 		hosts + `
   }
-  subgraph cluster_processes {
-    label=Processes fontsize=11 penwidth=3.0 pencolor="#5599BB"` +
+  subgraph processes {
+	cluster=true label=Processes ` + cluster +
 		strings.Join(processes, "") + `
   }
-  subgraph cluster_files {
-    label="Open Files" rank=max fontsize=11 penwidth=3.0 pencolor="#99BB55"` +
+  subgraph files {
+	cluster=true label="Open Files" ` + cluster +
 		datas + `
   }` +
 		clusterEdges +
