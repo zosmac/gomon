@@ -4,9 +4,7 @@ package core
 
 import (
 	"fmt"
-	"os"
 	"strings"
-	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -97,6 +95,7 @@ func decodeYaml(indent string, y interface{}) string {
 }
 
 // y is an example prometheus.yml file to test decoding.
+/*
 var y = []byte(`
 global:
   scrape_interval: 15s
@@ -178,3 +177,4 @@ func test() {
 	dur, _ = time.ParseDuration(strings.TrimSpace(val))
 	fmt.Fprintf(os.Stderr, "gomon scrape_interval is %v\n", dur)
 }
+*/

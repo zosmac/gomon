@@ -1,0 +1,87 @@
+/* Copyright © 2021 The Gomon Project. */
+
+/*
+This CSS configures the gomon process node graph to support dark mode.
+*/
+
+@media(prefers-color-scheme: light) {
+  svg {
+    background-color: #F8F8FC;
+  }
+  .graph > polygon {
+    fill: #F8F8FC;
+  }
+  
+  text { /* text is an svg tag, and fill sets its color :( */
+    fill: black;
+  }
+  .parent path {
+    stroke: black;
+  }
+  .parent polygon {
+    stroke: black;
+  }
+}
+
+@media(prefers-color-scheme: dark) {
+  svg {
+    background-color: #202028;
+  }
+  .graph > polygon {
+    fill: #202028;
+  }
+  text {
+    fill: white;
+  }
+  .parent path {
+    stroke: white;
+  }
+  .parent polygon {
+    stroke: white;
+    fill: white;
+  }
+}
+
+text {
+  font-size: 9px;
+  font-family: sans-serif;
+}
+
+.graph > text {
+  font-size: 14px;
+  font-family: serif;
+}
+
+.cluster text {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.cluster polygon {
+  stroke:royalblue;
+  stroke-width: 3px;
+}
+
+/*
+Setting the opacity of the nodes and edges allows the background
+to lighten or darken them depending on the system appearance.
+Overlapping edges are also easier to follow.
+*/
+
+.edge path {
+  stroke-width: 2px;
+  opacity: 50%;
+}
+
+.edge polygon { /* arrowhead */
+  stroke-width: 1px;
+  opacity: 50%;
+}
+
+.node path {
+  opacity: 50%;
+}
+
+.node polygon {
+  opacity: 50%;
+}

@@ -24,9 +24,7 @@ import (
 
 // main
 func main() {
-	core.Init()
 	core.Main(Main)
-	core.Exit()
 }
 
 // Main called from core.Main.
@@ -60,11 +58,17 @@ func Main(ctx context.Context) {
 		return
 	}
 
+	// fire up the http server
+	server := serve()
+
 	// capture and write with encoder
 	go func() {
 		ticker := core.Flags.Sample.AlignTicker()
 		for {
 			select {
+			case <-ctx.Done():
+				server.Shutdown(ctx)
+				return
 			case t := <-ticker.C:
 				start := time.Now()
 				last, ok := lastPrometheusCollection.Load().(time.Time)
@@ -98,9 +102,6 @@ func Main(ctx context.Context) {
 			}
 		}
 	}()
-
-	// fire up the http server
-	serve()
 }
 
 // measure gathers measurements of each subsystem.

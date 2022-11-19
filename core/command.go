@@ -17,10 +17,6 @@ import (
 //go:generate ./generate.sh
 
 var (
-	// Context is canceled on exit.
-	Context context.Context
-	Cancel  context.CancelFunc
-
 	// Hostname identifies the host.
 	Hostname, _ = os.Hostname()
 
@@ -45,15 +41,13 @@ Copyright © 2021 The Gomon Project.
 		executable, vmmp, buildDate, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }
 
-// Init called by main() to initialize core.
-func Init() {
-	Context, Cancel = context.WithCancel(context.Background())
-}
-
 // Main drives the show.
 func Main(fn func(context.Context)) {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
 	// set up profiling if requested
-	profile(Context)
+	profile(ctx)
 
 	if !parse(os.Args[1:]) {
 		return
@@ -84,19 +78,16 @@ func Main(fn func(context.Context)) {
 				fmt.Fprintln(os.Stderr, string(buf[:n]))
 			default:
 			}
+			cncl()                    // signal all service routines to cleanup and exit
+			<-time.After(time.Second) // wait a bit for all resource cleanup to complete
+			os.Exit(exitCode)
 		}
 	}()
 
-	go fn(Context)
+	go fn(ctx)
+
+	// run osEnvironment on main thread for the native host application environment setup (e.g. MacOS main run loop)
+	osEnvironment(ctx)
 
 	wg.Wait()
-}
-
-// Exit calls cleanup and sets gomon's return code.
-func Exit() {
-	Cancel() // signal all service routines to cleanup and exit
-
-	<-time.After(2 * time.Second) // wait a bit for all resource cleanup to complete
-
-	os.Exit(exitCode)
 }

@@ -16,11 +16,6 @@ var (
 	euid = os.Geteuid()
 )
 
-// init sets the process owner to user. When a datasource instance is created it cannot be running as root.
-func init() {
-	Setuid()
-}
-
 // signalChannel returns channel on which OS signals are delivered.
 func signalChannel() <-chan os.Signal {
 	signalChan := make(chan os.Signal, 1)                      // use buffered channel to ensure signal delivery

@@ -94,16 +94,26 @@ func wsHandler() {
 	)
 }
 
+// assetHandler serves up files from the gomoo assets directory
+func assetHandler() {
+	http.Handle("/assets/",
+		http.FileServer(http.Dir(core.Srcpath)),
+	)
+}
+
 // serve sets up the web REST endpoints.
-func serve() {
+func serve() *http.Server {
 	// define http request handlers
 	prometheusHandler()
 	gomonHandler()
 	wsHandler()
+	assetHandler()
 
+	server := &http.Server{
+		Addr: "localhost:" + strconv.Itoa(core.Flags.Port),
+	}
 	go func() {
-		port := strconv.Itoa(core.Flags.Port)
-		core.LogError(http.ListenAndServe("localhost:"+port, nil))
+		core.LogError(server.ListenAndServe())
 		// to enable https/wss for these handlers, follow these steps:
 		// 1. cmd/generate_cert/generate_cert -host localhost
 		// 2. cp cmd/generate_cert/cert.pem cmd_generate_cert/key.pem ~/Developer/testdir
@@ -112,4 +122,6 @@ func serve() {
 		// 5. authorize untrusted self-signed certificate
 		// core.LogError(http.ListenAndServeTLS("localhost:"+port, "cert.pem", "key.pem", nil))
 	}()
+
+	return server
 }

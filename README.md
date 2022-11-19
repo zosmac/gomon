@@ -159,10 +159,10 @@ sudo gomon -pretty -port 1234
 
 If *[Graphviz](https://graphviz.gitlab.io)* is installed, *Gomon* can render a view of the inter-process and remote host connections via the `/gomon` endpoint.
 [<img src="assets/graphviz-process-nodegraph.png">](http://localhost:1234/gomon)
-To download and install *[Graphviz](https://graphviz.org/download/source/)*, select a stable release, download its tar file, and build and install it.
+To download and install *[Graphviz](https://graphviz.org/download/source/)*, select a stable release, download its tar file, and build and install it. (Note that `gomon` specifies `-Tsvgz` to the `dot` command. Ensure that the zlib development library is installed on your system, e.g. on Ubuntu `sudo apt install zlib1g-dev`, Fedora `sudo yum install zlib devel`)
 ```zsh
-tar xzvf =(curl -L "https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/3.0.0/graphviz-3.0.0.tar.gz")
-cd graphviz-3.0.0
+tar xzvf =(curl -L "https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/7.0.1/graphviz-7.0.1.tar.xz")
+cd graphviz-7.0.1
 ./configure
 make
 sudo make install

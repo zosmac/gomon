@@ -95,7 +95,7 @@ func logMessage(depth int, name string, err error) *Err {
 	}
 	c := append([]string{executable}, os.Args[1:]...)
 	_, n, l, _ := runtime.Caller(depth)
-	n, _ = filepath.Rel(srcpath, n)
+	n, _ = filepath.Rel(Srcpath, n)
 	var s string
 	if u, err := user.Current(); err == nil {
 		s = u.Username

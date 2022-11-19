@@ -4,18 +4,81 @@ package core
 
 /*
 #cgo CFLAGS: -x objective-c -std=gnu11 -fobjc-arc
-#cgo LDFLAGS: -framework CoreFoundation -framework IOKit
+#cgo LDFLAGS: -framework CoreFoundation -framework AppKit -framework Foundation -framework IOKit
 #import <CoreFoundation/CoreFoundation.h>
+#import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
 #include <libproc.h>
 #include <sys/sysctl.h>
 
 void *CopyCFString(char *s) { // required to avoid go vet "possible misuse of unsafe.Pointer"
 	return (void*)CFStringCreateWithCString(nil, s, kCFStringEncodingUTF8);
 }
+
+// The following code invoked by C.Run() is to capture dynamically the system appearance.
+// Simply querying the NSApplication effective appearance is insufficient if no view defined.
+
+extern void darkmode(BOOL);
+
+@interface MyView : NSView
+@end
+
+@implementation MyView
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    return self;
+}
+- (void)viewDidChangeEffectiveAppearance {
+	NSString *name = [[self effectiveAppearance] name];
+	NSLog(@"Changed Appearance is %@", name);
+	name = [[self effectiveAppearance] bestMatchFromAppearancesWithNames: @[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]];
+	darkmode((name == NSAppearanceNameDarkAqua) ? TRUE : FALSE);
+}
+@end
+
+@interface MyAppDelegate : NSObject<NSApplicationDelegate>
+@end
+
+@implementation MyAppDelegate
+- (void)applicationDidFinishLaunching:(NSNotification*)note {
+	NSLog(@"Finish launch notification is %@", [note description]);
+}
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)app {
+	NSLog(@"Application should terminate %@", [app description]);
+	return NSTerminateNow;
+}
+@end
+
+static void
+Run() {
+	[NSApplication sharedApplication]; // initialize the application
+	[NSApp setDelegate: [[MyAppDelegate alloc] init]];
+
+	NSRect rect = NSMakeRect(100.0, 100.0, 100.0, 100.0);
+	NSWindow *window = [[NSWindow alloc]
+		initWithContentRect:rect
+                  styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable
+                    backing:NSBackingStoreBuffered
+                      defer:NO
+	];
+
+	rect = [[window contentView] frame];
+	MyView *view = [[MyView alloc] initWithFrame: rect];
+	[window setContentView: view];
+	[NSApp hide:nil];
+	[NSApp run];
+}
+
+static void
+terminate() {
+	[NSApp terminate: nil];
+}
 */
 import "C"
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"syscall"
@@ -201,4 +264,14 @@ func GetCFValue(v unsafe.Pointer) interface{} {
 		C.CFRelease(C.CFTypeRef(d))
 		return fmt.Sprintf("Unrecognized Type is %d: %s\n", id, t)
 	}
+}
+
+// osEnvironment starts the native application environment run loop.
+// It must run on the main thread, therefore launch the go application in a go routine.
+func osEnvironment(ctx context.Context) {
+	go func() {
+		<-ctx.Done()
+		C.terminate()
+	}()
+	C.Run()
 }

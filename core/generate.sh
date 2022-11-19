@@ -8,13 +8,8 @@ version="1.0.0"
 
 license() {
    file=`mktemp`
-   if [ -n "$1" ]; then
-      export GOOS=$1
-      srcpath=`go env GOPATH`/src
-   else
-      srcpath=$(dirname `pwd`)
-      rm -f $srcpath/LICENSE
-   fi
+   srcpath=$(dirname `pwd`)
+   rm -f $srcpath/LICENSE
    cat <<EOF >$file
 Copyright © 2021 The Gomon Project.
 
@@ -43,8 +38,8 @@ import (
 )
 
 var (
-\t// srcpath to strip from source file path in log messages.
-\tsrcpath = \"$srcpath\"
+\t// Srcpath to strip from source file path in log messages.
+\tSrcpath = "'$srcpath$'"
 
 \t// executable identifies the full command path.
 \texecutable, _ = os.Executable()
