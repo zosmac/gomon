@@ -2,7 +2,7 @@
 # Copyright © 2021 The Gomon Project.
 
 # define Gomon version value
-version="1.0.0"
+version="2.0.0"
 
 # Create LICENSE file
 
@@ -24,6 +24,10 @@ EOF
 go mod tidy
 license
 
+# Identify the module
+
+module=`go list -m`
+
 # Generate Dependencies
 
 dependencies=$(go list -m -f='{{.Dir}} {{.Path}} {{.Version}}' all | while read i j k;do if [[ "$i" == "${i#`pwd`}" && -n "$k" ]]; then echo $'\t//' "$j" "$k"; fi; done)
@@ -40,6 +44,9 @@ import (
 var (
 \t// Srcpath to strip from source file path in log messages.
 \tSrcpath = "'$srcpath$'"
+
+\t// module identifies the import package path for this module.
+\tmodule = "'$module$'"
 
 \t// executable identifies the full command path.
 \texecutable, _ = os.Executable()

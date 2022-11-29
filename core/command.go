@@ -33,12 +33,13 @@ var (
 func version() {
 	fmt.Fprintf(os.Stderr,
 		`Command    - %s
+Module     - %s
 Version    - %s
 Build Date - %s
 Compiler   - %s %s_%s
 Copyright © 2021 The Gomon Project.
 `,
-		executable, vmmp, buildDate, runtime.Version(), runtime.GOOS, runtime.GOARCH)
+		executable, module, vmmp, buildDate, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }
 
 // Main drives the show.

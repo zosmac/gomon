@@ -134,17 +134,7 @@ func endpoints(ctx context.Context) error {
 		cmd.Process.Pid),
 	)
 
-	go func() {
-		state, err := cmd.Process.Wait()
-		core.LogInfo(fmt.Errorf(
-			"Wait() command=%q pid=%d err=%v rc=%d usage=%+v",
-			cmd.String(),
-			cmd.Process.Pid,
-			err,
-			state.ExitCode(),
-			state.SysUsage(),
-		))
-	}()
+	go core.Wait(cmd)
 
 	go parseLsof(stdout)
 

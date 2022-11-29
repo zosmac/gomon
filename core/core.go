@@ -5,7 +5,9 @@ package core
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"unsafe"
 )
@@ -42,4 +44,21 @@ func ChDir(dir string) (string, error) {
 	dir, _ = os.Getwd()
 	dir, _ = filepath.EvalSymlinks(dir)
 	return dir, err
+}
+
+// Wait waits for a started command and reports its completion status.
+func Wait(cmd *exec.Cmd) {
+	err := cmd.Wait()
+	state := cmd.ProcessState
+	LogInfo(fmt.Errorf(
+		"Wait() command=%q pid=%d err=%v rc=%d\nsystime=%v, usrtime=%v, sys=%#v usage=%#v",
+		cmd.String(),
+		cmd.Process.Pid,
+		err,
+		state.ExitCode(),
+		state.SystemTime(),
+		state.UserTime(),
+		state.Sys(),
+		state.SysUsage(),
+	))
 }
