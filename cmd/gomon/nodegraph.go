@@ -2,11 +2,6 @@
 
 package main
 
-/*
-// import "C" to enable export of setMode function into the CGO code.
-*/
-import "C"
-
 import (
 	"bufio"
 	"bytes"
@@ -351,7 +346,7 @@ func NodeGraph(req *http.Request) []byte {
   ranksep=2
   node [margin=0]
   subgraph hosts {
-    cluster=true rank=same label="External Connections"` +
+    cluster=true rank=source label="External Connections"` +
 		hosts + `
   }
   subgraph processes {
@@ -359,7 +354,7 @@ func NodeGraph(req *http.Request) []byte {
 		strings.Join(processes, "") + `
   }
   subgraph files {
-	cluster=true rank=max label="Open Files"` +
+	cluster=true rank=sink label="Open Files"` +
 		datas + `
   }` +
 		clusterEdges +

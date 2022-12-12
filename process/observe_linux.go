@@ -155,13 +155,13 @@ func observe(ctx context.Context) error {
 				case procEventSID:
 					// event := (*sidProcEvent)(ev)
 					// if id, ok := youth[Pid(event.processTgid)]; ok {
-					// 	fmt.Fprintf(os.Stderr, "SID ========== %+v\n", event)
+					// 	fmt.Fprintf(os.Stderr, "SID ========== %#v\n", event)
 					// }
 
 				case procEventComm:
 					// event := (*commProcEvent)(ev)
 					// if id, ok := youth[Pid(event.processTgid)]; ok {
-					// 	fmt.Fprintf(os.Stderr, "COMM ========== %+v\n", event)
+					// 	fmt.Fprintf(os.Stderr, "COMM ========== %#v\n", event)
 					// }
 				}
 			}
