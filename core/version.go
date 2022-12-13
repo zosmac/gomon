@@ -24,7 +24,7 @@ var (
 	}()
 
 	// vmmp is "Version, Major, Minor, Patch"
-	vmmp = "v2.0.0-cbcc165f0a04"
+	vmmp = "v2.0.0-c0577e0f2b84"
 
 	// Dependencies import paths and versions
 	// github.com/StackExchange/wmi v1.2.1
@@ -41,8 +41,8 @@ var (
 	// github.com/prometheus/client_model v0.3.0
 	// github.com/prometheus/common v0.37.0
 	// github.com/prometheus/procfs v0.8.0
-	// golang.org/x/net v0.2.0
-	// golang.org/x/sys v0.2.0
+	// golang.org/x/net v0.4.0
+	// golang.org/x/sys v0.3.0
 	// google.golang.org/protobuf v1.28.1
 	// gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
 	// gopkg.in/yaml.v2 v2.4.0
