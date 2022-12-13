@@ -33,7 +33,8 @@ module=`go list -m`
 dependencies=$(go list -m -f='{{.Dir}} {{.Path}} {{.Version}}' all | while read i j k;do if [[ "$i" == "${i#`pwd`}" && -n "$k" ]]; then echo $'\t//' "$j" "$k"; fi; done)
 
 echo -n \
-$'// Copyright © 2021 The Gomon Project.
+$'// Code generated  DO NOT EDIT.
+// Copyright © 2021 The Gomon Project.
 
 package core
 
