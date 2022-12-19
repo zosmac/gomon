@@ -1,10 +1,11 @@
-module github.com/zosmac/gomon
+module github.com/zosmac/gonode
 
 go 1.19
 
 require (
 	github.com/StackExchange/wmi v1.2.1
 	github.com/prometheus/client_golang v1.14.0
+	github.com/zosmac/gomon v0.0.0-20221213021833-0b0ecea02a23
 	golang.org/x/net v0.4.0
 	golang.org/x/sys v0.3.0
 	gopkg.in/yaml.v2 v2.4.0

@@ -201,7 +201,7 @@ func rename(oldname, newname string) {
 	if f.isDir {
 		for rel, f := range obs.watched {
 			n, err := filepath.Rel(oldname, f.name)
-			if err == nil && strings.SplitN(n, string(filepath.Separator), 2)[0] != ".." {
+			if err == nil && !strings.HasPrefix(n, "..") {
 				reln := filepath.Join(reln, n)
 				delete(obs.watched, rel)
 				f.name = filepath.Join(obs.root, reln)

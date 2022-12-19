@@ -332,7 +332,7 @@ func NodeGraph(req *http.Request) []byte {
 		time.Now().Local().Format(`\lMon Jan 02 2006 at 03:04:05PM MST\l"`),
 	)
 
-	return dot(`digraph "gomon process nodegraph" {
+	return dot(`digraph "Gomon Process Connections Nodegraph" {
   stylesheet="/assets/mode.css"
   label=` + glabel + `
   labelloc=t

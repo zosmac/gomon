@@ -121,12 +121,11 @@ func main() {
 		BasicConstraintsValid: true,
 	}
 
-	hosts := strings.Split(*host, ",")
-	for _, h := range hosts {
-		if ip := net.ParseIP(h); ip != nil {
+	for _, host := range strings.Split(*host, ",") {
+		if ip := net.ParseIP(host); ip != nil {
 			template.IPAddresses = append(template.IPAddresses, ip)
 		} else {
-			template.DNSNames = append(template.DNSNames, h)
+			template.DNSNames = append(template.DNSNames, host)
 		}
 	}
 

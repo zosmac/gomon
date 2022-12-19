@@ -4,6 +4,7 @@ package core
 
 import (
 	"bufio"
+	"context"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -56,10 +57,10 @@ func boottime() time.Time {
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		l := sc.Text()
-		kv := strings.SplitN(l, " ", 2)
-		switch kv[0] {
+		k, v, _ := strings.Cut(l, " ")
+		switch k {
 		case "btime":
-			sec, err := strconv.Atoi(kv[1])
+			sec, err := strconv.Atoi(v)
 			if err != nil {
 				LogError(Error("/proc/stat btime", err))
 				return time.Time{}
@@ -83,10 +84,8 @@ func Measures(filename string) (map[string]string, error) {
 	m := map[string]string{}
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
-		s := strings.SplitN(sc.Text(), ":", 2)
-		if len(s) == 2 {
-			k := s[0]
-			v := strings.Fields(s[1])
+		if k, v, ok := strings.Cut(sc.Text(), ":"); ok {
+			v := strings.Fields(v)
 			if len(v) > 0 {
 				m[k] = v[0]
 			}
@@ -94,4 +93,9 @@ func Measures(filename string) (map[string]string, error) {
 	}
 
 	return m, nil
+}
+
+// osEnvironment starts the native application environment run loop.
+// It must run on the main thread, therefore launch the go application in a go routine.
+func osEnvironment(ctx context.Context) {
 }

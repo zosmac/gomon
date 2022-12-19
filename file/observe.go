@@ -170,7 +170,7 @@ func remove(f file) {
 		for rel, f := range obs.watched {
 			f := f
 			n, err := filepath.Rel(abs, f.name)
-			if err == nil && strings.SplitN(n, string(filepath.Separator), 2)[0] != ".." {
+			if err == nil && !strings.HasPrefix(n, "..") {
 				delete(obs.watched, rel)
 				if !f.isDir {
 					notify(fileDelete, f, "")

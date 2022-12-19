@@ -70,10 +70,10 @@ func contextSwitches() int {
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		l := sc.Text()
-		kv := strings.SplitN(l, " ", 2)
-		switch kv[0] {
+		k, v, _ := strings.Cut(l, " ")
+		switch k {
 		case "ctxt":
-			s, err := strconv.Atoi(kv[1])
+			s, err := strconv.Atoi(v)
 			if err != nil {
 				return 0
 			}
@@ -116,10 +116,10 @@ func cpu() CPU {
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		l := sc.Text()
-		kv := strings.SplitN(l, " ", 2)
-		switch kv[0] {
+		k, v, _ := strings.Cut(l, " ")
+		switch k {
 		case "cpu":
-			return scale(kv[1])
+			return scale(v)
 		}
 	}
 
@@ -141,8 +141,8 @@ func cpus() []CPU {
 	for sc.Scan() {
 		l := sc.Text()
 		if len(l) > 3 && l[:3] == "cpu" && l[3] != ' ' {
-			kv := strings.SplitN(l[3:], " ", 2)
-			cpus = append(cpus, scale(kv[1]))
+			_, v, _ := strings.Cut(l[3:], " ")
+			cpus = append(cpus, scale(v))
 		}
 	}
 	if len(cpus) == 0 && sc.Err() != nil {
