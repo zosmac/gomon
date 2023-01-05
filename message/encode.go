@@ -14,6 +14,11 @@ import (
 	"github.com/zosmac/gomon/core"
 )
 
+type (
+	// writer wraps os.Stdout.
+	writer struct{}
+)
+
 var (
 	jsonEncoder *json.Encoder
 
@@ -21,11 +26,6 @@ var (
 
 	// cache a time series stream of messages.
 	cache []Content
-)
-
-type (
-	// writer wraps os.Stdout.
-	writer struct{}
 )
 
 // Write enables writer to conform to io.Writer, indirection allows stdout destination to rotate.

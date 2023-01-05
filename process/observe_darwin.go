@@ -18,13 +18,14 @@ import (
 	"github.com/zosmac/gomon/core"
 )
 
-var (
-	// families identifies parent-child relationships
-	families = map[Pid]ids{}
+type (
+	// ids maps pids to current process instances.
+	ids map[Pid]Id
 )
 
-type (
-	ids map[Pid]Id
+var (
+	// families identifies parent-child relationships.
+	families = map[Pid]ids{}
 )
 
 func open() error {

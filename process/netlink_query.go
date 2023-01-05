@@ -31,57 +31,7 @@ It looks like these came in around Linux 3.3.
 	unix_diag_req in /usr/include/uqpi/linux/unix_diag.h
 */
 
-// RTA_ALIGN from /usr/include/uapi/linux/rtnetlink.h
-func rtaAlign(l int) int {
-	return int((l + syscall.RTA_ALIGNTO - 1) &^ (syscall.RTA_ALIGNTO - 1))
-}
-
-// *******************************
-// NETLINK convenience definitions
-// http://man7.org/linux/man-pages/man7/netlink.7.html
-// /usr/include/uapi/linux/netlink.h
-// /usr/include/uapi/linux/rtnetlink.h
-// /usr/include/uapi/linux/sock_diag.h
-// *******************************
-
-const (
-	// SOCK_DIAG_BY_FAMILY is the netlink socket query key
-	sockDiagByFamily = 20
-)
-
-// *************************************
-// Netlink inet family query definitions
-// *************************************
-
-// INET queries use "extensions" to request additional information.
-// We don't need this to get the connection endpoints
-const (
-	inetDiagReqNone = iota
-	inetDiagReqBytecode
-)
-
-// INET_DIAG response types from /usr/include/linux/inet_diag.h
-const (
-	inetDiagNone = iota
-	inetDiagMeminfo
-	inetDiagIinfo
-	inetDiagVegasInfo
-	inetDiagCong
-	inetDiagTOS
-	inetDiagTClass
-	inetDiagSKMeminfo
-	inetDiagShutdown
-	inetDiagDCTCPInfo
-	inetDiagProtocol
-	inetDiagSKV6Only
-	inetDiagLocals
-	inetDiagPeers
-	inetDiagPad
-	inetDiagMax = iota - 1
-)
-
 type (
-
 	// inet_diag_req_v2 from /usr/include/linux/inet_diag.h
 	inetDiagReqV2 struct {
 		sdiagFamily   byte
@@ -121,7 +71,108 @@ type (
 		syscall.NlMsghdr
 		inetDiagReqV2
 	}
+
+	// unix_diag_req from /usr/include/linux/unix_diag.h
+	unixDiagReq struct {
+		sdiagFamily   byte
+		sdiagProtocol byte
+		pad           uint16
+		udiagStates   uint32
+		udiagIno      uint32
+		udiagShow     uint32
+		udiagCookie   [2]uint32
+	}
+
+	// unix_diag_msg from /usr/include/linux/unix_diag.h
+	unixDiagMsg struct {
+		udiagFamily byte
+		udiagType   byte
+		udiagState  byte
+		pad         byte
+		udiagIno    uint32
+		udiagCookie [2]uint32
+	}
+
+	// nlUnixRequest defines netlink unix request header.
+	nlUnixRequest struct {
+		syscall.NlMsghdr
+		unixDiagReq
+	}
 )
+
+// *******************************
+// NETLINK convenience definitions
+// http://man7.org/linux/man-pages/man7/netlink.7.html
+// /usr/include/uapi/linux/netlink.h
+// /usr/include/uapi/linux/rtnetlink.h
+// /usr/include/uapi/linux/sock_diag.h
+// *******************************
+
+const (
+	// SOCK_DIAG_BY_FAMILY is the netlink socket query key
+	sockDiagByFamily = 20
+)
+
+// *************************************
+// Netlink inet family query definitions
+// *************************************
+
+const (
+	// INET queries use "extensions" to request additional information.
+	// We don't need this to get the connection endpoints.
+	inetDiagReqNone = iota
+	inetDiagReqBytecode
+)
+const (
+	// INET_DIAG response types from /usr/include/linux/inet_diag.h
+	inetDiagNone = iota
+	inetDiagMeminfo
+	inetDiagIinfo
+	inetDiagVegasInfo
+	inetDiagCong
+	inetDiagTOS
+	inetDiagTClass
+	inetDiagSKMeminfo
+	inetDiagShutdown
+	inetDiagDCTCPInfo
+	inetDiagProtocol
+	inetDiagSKV6Only
+	inetDiagLocals
+	inetDiagPeers
+	inetDiagPad
+	inetDiagMax = iota - 1
+)
+
+// *************************************
+// Netlink unix family query definitions
+// /usr/include/linux/unix_diag.h
+// *************************************
+
+const (
+	// UDIAG_SHOW query types from /usr/include/linux/unix_diag.h
+	udiagShowName    = 1 << iota /* show name (not path) */
+	udiagShowVFS                 /* show VFS inode info */
+	udiagShowPeer                /* show peer socket info */
+	udiagShowIcons               /* show pending connections */
+	udiagShowRqlen               /* show skb receive queue len */
+	udiagShowMeminfo             /* show memory info of a socket */
+)
+const (
+	// UNIX_DIAG response types
+	unixDiagName = iota
+	unixDiagVFS
+	unixDiagPeer
+	unixDiagIcons
+	unixDiagRqlen
+	unixDiagMeminfo
+	unixDiagShutdown
+	unixDiagMax = iota - 1
+)
+
+// RTA_ALIGN from /usr/include/uapi/linux/rtnetlink.h
+func rtaAlign(l int) int {
+	return int((l + syscall.RTA_ALIGNTO - 1) &^ (syscall.RTA_ALIGNTO - 1))
+}
 
 // inetPeerInode queries netlink to find inet socket's remote connection inode based on its remote address.
 // See http://man7.org/linux/man-pages/man7/sock_diag.7.html for API details.
@@ -206,60 +257,6 @@ func nlInetPeerInode(addr net.Addr) (int, error) {
 			}
 		}
 	}
-}
-
-// *************************************
-// Netlink unix family query definitions
-// /usr/include/linux/unix_diag.h
-// *************************************
-
-// UDIAG_SHOW query types from /usr/include/linux/unix_diag.h
-const (
-	udiagShowName    = 0x00000001 /* show name (not path) */
-	udiagShowVFS     = 0x00000002 /* show VFS inode info */
-	udiagShowPeer    = 0x00000004 /* show peer socket info */
-	udiagShowIcons   = 0x00000008 /* show pending connections */
-	udiagShowRqlen   = 0x00000010 /* show skb receive queue len */
-	udiagShowMeminfo = 0x00000020 /* show memory info of a socket */
-)
-
-// UNIX_DIAG response types
-const (
-	unixDiagName = iota
-	unixDiagVFS
-	unixDiagPeer
-	unixDiagIcons
-	unixDiagRqlen
-	unixDiagMeminfo
-	unixDiagShutdown
-	unixDiagMax = iota - 1
-)
-
-// unix_diag_req from /usr/include/linux/unix_diag.h
-type unixDiagReq struct {
-	sdiagFamily   byte
-	sdiagProtocol byte
-	pad           uint16
-	udiagStates   uint32
-	udiagIno      uint32
-	udiagShow     uint32
-	udiagCookie   [2]uint32
-}
-
-// unix_diag_msg from /usr/include/linux/unix_diag.h
-type unixDiagMsg struct {
-	udiagFamily byte
-	udiagType   byte
-	udiagState  byte
-	pad         byte
-	udiagIno    uint32
-	udiagCookie [2]uint32
-}
-
-// nlUnixRequest defines netlink unix request header.
-type nlUnixRequest struct {
-	syscall.NlMsghdr
-	unixDiagReq
 }
 
 // unixPeerInode queries netlink to find a unix socket's remote connection inode connected to a local inode.

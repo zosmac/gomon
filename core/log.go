@@ -15,6 +15,28 @@ import (
 	"time"
 )
 
+type (
+	// Err custom logging error type
+	Err struct {
+		s   string
+		err error
+	}
+)
+
+const (
+	levelTrace = iota - 2
+	levelDebug
+	levelInfo // default
+	levelWarn
+	levelError
+)
+
+const (
+	exitSuccess = iota
+	exitWarn
+	exitError
+)
+
 var (
 	logLevel = func() int {
 		switch strings.ToUpper(os.Getenv("LOG_LEVEL")) {
@@ -32,28 +54,6 @@ var (
 
 	// exitCode: 0 SUCCESS, 1 WARN, 2 ERROR
 	exitCode = exitSuccess
-)
-
-const (
-	levelTrace = iota - 2
-	levelDebug
-	levelInfo // default
-	levelWarn
-	levelError
-)
-
-const (
-	exitSuccess = iota
-	exitWarn
-	exitError
-)
-
-type (
-	// Err custom logging error type
-	Err struct {
-		s   string
-		err error
-	}
 )
 
 // Error method to comply with error interface

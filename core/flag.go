@@ -10,10 +10,22 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"runtime"
 	"sort"
 	"strings"
 	"time"
+)
+
+type (
+	flags struct {
+		flag.FlagSet
+		version              bool
+		document             bool
+		commandDescription   string
+		argumentDescriptions [][2]string
+		argsMax              int
+		Port                 int
+		Sample
+	}
 )
 
 var (
@@ -34,19 +46,6 @@ var (
 
 	// logBuf captures error output from Go flag parser
 	logBuf = bytes.Buffer{}
-)
-
-type (
-	flags struct {
-		flag.FlagSet
-		version              bool
-		document             bool
-		commandDescription   string
-		argumentDescriptions [][2]string
-		argsMax              int
-		Port                 int
-		Sample
-	}
 )
 
 // Var maps a flag field to its name and description, and adds a brief description
@@ -175,22 +174,6 @@ OPTIONS:
 	fmt.Fprint(os.Stderr, logBuf.String())
 }
 
-// IsTerminal reports if the file handle is connected to the terminal.
-func IsTerminal(f *os.File) bool {
-	info, err := f.Stat()
-	if err != nil {
-		return false
-	}
-	mode := info.Mode()
-
-	// see https://github.com/golang/go/issues/23123
-	if runtime.GOOS == "windows" {
-		return mode&os.ModeCharDevice == os.ModeCharDevice
-	}
-
-	return mode&(os.ModeDevice|os.ModeCharDevice) == (os.ModeDevice | os.ModeCharDevice)
-}
-
 // Sample is a command line flag type.
 type Sample time.Duration
 
@@ -205,8 +188,8 @@ func (i *Sample) Set(s string) error {
 }
 
 // String is a flag.Value interface method to enable Sample as a command line flag.
-func (i Sample) String() string {
-	return time.Duration(i).String()
+func (i *Sample) String() string {
+	return time.Duration(*i).String()
 }
 
 // AlignTicker aligns the sample ticking.

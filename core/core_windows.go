@@ -3,6 +3,7 @@
 package core
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"strings"
@@ -28,6 +29,15 @@ var (
 		windows.DRIVE_CDROM:       "cdrom",
 		windows.DRIVE_RAMDISK:     "ramdisk",
 	}
+
+	// boottime gets the system boot time.
+	Boottime = func() time.Time {
+		wos := []win32OperatingSystem{}
+		if wmi.Query(wmi.CreateQuery(&wos, ""), &wos) == nil {
+			return wos[0].LastBootUpTime
+		}
+		return time.Time{}
+	}()
 )
 
 const (
@@ -73,11 +83,8 @@ type win32OperatingSystem struct {
 	LastBootUpTime time.Time // Field names in the structure must match names in the WMI Class
 }
 
-// boottime gets the system boot time.
-func boottime() time.Time {
-	wos := []win32OperatingSystem{}
-	if wmi.Query(wmi.CreateQuery(&wos, ""), &wos) == nil {
-		return wos[0].LastBootUpTime
-	}
-	return time.Time{}
+// osEnvironment starts the native application environment run loop.
+// Note that a native application environment runs on the main thread.
+// Therefore, launch the gomon command Main() in a go routine.
+func osEnvironment(ctx context.Context) {
 }

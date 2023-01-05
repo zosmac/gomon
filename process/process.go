@@ -7,14 +7,10 @@ import (
 	"time"
 )
 
-// Pid is the identifier for a process.
-type Pid int
-
-func (pid Pid) String() string {
-	return strconv.Itoa(int(pid))
-}
-
 type (
+	// Pid is the identifier for a process.
+	Pid int
+
 	// Id identifies the message.
 	Id struct {
 		ppid      Pid       // for observer
@@ -23,3 +19,8 @@ type (
 		Starttime time.Time `json:"starttime" gomon:"property"`
 	}
 )
+
+// String formats a pid as a string to comply with fmt.Stringer interface.
+func (pid Pid) String() string {
+	return strconv.Itoa(int(pid))
+}

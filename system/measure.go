@@ -12,16 +12,16 @@ import (
 
 // Measure captures the system's metrics.
 func Measure(ps process.ProcStats) message.Content {
-	hdr := message.Measurement()
+	header := message.Measurement()
 	mem, swap := memory()
 	return &measurement{
-		Header: hdr,
+		Header: header,
 		Properties: Properties{
 			Uname:    uname(),
 			Boottime: core.Boottime,
 		},
 		Metrics: Metrics{
-			Uptime:          hdr.Timestamp.Sub(core.Boottime),
+			Uptime:          header.Timestamp.Sub(core.Boottime),
 			Rlimits:         rlimits(),
 			LoadAverage:     loadAverage(),
 			ContextSwitches: contextSwitches(),

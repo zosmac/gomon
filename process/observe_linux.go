@@ -13,23 +13,21 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-var (
-	// h is handle containing netlink descriptors
-	h = handle{fd: -1, gd: -1, id: -1}
-
-	// youth tracks processes spawned after gomon starts
-	youth = ids{}
-)
-
 type (
-	ids map[Pid]Id
-
 	// handle contains netlink descriptors
 	handle struct {
 		fd int // netlink process connector descriptor
 		gd int // netlink generic connector descriptor
 		id int // netlink generic TASKSTATS family id
 	}
+)
+
+var (
+	// h is handle containing netlink descriptors
+	h = handle{fd: -1, gd: -1, id: -1}
+
+	// ids maps pids to current process instances.
+	ids = map[Pid]Id{}
 )
 
 // open obtains netlink socket descriptors.
@@ -111,56 +109,56 @@ func observe(ctx context.Context) error {
 					pid := Pid(event.childTgid)
 					id := pid.id()
 					id.ppid = ppid // preserve in case child reassigned to init process
-					youth[id.Pid] = id
+					ids[id.Pid] = id
 					id.fork()
 
 				case procEventExec:
 					event := (*execProcEvent)(ev)
 					pid := Pid(event.processTgid)
 					id := pid.id() // get new name
-					if i, ok := youth[pid]; ok {
+					if i, ok := ids[pid]; ok {
 						id.ppid = i.ppid // preserve in case child reassigned to init process
 					}
-					youth[pid] = id
+					ids[pid] = id
 					id.exec()
 
 				case procEventExit:
 					event := (*exitProcEvent)(ev)
 					pid := Pid(event.processTgid)
-					if id, ok := youth[pid]; ok {
-						delete(youth, pid)
+					if id, ok := ids[pid]; ok {
+						delete(ids, pid)
 						id.exit()
 					}
 
 				case procEventUID:
 					event := (*uidProcEvent)(ev)
 					pid := Pid(event.processTgid)
-					id, ok := youth[pid]
+					id, ok := ids[pid]
 					if !ok {
 						id = pid.id()
-						youth[pid] = id
+						ids[pid] = id
 					}
 					id.setuid(int(event.uid))
 
 				case procEventGID:
 					event := (*gidProcEvent)(ev)
 					pid := Pid(event.processTgid)
-					id, ok := youth[pid]
+					id, ok := ids[pid]
 					if !ok {
 						id = pid.id()
-						youth[pid] = id
+						ids[pid] = id
 					}
 					id.setgid(int(event.gid))
 
 				case procEventSID:
 					// event := (*sidProcEvent)(ev)
-					// if id, ok := youth[Pid(event.processTgid)]; ok {
+					// if id, ok := ids[Pid(event.processTgid)]; ok {
 					// 	fmt.Fprintf(os.Stderr, "SID ========== %#v\n", event)
 					// }
 
 				case procEventComm:
 					// event := (*commProcEvent)(ev)
-					// if id, ok := youth[Pid(event.processTgid)]; ok {
+					// if id, ok := ids[Pid(event.processTgid)]; ok {
 					// 	fmt.Fprintf(os.Stderr, "COMM ========== %#v\n", event)
 					// }
 				}

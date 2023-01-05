@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -199,7 +198,7 @@ func Remove(pids []int) {
 
 // filter determines whether a log file should be watched.
 func filter(abs string) error {
-	if path, err := filepath.Rel(flags.logDirectory, abs); err != nil || strings.HasPrefix(path, "..") {
+	if rel, err := filepath.Rel(flags.logDirectory, abs); err != nil || len(rel) > 1 && rel[:2] == ".." {
 		return fmt.Errorf("%s not in %s path", abs, flags.logDirectory)
 	}
 

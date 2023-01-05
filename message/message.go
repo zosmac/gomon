@@ -3,7 +3,6 @@
 package message
 
 import (
-	"fmt"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -13,20 +12,15 @@ import (
 )
 
 type (
-	ValidValues []ValidValue
-
-	// ValidValue interface defines valid values for an event type.
-	ValidValue interface {
-		fmt.Stringer
-		ValidValues() ValidValues
-	}
+	// MeasureEvent defines the event type for a measurement.
+	MeasureEvent string
 
 	// Header for a message.
-	Header struct {
-		Timestamp time.Time  `json:"timestamp" gomon:"property"`
-		Host      string     `json:"host" gomon:"property"`
-		Source    string     `json:"source" gomon:"property"`
-		Event     ValidValue `json:"event" gomon:"property"`
+	Header[T ~string] struct {
+		Timestamp time.Time `json:"timestamp" gomon:"property"`
+		Host      string    `json:"host" gomon:"property"`
+		Source    string    `json:"source" gomon:"property"`
+		Event     T         `json:"event" gomon:"property"`
 	}
 
 	// Content interface methods for all messages.
@@ -36,46 +30,32 @@ type (
 	}
 )
 
-func source() string {
-	pc := []uintptr{0}
-	runtime.Callers(3, pc)
-	fs := runtime.CallersFrames(pc)
-	f, _ := fs.Next()
-	return strings.Split(filepath.Base(f.Function), ".")[0]
-}
+const (
+	// measure is the event for all measurements.
+	measure MeasureEvent = "measure"
+)
 
-// Values returns an ordered list of valid values for the type.
-func (vs ValidValues) Values() []string {
-	ss := make([]string, len(vs))
-	for i, v := range vs {
-		ss[i] = v.String()
+var (
+	// MeasureEvents has only the single type "measure".
+	MeasureEvents = core.ValidValue[MeasureEvent]{}.Define(measure)
+)
+
+// Measurement initializes the message header for measurement.
+// Measurement types are distinguised by their source.
+func Measurement() Header[MeasureEvent] {
+	return Header[MeasureEvent]{
+		Timestamp: time.Now(),
+		Host:      core.Hostname,
+		Source:    source(),
+		Event:     measure,
 	}
-	return ss
 }
 
-// IsValid returns whether a value is valid.
-func (vs ValidValues) IsValid(s string) bool {
-	for _, v := range vs {
-		if s == v.String() {
-			return true
-		}
-	}
-	return false
-}
-
-// Index returns the position of a value in the valid value list.
-func (vs ValidValues) Index(vv ValidValue) int {
-	for i, v := range vs {
-		if vv == v {
-			return i
-		}
-	}
-	return -1
-}
-
-// Observation initializes message header for observation.
-func Observation(t time.Time, event ValidValue) Header {
-	return Header{
+// Observation initializes the message header for an observation.
+// An observer (source) may detect several types of events, so the
+// source qualifies an event type by its origin.
+func Observation[T ~string](t time.Time, event T) Header[T] {
+	return Header[T]{
 		Timestamp: t,
 		Host:      core.Hostname,
 		Source:    source(),
@@ -83,34 +63,11 @@ func Observation(t time.Time, event ValidValue) Header {
 	}
 }
 
-type measureEvent string
-
-const (
-	measure measureEvent = "measure"
-)
-
-var (
-	MeasureEvents = ValidValues{
-		measure,
-	}
-)
-
-// String returns the event value of the message as a string.
-func (ev measureEvent) String() string {
-	return string(ev)
-}
-
-// ValidValues returns the valid event values for the message.
-func (measureEvent) ValidValues() ValidValues {
-	return MeasureEvents
-}
-
-// Measurement initializes message header for Measurement.
-func Measurement() Header {
-	return Header{
-		Timestamp: time.Now(),
-		Host:      core.Hostname,
-		Source:    source(),
-		Event:     measure,
-	}
+// source qualifies the event type of an observation/measurement.
+func source() string {
+	pc := []uintptr{0}
+	runtime.Callers(3, pc)
+	fs := runtime.CallersFrames(pc)
+	f, _ := fs.Next()
+	return strings.Split(filepath.Base(f.Function), ".")[0]
 }

@@ -20,6 +20,11 @@ import (
 	"github.com/zosmac/gomon/core"
 )
 
+type (
+	kernReturn C.int
+	cpuTicks   [C.CPU_STATE_MAX]C.uint
+)
+
 var (
 	// version of the Operating System.
 	version = func() string {
@@ -86,11 +91,6 @@ var (
 
 	// pagesize of memory pages.
 	pagesize = int(C.vm_kernel_page_size)
-)
-
-type (
-	kernReturn C.int
-	cpuTicks   [C.CPU_STATE_MAX]C.uint
 )
 
 func (r kernReturn) Error() string {

@@ -52,16 +52,16 @@ type (
 
 	// measurement for the message.
 	measurement struct {
-		message.Header `gomon:""`
-		Id             `json:"id" gomon:""`
-		Properties     `gomon:""`
-		Metrics        `gomon:""`
+		message.Header[message.MeasureEvent] `gomon:""`
+		Id                                   `json:"id" gomon:""`
+		Properties                           `gomon:""`
+		Metrics                              `gomon:""`
 	}
 )
 
 // Events returns the list of acceptable Event values for this message.
 func (*measurement) Events() []string {
-	return message.MeasureEvents.Values()
+	return message.MeasureEvents.ValidValues()
 }
 
 // ID returns the identifier for a network interface message.

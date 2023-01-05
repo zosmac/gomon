@@ -3,30 +3,13 @@
 package file
 
 import (
+	"github.com/zosmac/gomon/core"
 	"github.com/zosmac/gomon/message"
 )
 
 func init() {
 	message.Document(&observation{})
 }
-
-const (
-	// message events.
-	fileCreate fileEvent = "create"
-	fileRename fileEvent = "rename"
-	fileUpdate fileEvent = "update"
-	fileDelete fileEvent = "delete"
-)
-
-var (
-	// fileEvents valid event values for messages.
-	fileEvents = message.ValidValues{
-		fileCreate,
-		fileRename,
-		fileUpdate,
-		fileDelete,
-	}
-)
 
 type (
 	// fileEvent type.
@@ -39,25 +22,33 @@ type (
 
 	// message defines the properties of a file update message.
 	observation struct {
-		message.Header `gomon:""`
-		Id             `json:"id" gomon:""`
-		Message        string `json:"message" gomon:"property"`
+		message.Header[fileEvent] `gomon:""`
+		Id                        `json:"id" gomon:""`
+		Message                   string `json:"message" gomon:"property"`
 	}
 )
 
-// String returns the event value of the message as a string.
-func (ev fileEvent) String() string {
-	return string(ev)
-}
+const (
+	// message events.
+	fileCreate fileEvent = "create"
+	fileRename fileEvent = "rename"
+	fileUpdate fileEvent = "update"
+	fileDelete fileEvent = "delete"
+)
 
-// ValidValues returns the valid event values for the message.
-func (fileEvent) ValidValues() message.ValidValues {
-	return fileEvents
-}
+var (
+	// fileEvents valid event values for messages.
+	fileEvents = core.ValidValue[fileEvent]{}.Define(
+		fileCreate,
+		fileRename,
+		fileUpdate,
+		fileDelete,
+	)
+)
 
 // Events returns the list of acceptable Event values for this message.
 func (*observation) Events() []string {
-	return fileEvents.Values()
+	return fileEvents.ValidValues()
 }
 
 // ID returns the identifier for a file update message message.

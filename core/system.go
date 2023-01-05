@@ -35,9 +35,6 @@ var (
 		names: map[int]string{},
 	}
 
-	// Boottime contains the system boottime.
-	Boottime = boottime()
-
 	// DarkAppearance indicates whether system appearance is "dark" or "light"
 	DarkAppearance bool
 )

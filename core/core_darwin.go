@@ -86,6 +86,43 @@ import (
 	"unsafe"
 )
 
+// CGO interprets C. types in different packages as being different types. The following core package aliases for
+// CoreFoundation (C.CF...) types externalize these locally defined types as core package types. Casting C.CF...Ref
+// arguments to core.CF...Ref enables callers from other packages by using the core package type name.
+type (
+	// CFStringRef creates core package alias for type
+	CFStringRef = C.CFStringRef
+	// CFNumberRef creates core package alias for type
+	CFNumberRef = C.CFNumberRef
+	// CFBooleanRef creates core package alias for type
+	CFBooleanRef = C.CFBooleanRef
+	// CFArrayRef creates core package alias for type
+	CFArrayRef = C.CFArrayRef
+	// CFDictionaryRef creates core package alias for type
+	CFDictionaryRef = C.CFDictionaryRef
+)
+
+var (
+	// Boottime retrieves the system boot time.
+	Boottime = func() time.Time {
+		var timespec C.struct_timespec
+		size := C.size_t(C.sizeof_struct_timespec)
+		if rv, err := C.sysctl(
+			(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_KERN, C.KERN_BOOTTIME})),
+			2,
+			unsafe.Pointer(&timespec),
+			&size,
+			unsafe.Pointer(nil),
+			0,
+		); rv != 0 {
+			LogError(Error("sysctl kern.boottime", err))
+			return time.Time{}
+		}
+
+		return time.Unix(int64(timespec.tv_sec), int64(timespec.tv_nsec))
+	}()
+)
+
 // FdPath gets the path for an open file descriptor.
 func FdPath(fd int) (string, error) {
 	pid := C.int(os.Getpid())
@@ -124,47 +161,12 @@ func MountMap() (map[string]string, error) {
 	return m, nil
 }
 
-// boottime gets the system boot time.
-func boottime() time.Time {
-	var timespec C.struct_timespec
-	size := C.size_t(C.sizeof_struct_timespec)
-	if rv, err := C.sysctl(
-		(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_KERN, C.KERN_BOOTTIME})),
-		2,
-		unsafe.Pointer(&timespec),
-		&size,
-		unsafe.Pointer(nil),
-		0,
-	); rv != 0 {
-		LogError(Error("sysctl kern.boottime", err))
-		return time.Time{}
-	}
-
-	return time.Unix(int64(timespec.tv_sec), int64(timespec.tv_nsec))
-}
-
 // CreateCFString copies a Go string as a Core Foundation CFString. Requires CFRelease be called when done.
 func CreateCFString(s string) unsafe.Pointer {
 	cs := C.CString(s)
 	defer C.free(unsafe.Pointer(cs))
 	return unsafe.Pointer(C.CopyCFString(cs))
 }
-
-// CGO interprets C. types in different packages as being different types. The following core package aliases for
-// CoreFoundation (C.CF...) types externalize these locally defined types as core package types. Casting C.CF...Ref
-// arguments to core.CF...Ref enables callers from other packages by using the core package type name.
-type (
-	// CFStringRef creates core package alias for type
-	CFStringRef = C.CFStringRef
-	// CFNumberRef creates core package alias for type
-	CFNumberRef = C.CFNumberRef
-	// CFBooleanRef creates core package alias for type
-	CFBooleanRef = C.CFBooleanRef
-	// CFArrayRef creates core package alias for type
-	CFArrayRef = C.CFArrayRef
-	// CFDictionaryRef creates core package alias for type
-	CFDictionaryRef = C.CFDictionaryRef
-)
 
 // GetCFString gets a Go string from a CFString
 func GetCFString(p CFStringRef) string {
@@ -267,7 +269,8 @@ func GetCFValue(v unsafe.Pointer) interface{} {
 }
 
 // osEnvironment starts the native application environment run loop.
-// It must run on the main thread, therefore launch the go application in a go routine.
+// Note that a native application environment runs on the main thread.
+// Therefore, launch the gomon command Main() in a go routine.
 func osEnvironment(ctx context.Context) {
 	go func() {
 		<-ctx.Done()

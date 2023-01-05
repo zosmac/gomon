@@ -20,19 +20,8 @@ import (
 	"github.com/zosmac/gomon/core"
 )
 
-var (
-	pt processTable
-)
-
 type (
 	Pid int
-
-	// CommandLine contains a process' command line arguments.
-	CommandLine struct {
-		Executable string   `json:"executable" gomon:"property"`
-		Args       []string `json:"args" gomon:"property"`
-		Envs       []string `json:"envs" gomon:"property"`
-	}
 
 	// processTable defines a process table as a map of pids to processes.
 	processTable map[Pid]*process
@@ -47,6 +36,13 @@ type (
 		Ppid Pid
 		CommandLine
 	}
+
+	// CommandLine contains a process' command line arguments.
+	CommandLine struct {
+		Executable string   `json:"executable" gomon:"property"`
+		Args       []string `json:"args" gomon:"property"`
+		Envs       []string `json:"envs" gomon:"property"`
+	}
 )
 
 func (pid Pid) String() string {
@@ -58,7 +54,9 @@ func main() {
 	if len(os.Args) > 1 {
 		pid, _ = strconv.Atoi(os.Args[1])
 	}
-	pids := flatTree(findTree(buildTree(buildTable()), Pid(pid)))
+	tb := buildTable()
+	tr := findTree(buildTree(tb), Pid(pid))
+	pids := flatTree(tb, tr)
 
 	fmt.Fprintf(os.Stderr, "%v\n", pids)
 }
@@ -94,7 +92,7 @@ func buildTable() processTable {
 		panic(fmt.Errorf("could not build process table %v", err))
 	}
 
-	pt = make(map[Pid]*process, len(pids))
+	tb := make(map[Pid]*process, len(pids))
 	for _, pid := range pids {
 
 		var bsi C.struct_proc_bsdshortinfo
@@ -108,7 +106,7 @@ func buildTable() processTable {
 			continue
 		}
 
-		pt[pid] = &process{
+		tb[pid] = &process{
 			ancestors:   []Pid{},
 			Pid:         pid,
 			Ppid:        Pid(bsi.pbsi_ppid),
@@ -116,57 +114,57 @@ func buildTable() processTable {
 		}
 	}
 
-	for pid, p := range pt {
+	for pid, p := range tb {
 		p.ancestors = func() []Pid {
 			var pids []Pid
-			for pid := pt[pid].Ppid; pid > 0; pid = pt[pid].Ppid {
+			for pid := tb[pid].Ppid; pid > 0; pid = tb[pid].Ppid {
 				pids = append([]Pid{pid}, pids...)
 			}
 			return pids
 		}()
 	}
 
-	return pt
+	return tb
 }
 
-func buildTree(pt processTable) processTree {
-	t := processTree{}
+func buildTree(tb processTable) processTree {
+	tr := processTree{}
 
-	for pid, p := range pt {
-		addPid(t, append(p.ancestors, pid))
+	for pid, p := range tb {
+		addPid(tr, append(p.ancestors, pid))
 	}
 
-	return t
+	return tr
 }
 
-func addPid(t processTree, ancestors []Pid) {
+func addPid(tr processTree, ancestors []Pid) {
 	if len(ancestors) == 0 {
 		return
 	}
-	if _, ok := t[ancestors[0]]; !ok {
-		t[ancestors[0]] = processTree{}
+	if _, ok := tr[ancestors[0]]; !ok {
+		tr[ancestors[0]] = processTree{}
 	}
-	addPid(t[ancestors[0]], ancestors[1:])
+	addPid(tr[ancestors[0]], ancestors[1:])
 }
 
-func flatTree(t processTree) []Pid {
-	return flatTreeIndent(t, 0)
+func flatTree(tb processTable, tr processTree) []Pid {
+	return flatTreeIndent(tb, tr, 0)
 }
 
-func flatTreeIndent(t processTree, indent int) []Pid {
-	if len(t) == 0 {
+func flatTreeIndent(tb processTable, tr processTree, indent int) []Pid {
+	if len(tr) == 0 {
 		return nil
 	}
 	var flat []Pid
 
 	var pids []Pid
-	for pid := range t {
+	for pid := range tr {
 		pids = append(pids, pid)
 	}
 
 	sort.Slice(pids, func(i, j int) bool {
-		dti := depthTree(t[pids[i]])
-		dtj := depthTree(t[pids[j]])
+		dti := depthTree(tr[pids[i]])
+		dtj := depthTree(tr[pids[j]])
 		return dti > dtj ||
 			dti == dtj && pids[i] < pids[j]
 	})
@@ -174,34 +172,34 @@ func flatTreeIndent(t processTree, indent int) []Pid {
 
 	for _, pid := range pids {
 		flat = append(flat, pid)
-		display(pid, indent)
-		flat = append(flat, flatTreeIndent(t[pid], indent+3)...)
+		display(tb[pid], indent)
+		flat = append(flat, flatTreeIndent(tb, tr[pid], indent+3)...)
 	}
 
 	return flat
 }
 
-func display(pid Pid, indent int) {
+func display(p *process, indent int) {
 	tab := fmt.Sprintf("\n\t%*s", indent, "")
 	var cmd, args, envs string
-	if len(pt[pid].Args) > 0 {
-		cmd = pt[pid].Args[0]
+	if len(p.Args) > 0 {
+		cmd = p.Args[0]
 	}
-	if len(pt[pid].Args) > 1 {
-		args = tab + strings.Join(pt[pid].Args[1:], tab)
+	if len(p.Args) > 1 {
+		args = tab + strings.Join(p.Args[1:], tab)
 	}
-	if len(pt[pid].Envs) > 0 {
-		envs = tab + strings.Join(pt[pid].Envs, tab)
+	if len(p.Envs) > 0 {
+		envs = tab + strings.Join(p.Envs, tab)
 	}
-	p := pid.String()
-	pre := "      "[:6-len(p)] + "\033[36;40m" + p
+	pid := p.Pid.String()
+	pre := "      "[:6-len(pid)] + "\033[36;40m" + pid
 	fmt.Printf("%*s%s\033[m  %s\033[34m%s\033[35m%s\033[m\n", indent, "", pre, cmd, args, envs)
 }
 
 // depthTree enables sort of deepest process trees first.
-func depthTree(t processTree) int {
+func depthTree(tr processTree) int {
 	depth := 0
-	for _, tree := range t {
+	for _, tree := range tr {
 		dt := depthTree(tree) + 1
 		if depth < dt {
 			depth = dt
@@ -211,13 +209,13 @@ func depthTree(t processTree) int {
 }
 
 // findTree finds the process tree parented by a specific process.
-func findTree(t processTree, parent Pid) processTree {
-	for pid, t := range t {
+func findTree(tr processTree, parent Pid) processTree {
+	for pid, tr := range tr {
 		if pid == parent {
-			return processTree{parent: t}
+			return processTree{parent: tr}
 		}
-		if t = findTree(t, parent); t != nil {
-			return t
+		if tr = findTree(tr, parent); tr != nil {
+			return tr
 		}
 	}
 

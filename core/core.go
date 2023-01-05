@@ -9,7 +9,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"unsafe"
+)
+
+type (
+	// ValidValue defines list of values that are valid for a type safe string.
+	ValidValue[T ~string] map[T]int
 )
 
 const (
@@ -30,6 +36,35 @@ var (
 	}()
 )
 
+// Define initializes a ValidValue type with its valid values.
+func (vv ValidValue[T]) Define(values ...T) ValidValue[T] {
+	vv = map[T]int{}
+	for i, v := range values {
+		vv[v] = i
+	}
+	return vv
+}
+
+// ValidValues returns an ordered list of valid values for the type.
+func (vv ValidValue[T]) ValidValues() []string {
+	ss := make([]string, len(vv))
+	for v, i := range vv {
+		ss[i] = string(v)
+	}
+	return ss
+}
+
+// IsValid returns whether a value is valid.
+func (vv ValidValue[T]) IsValid(v T) bool {
+	_, ok := vv[v]
+	return ok
+}
+
+// Index returns the position of a value in the valid value list.
+func (vv ValidValue[T]) Index(v T) int {
+	return vv[v]
+}
+
 // ChDir is a convenience function for changing the current directory and reporting its canonical path.
 // If changing the directory fails, ChDir returns the error and canonical path of the current directory.
 func ChDir(dir string) (string, error) {
@@ -46,7 +81,7 @@ func ChDir(dir string) (string, error) {
 	return dir, err
 }
 
-// Wait waits for a started command and reports its completion status.
+// Wait for a started command to complete and report its exit status.
 func Wait(cmd *exec.Cmd) {
 	err := cmd.Wait()
 	state := cmd.ProcessState
@@ -61,4 +96,20 @@ func Wait(cmd *exec.Cmd) {
 		state.Sys(),
 		state.SysUsage(),
 	))
+}
+
+// IsTerminal reports if a file handle is connected to the terminal.
+func IsTerminal(f *os.File) bool {
+	info, err := f.Stat()
+	if err != nil {
+		return false
+	}
+	mode := info.Mode()
+
+	// see https://github.com/golang/go/issues/23123
+	if runtime.GOOS == "windows" {
+		return mode&os.ModeCharDevice == os.ModeCharDevice
+	}
+
+	return mode&(os.ModeDevice|os.ModeCharDevice) == (os.ModeDevice | os.ModeCharDevice)
 }

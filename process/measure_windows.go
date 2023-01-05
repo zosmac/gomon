@@ -13,33 +13,6 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-var (
-	kernel32             = windows.NewLazySystemDLL("kernel32.dll")
-	getProcessIoCounters = kernel32.NewProc("GetProcessIoCounters").Call
-
-	psapi                   = windows.NewLazySystemDLL("psapi.dll")
-	getProcessImageFileName = psapi.NewProc("GetProcessImageFileNameW").Call
-	getProcessMemoryInfo    = psapi.NewProc("GetProcessMemoryInfo").Call
-
-	status = map[uint16]string{ // Win32_Process ExecutionState
-		0: "Unknown",
-		1: "Other",
-		2: "Ready",
-		3: "Running",
-		4: "Blocked",
-		5: "Suspended Blocked",
-		6: "Suspended Ready",
-		7: "Terminated",
-		8: "Stopped",
-		9: "Growing",
-	}
-)
-
-const (
-	processAllAccess = 0x001f0fff
-	stillActive      = 259
-)
-
 type (
 	// PROCESS_MEMORY_COUNTERS_EX contains process memory counters.
 	processMemoryCountersEx struct {
@@ -89,6 +62,33 @@ type (
 		WriteOperationCount uint64 // GetProcessIoCounters also gets this
 		WriteTransferCount  uint64 // GetProcessIoCounters also gets this
 	}
+)
+
+var (
+	kernel32             = windows.NewLazySystemDLL("kernel32.dll")
+	getProcessIoCounters = kernel32.NewProc("GetProcessIoCounters").Call
+
+	psapi                   = windows.NewLazySystemDLL("psapi.dll")
+	getProcessImageFileName = psapi.NewProc("GetProcessImageFileNameW").Call
+	getProcessMemoryInfo    = psapi.NewProc("GetProcessMemoryInfo").Call
+
+	status = map[uint16]string{ // Win32_Process ExecutionState
+		0: "Unknown",
+		1: "Other",
+		2: "Ready",
+		3: "Running",
+		4: "Blocked",
+		5: "Suspended Blocked",
+		6: "Suspended Ready",
+		7: "Terminated",
+		8: "Stopped",
+		9: "Growing",
+	}
+)
+
+const (
+	processAllAccess = 0x001f0fff
+	stillActive      = 259
 )
 
 // metrics captures the metrics for a process.

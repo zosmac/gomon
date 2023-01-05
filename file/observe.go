@@ -8,22 +8,10 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/zosmac/gomon/core"
 	"github.com/zosmac/gomon/message"
-)
-
-var (
-	// obs anchors the observer.
-	obs *observer
-
-	// messageChan queues file event observations for periodic reporting.
-	messageChan = make(chan *observation, 100)
-
-	// errorChan communicates errors from the observe goroutine.
-	errorChan = make(chan error, 10)
 )
 
 type (
@@ -39,6 +27,17 @@ type (
 		*handle
 		watched map[string]file
 	}
+)
+
+var (
+	// obs anchors the observer.
+	obs *observer
+
+	// messageChan queues file event observations for periodic reporting.
+	messageChan = make(chan *observation, 100)
+
+	// errorChan communicates errors from the observe goroutine.
+	errorChan = make(chan error, 10)
 )
 
 // Observer starts capture of file update observations.
@@ -169,8 +168,7 @@ func remove(f file) {
 		abs := f.name
 		for rel, f := range obs.watched {
 			f := f
-			n, err := filepath.Rel(abs, f.name)
-			if err == nil && !strings.HasPrefix(n, "..") {
+			if n, err := filepath.Rel(abs, f.name); err == nil && (len(n) < 2 || n[:2] != "..") {
 				delete(obs.watched, rel)
 				if !f.isDir {
 					notify(fileDelete, f, "")

@@ -29,7 +29,6 @@ import (
 	"errors"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"unsafe"
 
 	"github.com/zosmac/gomon/core"
@@ -200,8 +199,7 @@ func rename(oldname, newname string) {
 	obs.watched[reln] = f
 	if f.isDir {
 		for rel, f := range obs.watched {
-			n, err := filepath.Rel(oldname, f.name)
-			if err == nil && !strings.HasPrefix(n, "..") {
+			if n, err := filepath.Rel(oldname, f.name); err == nil && (len(n) < 2 || n[:2] != "..") {
 				reln := filepath.Join(reln, n)
 				delete(obs.watched, rel)
 				f.name = filepath.Join(obs.root, reln)

@@ -119,7 +119,7 @@ func parseLog(sc *bufio.Scanner, regex *regexp.Regexp, format string) {
 
 		if runtime.GOOS == "linux" {
 			level := levelMap[strings.ToLower(match[groups[groupLevel]])]
-			if !logLevels.IsValid(string(level)) || logLevels.Index(level) < logLevels.Index(flags.logLevel) {
+			if !logLevels.IsValid(level) || logLevels.Index(level) < logLevels.Index(flags.logLevel) {
 				continue
 			}
 

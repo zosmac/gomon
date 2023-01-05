@@ -19,6 +19,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type (
+	// prometheusCollector complies with the Prometheus Collector interface.
+	prometheusCollector struct{}
+)
+
 var (
 	// descs maps metric names to descriptions.
 	descs = map[string]*prometheus.Desc{}
@@ -31,11 +36,6 @@ var (
 
 	// prometheusDone signals that main's measure is complete.
 	prometheusDone = make(chan struct{}, 1)
-)
-
-type (
-	// prometheusCollector complies with the Prometheus Collector interface.
-	prometheusCollector struct{}
 )
 
 // Describe returns metric descriptions for prometheusCollector.

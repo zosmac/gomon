@@ -33,7 +33,7 @@ var (
 
 // init initializes the command line flags.
 func init() {
-	s := strings.Join(logLevels.Values(), "|")
+	s := strings.Join(logLevels.ValidValues(), "|")
 	core.Flags.Var(
 		&flags.logLevel,
 		"loglevel",
@@ -66,14 +66,14 @@ func init() {
 // Set is a flag.Value interface method to enable logLevel as a command line flag.
 func (l *logLevel) Set(level string) error {
 	level = strings.ToLower(level)
-	if l.ValidValues().IsValid(level) {
+	if logLevels.IsValid(logLevel(level)) {
 		*l = logLevel(level)
 		return nil
 	}
-	return errors.New("valid values are " + strings.Join(l.ValidValues().Values(), ", "))
+	return errors.New("valid values are " + strings.Join(logLevels.ValidValues(), ", "))
 }
 
 // String is a flag.Value interface method to enable logLevel as a command line flag.
-func (l logLevel) String() string {
-	return string(l)
+func (l *logLevel) String() string {
+	return string(*l)
 }

@@ -97,12 +97,12 @@ type (
 
 	// measurement for the message.
 	measurement struct {
-		Ancestors      []Pid
-		message.Header `gomon:""`
-		Id             `json:"id" gomon:""`
-		Properties     `gomon:""`
-		Metrics        `gomon:""`
-		Connections    []Connection `json:"connections" gomon:""`
+		Ancestors                            []Pid
+		message.Header[message.MeasureEvent] `gomon:""`
+		Id                                   `json:"id" gomon:""`
+		Properties                           `gomon:""`
+		Metrics                              `gomon:""`
+		Connections                          []Connection `json:"connections" gomon:""`
 	}
 
 	Process = measurement
@@ -110,7 +110,7 @@ type (
 
 // Events returns the list of acceptable Event values for this message.
 func (*measurement) Events() []string {
-	return message.MeasureEvents.Values()
+	return message.MeasureEvents.ValidValues()
 }
 
 // ID returns the identifier for a process message.

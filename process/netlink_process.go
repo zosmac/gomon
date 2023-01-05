@@ -23,57 +23,33 @@ Linux Netlink API and BPF Reference:
 	http://man7.org/linux/man-pages/man2/bpf.2.html
 	https://godoc.org/golang.org/x/net/bpf
 
-netlink process connector
-	/usr/include/linux/netlink.h
-	/usr/include/linux/connector.h
-	/usr/include/linux/cn_proc.h
-
-netlink generic connector
+netlink generic controller
 	/usr/include/linux/netlink.h
 	/usr/include/net/linux/genetlink.h
 	/usr/include/uapi/linux/genetlink.h
 	/usr/include/uapi/linux/netlink.h
 	/usr/include/uapi/linux/taskstats.h
+
+	netlink process connector
+	/usr/include/linux/netlink.h
+	/usr/include/linux/connector.h
+	/usr/include/linux/cn_proc.h
 */
 
-// nlmsgAlign from /usr/include/linux/netlink.h
-func nlmsgAlign(l int) uintptr {
-	return uintptr((l + syscall.NLMSG_ALIGNTO - 1) & ^(syscall.NLMSG_ALIGNTO - 1))
-}
-
-// *************************************************
-// NETLINK process connector convenience definitions
-// *************************************************
 type (
 	// proc_cn_mcast_op enum from /usr/include/linux/cn_proc.h
 	procCnMcastOp uint32
 
 	// proc_event.what enum from /usr/include/linux/cn_proc.h
 	what uint32
-)
 
-const (
-	// netlink connector routing ids from linux/connector.h
-	cnIdxProc = 1
-	cnValProc = 1
+	// nlGenlRequest defines netlink generic controller request.
+	nlGenlRequest struct {
+		syscall.NlMsghdr
+		unix.Genlmsghdr
+		syscall.NlAttr
+	}
 
-	connectorMaxMessageSize = 16384
-
-	// enum procCnMcastOp
-	procCnMcastObserve = procCnMcastOp(1)
-	procCnMcastIgnore  = procCnMcastOp(2)
-
-	// enum proc_event.what
-	procEventFork = what(0x00000001)
-	procEventExec = what(0x00000002)
-	procEventUID  = what(0x00000004)
-	procEventGID  = what(0x00000040)
-	procEventSID  = what(0x00000080)
-	procEventComm = what(0x00000200)
-	procEventExit = what(0x80000000)
-)
-
-type (
 	// nlProcRequest defines netlink process request.
 	nlProcRequest struct {
 		syscall.NlMsghdr
@@ -162,150 +138,40 @@ type (
 	}
 )
 
-// nlProcess opens socket to the netlink process connector.
-func nlProcess() (int, error) {
-	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_DGRAM, syscall.NETLINK_CONNECTOR)
-	if err != nil {
-		return -1, core.Error("socket", err)
-	}
+const (
+	// netlink connector routing ids from linux/connector.h
+	cnIdxProc = 1
+	cnValProc = 1
 
-	if err := syscall.Bind(fd,
-		&syscall.SockaddrNetlink{
-			Family: syscall.AF_NETLINK,
-			Groups: cnIdxProc,
-		},
-	); err != nil {
-		syscall.Close(fd)
-		return -1, core.Error("bind", err)
-	}
+	connectorMaxMessageSize = 16384
 
-	if err := nlProcessFilter(fd); err != nil {
-		syscall.Close(fd)
-		return -1, core.Error("setsockopt attach filter", err)
-	}
+	// enum procCnMcastOp
+	procCnMcastObserve = procCnMcastOp(1)
+	procCnMcastIgnore  = procCnMcastOp(2)
 
-	if err := nlProcessObserve(fd, true); err != nil {
-		syscall.Close(fd)
-		return -1, core.Error("netlink process connector", err)
-	}
-
-	return fd, nil
-}
-
-// nlProcessFilter sets filter program for netlink process connector socket.
-// Inspiration: http://netsplit.com/the-proc-connector-and-socket-filters
-// godoc for bpf package: https://godoc.org/golang.org/x/net/bpf
-func nlProcessFilter(fd int) error {
-	filter, err := bpf.Assemble([]bpf.Instruction{
-		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Offsetof(nlProcResponse{}.Type)), Size: 2},
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(syscall.NLMSG_DONE), SkipTrue: 1}, // NLMSG_DONE
-		bpf.RetConstant{Val: 0}, // filter out
-		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Offsetof(nlProcResponse{}.idx)), Size: 4},
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: cnIdxProc, SkipTrue: 1}, // CN_IDX_PROC
-		bpf.RetConstant{Val: 0}, // filter out
-		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Offsetof(nlProcResponse{}.val)), Size: 4},
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: cnValProc, SkipTrue: 1}, // CN_VAL_PROC
-		bpf.RetConstant{Val: 0}, // filter out
-		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Offsetof(nlProcResponse{}.what)), Size: 4},
-		// FORK filter
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventFork), SkipFalse: 8},
-		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(forkProcEvent{}.childPid)), Size: 4},
-		bpf.StoreScratch{Src: bpf.RegA, N: 0},
-		bpf.LoadScratch{Dst: bpf.RegX, N: 0},
-		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(forkProcEvent{}.childTgid)), Size: 4},
-		bpf.JumpIfX{Cond: bpf.JumpEqual, SkipTrue: 1}, // child_pid == child_tgid (i.e. this is a fork(), not a clone()
-		bpf.RetConstant{Val: 0},                       // filter out
-		bpf.RetConstant{Val: 0xFFFFFFFF},
-		// EXEC filter
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventExec), SkipFalse: 8},
-		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(execProcEvent{}.processPid)), Size: 4},
-		bpf.StoreScratch{Src: bpf.RegA, N: 0},
-		bpf.LoadScratch{Dst: bpf.RegX, N: 0},
-		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(execProcEvent{}.processTgid)), Size: 4},
-		bpf.JumpIfX{Cond: bpf.JumpEqual, SkipTrue: 1}, // exec process_pid == process_tgid
-		bpf.RetConstant{Val: 0},                       // filter out
-		bpf.RetConstant{Val: 0xFFFFFFFF},
-		// EXIT filter
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventExit), SkipFalse: 8},
-		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(exitProcEvent{}.processPid)), Size: 4},
-		bpf.StoreScratch{Src: bpf.RegA, N: 0},
-		bpf.LoadScratch{Dst: bpf.RegX, N: 0},
-		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(exitProcEvent{}.processTgid)), Size: 4},
-		bpf.JumpIfX{Cond: bpf.JumpEqual, SkipTrue: 1}, // exit process_pid == process_tgid
-		bpf.RetConstant{Val: 0},                       // filter out
-		bpf.RetConstant{Val: 0xFFFFFFFF},
-		// UID, GID, SID, COMM
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventUID), SkipTrue: 4},  // PROC_EVENT_UID
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventGID), SkipTrue: 3},  // PROC_EVENT_GID
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventSID), SkipTrue: 2},  // PROC_EVENT_SID
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventComm), SkipTrue: 1}, // PROC_EVENT_COMM
-		bpf.RetConstant{Val: 0},          // filter out
-		bpf.RetConstant{Val: 0xFFFFFFFF}, // UID, GID, SID, COMM
-	})
-	if err != nil {
-		return err
-	}
-
-	if _, _, err := syscall.Syscall6(
-		syscall.SYS_SETSOCKOPT,
-		uintptr(fd),
-		uintptr(syscall.SOL_SOCKET),
-		uintptr(syscall.SO_ATTACH_FILTER),
-		uintptr(unsafe.Pointer(
-			&syscall.SockFprog{
-				Len:    uint16(len(filter)),
-				Filter: (*syscall.SockFilter)(unsafe.Pointer(&filter[0])),
-			},
-		)),
-		unsafe.Sizeof(syscall.SockFprog{}),
-		0,
-	); err != 0 {
-		return err
-	}
-
-	return nil
-}
-
-// nlProcessObserve sets process connector to observe or ignore process messages.
-func nlProcessObserve(fd int, on bool) error {
-	op := procCnMcastIgnore
-	if on {
-		op = procCnMcastObserve
-	}
-	req := nlProcRequest{
-		NlMsghdr: syscall.NlMsghdr{
-			Len:  uint32(unsafe.Sizeof(nlProcRequest{})),
-			Type: uint16(syscall.NLMSG_DONE),
-		},
-		cnMsg: cnMsg{
-			cbID: cbID{
-				idx: cnIdxProc,
-				val: cnValProc,
-			},
-			len: uint16(unsafe.Sizeof(op)),
-		},
-		procCnMcastOp: op,
-	}
-
-	buf := (*[unsafe.Sizeof(req)]byte)(unsafe.Pointer(&req))[:]
-	return syscall.Sendto(fd, buf, 0, &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK})
-}
-
-// *************************************************
-// NETLINK generic TASKSTATS convenience definitions
-// *************************************************
+	// enum proc_event.what
+	procEventFork = what(0x00000001)
+	procEventExec = what(0x00000002)
+	procEventUID  = what(0x00000004)
+	procEventGID  = what(0x00000040)
+	procEventSID  = what(0x00000080)
+	procEventComm = what(0x00000200)
+	procEventExit = what(0x80000000)
+)
 
 // NLA_ALIGNTO from /usr/include/linux/netlink.h
 func nlaAlignTo(l int) int {
 	return (l + syscall.NLA_ALIGNTO - 1) & ^(syscall.NLA_ALIGNTO - 1)
 }
 
-// nlGenlRequest defines netlink generic controller request.
-type nlGenlRequest struct {
-	syscall.NlMsghdr
-	unix.Genlmsghdr
-	syscall.NlAttr
+// nlmsgAlign from /usr/include/linux/netlink.h
+func nlmsgAlign(l int) uintptr {
+	return uintptr((l + syscall.NLMSG_ALIGNTO - 1) & ^(syscall.NLMSG_ALIGNTO - 1))
 }
+
+// **********************************************
+// NETLINK generic controller TASKSTATS functions
+// **********************************************
 
 // nlGeneric opens a socket to the netlink generic controller.
 func nlGeneric() (int, error) {
@@ -446,4 +312,137 @@ func nlTaskstats(pid Pid) error {
 
 	buf := append((*[unsafe.Sizeof(req)]byte)(unsafe.Pointer(&req))[:], data...)
 	return syscall.Sendto(h.gd, buf, 0, &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK})
+}
+
+// ***********************************
+// NETLINK process connector functions
+// ***********************************
+
+// nlProcess opens socket to the netlink process connector.
+func nlProcess() (int, error) {
+	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_DGRAM, syscall.NETLINK_CONNECTOR)
+	if err != nil {
+		return -1, core.Error("socket", err)
+	}
+
+	if err := syscall.Bind(fd,
+		&syscall.SockaddrNetlink{
+			Family: syscall.AF_NETLINK,
+			Groups: cnIdxProc,
+		},
+	); err != nil {
+		syscall.Close(fd)
+		return -1, core.Error("bind", err)
+	}
+
+	if err := nlProcessFilter(fd); err != nil {
+		syscall.Close(fd)
+		return -1, core.Error("setsockopt attach filter", err)
+	}
+
+	if err := nlProcessObserve(fd, true); err != nil {
+		syscall.Close(fd)
+		return -1, core.Error("netlink process connector", err)
+	}
+
+	return fd, nil
+}
+
+// nlProcessFilter sets filter program for netlink process connector socket.
+// Inspiration: http://netsplit.com/the-proc-connector-and-socket-filters
+// godoc for bpf package: https://godoc.org/golang.org/x/net/bpf
+func nlProcessFilter(fd int) error {
+	filter, err := bpf.Assemble([]bpf.Instruction{
+		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Offsetof(nlProcResponse{}.Type)), Size: 2},
+		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(syscall.NLMSG_DONE), SkipTrue: 1}, // NLMSG_DONE
+		bpf.RetConstant{Val: 0}, // filter out
+		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Offsetof(nlProcResponse{}.idx)), Size: 4},
+		bpf.JumpIf{Cond: bpf.JumpEqual, Val: cnIdxProc, SkipTrue: 1}, // CN_IDX_PROC
+		bpf.RetConstant{Val: 0}, // filter out
+		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Offsetof(nlProcResponse{}.val)), Size: 4},
+		bpf.JumpIf{Cond: bpf.JumpEqual, Val: cnValProc, SkipTrue: 1}, // CN_VAL_PROC
+		bpf.RetConstant{Val: 0}, // filter out
+		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Offsetof(nlProcResponse{}.what)), Size: 4},
+		// FORK filter
+		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventFork), SkipFalse: 8},
+		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(forkProcEvent{}.childPid)), Size: 4},
+		bpf.StoreScratch{Src: bpf.RegA, N: 0},
+		bpf.LoadScratch{Dst: bpf.RegX, N: 0},
+		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(forkProcEvent{}.childTgid)), Size: 4},
+		bpf.JumpIfX{Cond: bpf.JumpEqual, SkipTrue: 1}, // child_pid == child_tgid (i.e. this is a fork(), not a clone()
+		bpf.RetConstant{Val: 0},                       // filter out
+		bpf.RetConstant{Val: 0xFFFFFFFF},
+		// EXEC filter
+		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventExec), SkipFalse: 8},
+		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(execProcEvent{}.processPid)), Size: 4},
+		bpf.StoreScratch{Src: bpf.RegA, N: 0},
+		bpf.LoadScratch{Dst: bpf.RegX, N: 0},
+		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(execProcEvent{}.processTgid)), Size: 4},
+		bpf.JumpIfX{Cond: bpf.JumpEqual, SkipTrue: 1}, // exec process_pid == process_tgid
+		bpf.RetConstant{Val: 0},                       // filter out
+		bpf.RetConstant{Val: 0xFFFFFFFF},
+		// EXIT filter
+		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventExit), SkipFalse: 8},
+		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(exitProcEvent{}.processPid)), Size: 4},
+		bpf.StoreScratch{Src: bpf.RegA, N: 0},
+		bpf.LoadScratch{Dst: bpf.RegX, N: 0},
+		bpf.LoadAbsolute{Off: uint32(nlmsgAlign(0) + unsafe.Sizeof(nlProcResponse{}) + unsafe.Offsetof(exitProcEvent{}.processTgid)), Size: 4},
+		bpf.JumpIfX{Cond: bpf.JumpEqual, SkipTrue: 1}, // exit process_pid == process_tgid
+		bpf.RetConstant{Val: 0},                       // filter out
+		bpf.RetConstant{Val: 0xFFFFFFFF},
+		// UID, GID, SID, COMM
+		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventUID), SkipTrue: 4},  // PROC_EVENT_UID
+		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventGID), SkipTrue: 3},  // PROC_EVENT_GID
+		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventSID), SkipTrue: 2},  // PROC_EVENT_SID
+		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(procEventComm), SkipTrue: 1}, // PROC_EVENT_COMM
+		bpf.RetConstant{Val: 0},          // filter out
+		bpf.RetConstant{Val: 0xFFFFFFFF}, // UID, GID, SID, COMM
+	})
+	if err != nil {
+		return err
+	}
+
+	if _, _, err := syscall.Syscall6(
+		syscall.SYS_SETSOCKOPT,
+		uintptr(fd),
+		uintptr(syscall.SOL_SOCKET),
+		uintptr(syscall.SO_ATTACH_FILTER),
+		uintptr(unsafe.Pointer(
+			&syscall.SockFprog{
+				Len:    uint16(len(filter)),
+				Filter: (*syscall.SockFilter)(unsafe.Pointer(&filter[0])),
+			},
+		)),
+		unsafe.Sizeof(syscall.SockFprog{}),
+		0,
+	); err != 0 {
+		return err
+	}
+
+	return nil
+}
+
+// nlProcessObserve sets process connector to observe or ignore process messages.
+func nlProcessObserve(fd int, on bool) error {
+	op := procCnMcastIgnore
+	if on {
+		op = procCnMcastObserve
+	}
+	req := nlProcRequest{
+		NlMsghdr: syscall.NlMsghdr{
+			Len:  uint32(unsafe.Sizeof(nlProcRequest{})),
+			Type: uint16(syscall.NLMSG_DONE),
+		},
+		cnMsg: cnMsg{
+			cbID: cbID{
+				idx: cnIdxProc,
+				val: cnValProc,
+			},
+			len: uint16(unsafe.Sizeof(op)),
+		},
+		procCnMcastOp: op,
+	}
+
+	buf := (*[unsafe.Sizeof(req)]byte)(unsafe.Pointer(&req))[:]
+	return syscall.Sendto(fd, buf, 0, &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK})
 }

@@ -5,34 +5,13 @@ package logs
 import (
 	"strconv"
 
+	"github.com/zosmac/gomon/core"
 	"github.com/zosmac/gomon/message"
 )
 
 func init() {
 	message.Document(&observation{})
 }
-
-const (
-	// message events.
-	levelFatal logLevel = "fatal"
-	levelError logLevel = "error"
-	levelWarn  logLevel = "warn"
-	levelInfo  logLevel = "info"
-	levelDebug logLevel = "debug"
-	levelTrace logLevel = "trace"
-)
-
-var (
-	// logLevels valid event values for messages, in severity order.
-	logLevels = message.ValidValues{
-		levelTrace,
-		levelDebug,
-		levelInfo,
-		levelWarn,
-		levelError,
-		levelFatal,
-	}
-)
 
 type (
 	// logLevel type.
@@ -47,26 +26,37 @@ type (
 
 	// message defines the properties of a log message.
 	observation struct {
-		message.Header `gomon:"property"`
-		Id             `json:"id" gomon:""`
-		Message        string `json:"message" gomon:"property"`
+		message.Header[logLevel] `gomon:"property"`
+		Id                       `json:"id" gomon:""`
+		Message                  string `json:"message" gomon:"property"`
 	}
 )
 
-// String returns the event value of the message as a string.
-// This method is already defined in flag.go.
-// func (ev logLevel) String() string {
-// 	return string(ev)
-// }
+const (
+	// message events.
+	levelFatal logLevel = "fatal"
+	levelError logLevel = "error"
+	levelWarn  logLevel = "warn"
+	levelInfo  logLevel = "info"
+	levelDebug logLevel = "debug"
+	levelTrace logLevel = "trace"
+)
 
-// ValidValues returns the valid event values for the message.
-func (logLevel) ValidValues() message.ValidValues {
-	return logLevels
-}
+var (
+	// logLevels valid event values for messages, in severity order.
+	logLevels = core.ValidValue[logLevel]{}.Define(
+		levelTrace,
+		levelDebug,
+		levelInfo,
+		levelWarn,
+		levelError,
+		levelFatal,
+	)
+)
 
 // Events returns the list of acceptable Event values for this message.
 func (*observation) Events() []string {
-	return logLevels.Values()
+	return logLevels.ValidValues()
 }
 
 // ID returns the identifier for a log message message.

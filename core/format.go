@@ -146,8 +146,8 @@ func SnakeCase(s string) string {
 	return string(runes)
 }
 
-// ToCamelCase converts a snake_case name to CamelCase to follow Go naming conventions.
-func ToCamelCase(s string) string {
+// CamelCase converts a snake_case name to CamelCase to follow Go naming conventions.
+func CamelCase(s string) string {
 	c, n := utf8.DecodeRuneInString(s)
 	u := []rune{unicode.ToUpper(c)}
 	s = s[n:]

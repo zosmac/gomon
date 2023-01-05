@@ -12,6 +12,35 @@ import (
 	"time"
 )
 
+var (
+	// Boottime gets the system boot time.
+	Boottime = func() time.Time {
+		f, err := os.Open("/proc/stat")
+		if err != nil {
+			LogError(Error("/proc/stat open", err))
+			return time.Time{}
+		}
+		defer f.Close()
+		sc := bufio.NewScanner(f)
+		for sc.Scan() {
+			l := sc.Text()
+			k, v, _ := strings.Cut(l, " ")
+			switch k {
+			case "btime":
+				sec, err := strconv.Atoi(v)
+				if err != nil {
+					LogError(Error("/proc/stat btime", err))
+					return time.Time{}
+				}
+				return time.Unix(int64(sec), 0)
+			}
+		}
+
+		LogError(Error("/proc/stat btime", sc.Err()))
+		return time.Time{}
+	}()
+)
+
 // FromCString interprets a null terminated C char array as a GO string.
 func FromCString(p []int8) string {
 	var s string
@@ -44,33 +73,6 @@ func MountMap() (map[string]string, error) {
 		m[f[1]] = f[0]
 	}
 	return m, nil
-}
-
-// boottime gets the system boot time.
-func boottime() time.Time {
-	f, err := os.Open("/proc/stat")
-	if err != nil {
-		LogError(Error("/proc/stat open", err))
-		return time.Time{}
-	}
-	defer f.Close()
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
-		l := sc.Text()
-		k, v, _ := strings.Cut(l, " ")
-		switch k {
-		case "btime":
-			sec, err := strconv.Atoi(v)
-			if err != nil {
-				LogError(Error("/proc/stat btime", err))
-				return time.Time{}
-			}
-			return time.Unix(int64(sec), 0)
-		}
-	}
-
-	LogError(Error("/proc/stat btime", sc.Err()))
-	return time.Time{}
 }
 
 // Measures reads a /proc filesystem file and produces a map of name:value pairs.

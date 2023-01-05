@@ -22,6 +22,16 @@ import (
 	"github.com/zosmac/gomon/process"
 )
 
+type (
+	// Pid alias for Pid in process package.
+	Pid = process.Pid
+
+	// query from http request.
+	query struct {
+		pid Pid
+	}
+)
+
 var (
 	// hnMap caches resolver host name lookup.
 	hnMap  = map[string]string{}
@@ -39,16 +49,6 @@ var (
 		"0.7 0.75 1.0", // blue needs to be a bit brighter
 		"0.8 0.75 0.9",
 		"0.9 0.75 0.85",
-	}
-)
-
-type (
-	// Pid alias for Pid in process package.
-	Pid = process.Pid
-
-	// query from http request.
-	query struct {
-		pid Pid
 	}
 )
 

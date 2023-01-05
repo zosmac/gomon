@@ -25,7 +25,7 @@ var (
 	}()
 
 	// vmmp is "Version, Major, Minor, Patch"
-	vmmp = "v3.0.0-8808f1cc95f9"
+	vmmp = "v3.0.0-b4208f42ee9f"
 
 	// Dependencies import paths and versions
 	// github.com/StackExchange/wmi v1.2.1
