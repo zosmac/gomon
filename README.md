@@ -37,7 +37,7 @@ Gomon records its measurements and observations and reports them in a message st
 
 Analysis of *gomon*'s message stream may yield insights into the system's operations through discovery of event patterns and interrelationships and what these signify about the condition and operation of the system. An excellent application for stream analysis and visualization is *[Grafana](https://grafana.com)*. Together with *[Prometheus](http://prometheus.io)* to record the measurements, and *[Loki](https://grafana.com/oss/loki/)* to record the observations, *Grafana* can chart the measurements and report the observations. Look in the `gomon/assets` folder for sample configuration files for *[Prometheus](assets/prometheus.yml)* and *[Grafana](assets/grafana/dashboard.json)* to enable this scenario.
 
-The inspection of process relationships is also available if *[Graphviz](https://graphviz.gitlab.io)* is installed. *Gomon* can use *Graphviz* to render a web view of the inter-process and remote host connections of the system.
+The inspection of process relationships is also available if *[Graphviz]*(https://graphviz.org) is installed. *Gomon* can use *Graphviz* to render a web view of the inter-process and remote host connections of the system.
 
 # Installing *Gomon*
 
@@ -157,12 +157,12 @@ sudo gomon -pretty -port 1234
 
 ## Inter-process and remote host connections
 
-If *[Graphviz](https://graphviz.gitlab.io)* is installed, *Gomon* can render a view of the inter-process and remote host connections via the `/gomon` endpoint.
+If *[Graphviz]*(https://graphviz.org) is installed, *Gomon* can render a view of the inter-process and remote host connections via the `/gomon` endpoint.
 [<img src="assets/graphviz-process-nodegraph.png">](http://localhost:1234/gomon)
-To download and install *[Graphviz](https://graphviz.org/download/source/)*, select a stable release, download its tar file, and build and install it. (Note that `gomon` specifies `-Tsvgz` to the `dot` command. Ensure that the zlib development library is installed on your system, e.g. on Ubuntu `sudo apt install zlib1g-dev`, Fedora `sudo yum install zlib devel`)
+To download and install *[Graphviz]*(https://graphviz.org/download/source/), select a stable release, download its tar file, and build and install it. (Note that `gomon` specifies `-Tsvgz` to the `dot` command. Ensure that the zlib development library is installed on your system, e.g. on Ubuntu `sudo apt install zlib1g-dev`, on Fedora `sudo yum install zlib devel`)
 ```zsh
-tar xzvf =(curl -L "https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/7.0.1/graphviz-7.0.1.tar.xz")
-cd graphviz-7.0.1
+tar xzvf =(curl -L "https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/7.0.6/graphviz-7.0.6.tar.gz")
+cd graphviz-7.0.6
 ./configure
 make
 sudo make install
