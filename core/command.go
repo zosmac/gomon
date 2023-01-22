@@ -17,9 +17,6 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-// go generate creates version.go to set vmmp and package dependencies for version.
-//go:generate ./generate.sh
-
 var (
 	// Hostname identifies the host.
 	Hostname, _ = os.Hostname()
@@ -32,20 +29,19 @@ var (
 
 	// module identifies the import package path for this module.
 	// Srcpath to strip from source file path in log messages.
-	module, Srcpath, vmmp = func() (string, string, string) {
+	module, Srcpath, vmmp = func() (mod, dir, vers string) {
 		_, n, _, _ := runtime.Caller(1)
-		dir := filepath.Dir(n)
+		dir = filepath.Dir(n)
 		pkgs, err := packages.Load(&packages.Config{Mode: packages.NeedModule, Dir: dir})
 		module := pkgs[0].Module
-		mod := module.Path
+		mod = module.Path
 		dir = module.Dir
-		fmt.Fprintf(os.Stderr, "package Load mod %s, dir %s, ver %s, time %v, error %v\n", mod, dir, module.Version, module.Time, err)
 		if err != nil || mod == "" || dir == "" {
 			panic(fmt.Sprintf("go.mod not resolved %q, %v", dir, err))
 		}
-		dir, vers, ok := strings.Cut(dir, "@")
+		_, vers, ok := strings.Cut(dir, "@")
 		if ok {
-			return strings.TrimSpace(mod), strings.TrimSpace(dir), vers
+			return
 		}
 
 		cmd := exec.Command("git", "show", "-s", "--format=%cI %H")
@@ -60,9 +56,8 @@ var (
 		if err != nil {
 			panic(fmt.Sprintf("time parse failed %s %v", out, err))
 		}
-		return strings.TrimSpace(mod),
-			strings.TrimSpace(dir),
-			t.UTC().Format("v0.0.0-2006010150405-") + h[:12]
+		vers = t.UTC().Format("v0.0.0-2006010150405-") + h[:12]
+		return
 	}()
 
 	// buildDate sets the build date for the command.
