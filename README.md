@@ -1,10 +1,7 @@
-Copyright © 2021 The Gomon Project.
-
 # Welcome to *Gomon*, the *Go* language based system *mon*itor
 
 ![gomon](assets/gopher.png)
 
-- [Welcome to *Gomon*, the *Go* language based system *mon*itor](#welcome-to-gomon-the-go-language-based-system-monitor)
 - [Overview](#overview)
 - [Installing *Gomon*](#installing-gomon)
 - [Employing *Prometheus*, *Loki*, and *Grafana*](#employing-prometheus-loki-and-grafana)
@@ -12,7 +9,7 @@ Copyright © 2021 The Gomon Project.
   - [Loki](#loki)
   - [Grafana](#grafana)
 - [Putting it all together](#putting-it-all-together)
-  - [*Add data sources* for *Prometheus* and *Loki* to *Grafana*](#add-data-sources-for-prometheus-and-loki-to-grafana)
+  - [*Add the data sources* for *Prometheus* and *Loki* to *Grafana*](#add-the-data-sources-for-prometheus-and-loki-to-grafana)
   - [Configure the *Prometheus* data source](#configure-the-prometheus-data-source)
   - [Configure the *Loki* data source](#configure-the-loki-data-source)
   - [Install the *Gomon Dashboard* to *Grafana*](#install-the-gomon-dashboard-to-grafana)
@@ -21,11 +18,12 @@ Copyright © 2021 The Gomon Project.
     - [*Loki*](#loki-1)
     - [*Grafana*](#grafana-1)
     - [*Gomon*](#gomon)
-- [Visualize!](#visualize)
+- [Visualize](#visualize)
   - [Gomon Dashboard](#gomon-dashboard)
-  - [Inter-process and remote host connections](#inter-process-and-remote-host-connections)
+  - [Inter-process and remote host connections node graph](#inter-process-and-remote-host-connections-node-graph)
+- [Notices](#notices)
   
-# Overview
+## Overview
 
 The `gomon` command starts itself as a server that monitors its system. *Gomon* periodically measures the state of the system, including its CPU, memory, filesystems, network interfaces, and processes. *Gomon* also observes system logs and the system's management of files and processes. Hence, gomon's processing consists of two fundamental operations: **measurement** and **observation**.
 
@@ -33,15 +31,16 @@ What *gomon* **measures** of the system is performed through kernel interfaces t
 
 What *gomon* **observes** of the system are reports of events captured by the logging, file management, and process management subsystems. While *gomon* cannot observe the events directly, it assumes that the subsystems' reporting is timely. A potential enhancement to *gomon* would be for it to initiate periodically its own log, file, and process events to sample the lag between initiation and reporting of events. This could dovetail nicely with *gomon*'s measurement operation.
 
-Gomon records its measurements and observations and reports them in a message stream. By default, *gomon* streams these messages as JSON objects to standard out. 
+Gomon records its measurements and observations and reports them in a message stream. By default, *gomon* streams these messages as JSON objects to standard out.
 
 Analysis of *gomon*'s message stream may yield insights into the system's operations through discovery of event patterns and interrelationships and what these signify about the condition and operation of the system. An excellent application for stream analysis and visualization is *[Grafana](https://grafana.com)*. Together with *[Prometheus](http://prometheus.io)* to record the measurements, and *[Loki](https://grafana.com/oss/loki/)* to record the observations, *Grafana* can chart the measurements and report the observations. Look in the `gomon/assets` folder for sample configuration files for *[Prometheus](assets/prometheus.yml)* and *[Grafana](assets/grafana/dashboard.json)* to enable this scenario.
 
-The inspection of process relationships is also available if *[Graphviz]*(https://graphviz.org) is installed. *Gomon* can use *Graphviz* to render a web view of the inter-process and remote host connections of the system.
+The inspection of process relationships is also available if *[Graphviz](<https://graphviz.org>)* is installed. *Gomon* can use *Graphviz* to render a web view of the inter-process and remote host connections of the system.
 
-# Installing *Gomon*
+## Installing *Gomon*
 
 To set up *Gomon*, first download and install *[Go](https://golang.org/dl/)*. Then proceed with the following Terminal commands to download and install *Gomon*. *(On [macOS](https://www.apple.com/macos/), you may be prompted to install the [Xcode Command Line Tools](https://developer.apple.com/download/more/?=Command%20Line%20Tools).)*
+
 ```zsh
 git clone https://github.com/zosmac/gomon
 cd gomon
@@ -49,43 +48,51 @@ go mod init github.com/zosmac/gomon
 go generate ./...
 go install ./...
 ```
-As performing several of the measurements and observations requires root authority, use `sudo` to invoke `gomon`. 
+
+As performing several of the measurements and observations requires root authority, use `sudo` to invoke `gomon`:
+
 ```zsh
 sudo gomon -pretty
 ```
-*(Alternatively, assign the executable to root and grant it setuid permission)*
+
+Alternatively, assign the executable to root and grant it setuid permission:
+
 ```zsh
 sudo chown 0:0 $(which gomon)
 sudo chmod u+s $(which gomon)
 gomon -pretty
 ```
+
 *Gomon* periodically (default every 15s) makes system measurements and gathers observations, consolidating these into a *stream* that it writes to standard out as JSON objects.
 
 To view all the flags that the `gomon` command accepts for configuration, enter `gomon -help`. To see all the metrics that *Gomon* captures, enter `gomon -document`.
 
-# Employing *Prometheus*, *Loki*, and *Grafana*
+## Employing *Prometheus*, *Loki*, and *Grafana*
 
 Follow these steps for deploying the three servers that record measurements and observations to facilitate visualization. Building these servers depends on two Javascript applications, the *[Node](https://nodejs.org)* runtime and the *[Yarn classic](https://classic.yarnpkg.com)* package manager. Download the current [Node installer](https://nodejs.org/en/download/current/) for your system and install. Then use the Node Package Manager (npm) to install Yarn:
+
 ```zsh
 sudo npm install -global yarn
 ```
 
-## Prometheus
+### **Prometheus**
 
 *[Prometheus](http://prometheus.io)* is an open-source systems monitoring server for scraping and storing time-series data. At startup, *Gomon* opens a `/metrics` endpoint for *Prometheus* to collect *Gomon*’s system resource *measurement stream*.
 
-To install *Prometheus*, select an appropriate binary from the [Prometheus download page](https://prometheus.io/download/) for your Operating System and Architecture, download, and install it.
+To install *Prometheus*, select an appropriate binary from the [Prometheus download page](https://prometheus.io/download/) for your Operating System and Architecture, download, and install.
 
-To enable collection, open the `prometheus.yml` configuration file for the *Prometheus* deployment and add the following to `scrape_configs` *(a sample configuration file is in [`assets/prometheus.yml`](assets/prometheus.yml))*: 
+To enable collection, open the `prometheus.yml` configuration file for the *Prometheus* deployment and add the following to `scrape_configs` *(a sample configuration file is in [`assets/prometheus.yml`](assets/prometheus.yml))*:
+
 ```yml
   - job_name: "gomon"
     static_configs:
       - targets: ["localhost:1234"]
 ```
 
-## Loki
+### **Loki**
 
 *[Loki](https://grafana.com/oss/loki/)* is an open-source log aggregation server. Via *Gomon*’s HTTP POSTs to the `/loki/api/v1/push` endpoint, *Loki* can receive the *observations*. To install *Loki*, create a `loki` folder, select appropriate `loki` and `promtail` binaries from the list of Assets on the [Loki releases page](https://github.com/grafana/loki/releases/latest) for your platform, and download. Each binary also requires a configuration file; follow the instructions on the [Loki installation page](https://grafana.com/docs/loki/latest/installation/local) to copy these to the `loki` folder.
+
 ```zsh
 cd ${LOKI_DIR}
 unzip =(curl -L "https://github.com/grafana/loki/releases/latest/download/loki-$(go env GOOS)-$(go env GOARCH).zip")
@@ -95,71 +102,81 @@ curl -O -L "https://raw.githubusercontent.com/grafana/loki/main/cmd/loki/loki-lo
 curl -O -L "https://raw.githubusercontent.com/grafana/loki/main/clients/cmd/promtail/promtail-local-config.yaml"
 ```
 
-## Grafana
+### **Grafana**
 
 *[Grafana](https://grafana.com/oss/grafana)* is an open-source server that can query and display *Prometheus* time-series data and *Loki* aggregated logs. Together these three servers provide an excellent front-end for *Gomon*.
 
-To install *Grafana*, select an appropriate binary from the [Grafana download page](https://grafana.com/grafana/download) for your platform, download, and install it.
+To install *Grafana*, select an appropriate binary from the [Grafana download page](https://grafana.com/grafana/download) for your platform, download, and install.
 
-# Putting it all together
+## Putting it all together
 
-## *[Add data sources](http://localhost:3000/datasources/new)* for *Prometheus* and *Loki* to *Grafana*
+### **Add the *[data sources](http://localhost:3000/datasources/new)* for *Prometheus* and *Loki* to *Grafana***
 
-<img src="assets/grafana/datasource-add.png" width="500"><br>
+![Grafana data sources](assets/grafana/datasource-add.png)
 
-## Configure the *Prometheus* data source
+### **Configure the *Prometheus* data source**
 
-*Note that while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field. Then, scroll down and select* **Save & test.**
+*Note: while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field. Then, scroll down and select* **Save & test.**
 
-<img src="assets/grafana/prometheus-config.png"><br>
+![Configure Prometheus](assets/grafana/prometheus-config.png)
 
-## Configure the *Loki* data source
+### **Configure the *Loki* data source**
 
-*Note that while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field. Then, scroll down and select* **Save & test.**
+*Note: while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field. Then, scroll down and select* **Save & test.**
 
-<img src="assets/grafana/loki-config.png">
+![Configure Loki](assets/grafana/loki-config.png)
 
-## Install the *[Gomon Dashboard](assets/grafana/dashboard.json)* to *Grafana*
+### **Install the *[Gomon Dashboard](assets/grafana/dashboard.json)* to *Grafana***
+
 ```zsh
 curl ${GRAFANA_CRED} -X POST -i -w "\n" -H "Content-Type: application/json" -T ${GOMON_DIR}/assets/grafana/dashboard.json "http://localhost:3000/api/dashboards/db"
 ```
 
-## Start the servers
+### **Start the servers**
 
-### *Prometheus*
+#### *Prometheus*
+
 ```zsh
 cd ${PROMETHEUS_DIR}
 ./prometheus >prometheus.log 2>&1 &
 ```
 
-### *Loki*
+#### *Loki*
+
 ```zsh
 cd ${LOKI_DIR}
 ./loki-$(go env GOOS)-$(go env GOARCH) -config.file loki-local-config.yaml >loki.log 2>&1 &
 ```
 
-### *Grafana*
+#### *Grafana*
+
 ```zsh
 cd ${GRAFANA_DIR}
 bin/$(go env GOOS)-$(go env GOARCH)/grafana-server web >grafana.log 2>&1 &
 ```
 
-### *Gomon*
+#### *Gomon*
+
 ```zsh
 sudo gomon -pretty -port 1234
 ```
 
-# Visualize!
+## Visualize
 
-## Gomon Dashboard
+### **Gomon Dashboard**
 
-[<img src="assets/grafana/dashboard.png">](http://localhost:3000)
+[![grafana dashboard](assets/grafana/dashboard.png)](<http://localhost:3000>)
 
-## Inter-process and remote host connections
+### **Inter-process and remote host connections node graph**
 
-If *[Graphviz]*(https://graphviz.org) is installed, *Gomon* can render a view of the inter-process and remote host connections via the `/gomon` endpoint.
-[<img src="assets/graphviz-process-nodegraph.png">](http://localhost:1234/gomon)
-To download and install *[Graphviz]*(https://graphviz.org/download/source/), select a stable release, download its tar file, and build and install it. (Note that `gomon` specifies `-Tsvgz` to the `dot` command. Ensure that the zlib development library is installed on your system, e.g. on Ubuntu `sudo apt install zlib1g-dev`, on Fedora `sudo yum install zlib devel`)
+If *[Graphviz](<https://graphviz.org>)* is installed, *Gomon* can render a node graph of the inter-process and remote host connections via the `/gomon` endpoint:
+
+[![graphviz process nodegraph](assets/graphviz-process-nodegraph.png)](<http://localhost:1234/gomon>)
+
+To download and install *[Graphviz](<https://graphviz.org/download/source/>)*, select a stable release, download its tar file, build, and install.
+
+*Note: `gomon` specifies `-Tsvgz` to the `dot` command. Ensure that the zlib development library is installed on your system, e.g. on Ubuntu `sudo apt install zlib1g-dev`, on Fedora `sudo yum install zlib devel`.*
+
 ```zsh
 tar xzvf =(curl -L "https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/7.0.6/graphviz-7.0.6.tar.gz")
 cd graphviz-7.0.6
@@ -167,4 +184,9 @@ cd graphviz-7.0.6
 make
 sudo make install
 ```
-*(Note: installing from the git repository (i.e. `git clone https://gitlab.com/graphviz/graphviz/`) requires pre-configuration with `autogen.sh`, which in turn requires GNU autoconf, automake, and libtool. Find details at https://graphviz.org/download/source/#git-repos)*
+
+*Note: installing from the git repository (i.e. `git clone https://gitlab.com/graphviz/graphviz/`) requires pre-configuration with `autogen.sh`, which in turn requires GNU autoconf, automake, and libtool. Find details at <https://graphviz.org/download/source/#git-repos>*
+
+## Notices
+
+Copyright © 2021 The Gomon Project.
