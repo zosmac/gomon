@@ -1218,6 +1218,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    See the License for the specific language governing permissions and
    limitations under the License.
 
+======== github.com/rogpeppe/go-internal ========
+
+Copyright (c) 2018 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 ======== golang.org/x/net ========
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
@@ -1633,7 +1663,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-For /Users/keefe/go/pkg/mod/github.com/cespare/xxhash/v2@v2.1.2:
+For /Users/keefe/go/pkg/mod/github.com/cespare/xxhash/v2@v2.2.0:
 
 Copyright (c) 2016 Caleb Spare
 
@@ -1676,7 +1706,7 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-For /Users/keefe/go/pkg/mod/github.com/go-ole/go-ole@v1.2.5:
+For /Users/keefe/go/pkg/mod/github.com/go-ole/go-ole@v1.2.6:
 
 The MIT License (MIT)
 
@@ -1731,7 +1761,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-For /Users/keefe/go/pkg/mod/github.com/google/go-cmp@v0.5.8:
+For /Users/keefe/go/pkg/mod/github.com/google/go-cmp@v0.5.9:
 
 Copyright (c) 2017 The Go Authors. All rights reserved.
 
@@ -1761,7 +1791,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-For /Users/keefe/go/pkg/mod/github.com/matttproud/golang_protobuf_extensions@v1.0.1:
+For /Users/keefe/go/pkg/mod/github.com/matttproud/golang_protobuf_extensions@v1.0.4:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -2373,7 +2403,7 @@ For /Users/keefe/go/pkg/mod/github.com/prometheus/client_model@v0.3.0:
    See the License for the specific language governing permissions and
    limitations under the License.
 
-For /Users/keefe/go/pkg/mod/github.com/prometheus/common@v0.37.0:
+For /Users/keefe/go/pkg/mod/github.com/prometheus/common@v0.39.0:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -2577,7 +2607,7 @@ For /Users/keefe/go/pkg/mod/github.com/prometheus/common@v0.37.0:
    See the License for the specific language governing permissions and
    limitations under the License.
 
-For /Users/keefe/go/pkg/mod/github.com/prometheus/procfs@v0.8.0:
+For /Users/keefe/go/pkg/mod/github.com/prometheus/procfs@v0.9.0:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -2781,7 +2811,37 @@ For /Users/keefe/go/pkg/mod/github.com/prometheus/procfs@v0.8.0:
    See the License for the specific language governing permissions and
    limitations under the License.
 
-For /Users/keefe/go/pkg/mod/golang.org/x/net@v0.4.0:
+For /Users/keefe/go/pkg/mod/github.com/rogpeppe/go-internal@v1.9.0:
+
+Copyright (c) 2018 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+For /Users/keefe/go/pkg/mod/golang.org/x/net@v0.5.0:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -2811,7 +2871,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-For /Users/keefe/go/pkg/mod/golang.org/x/sys@v0.3.0:
+For /Users/keefe/go/pkg/mod/golang.org/x/sys@v0.4.0:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -2871,7 +2931,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-For /Users/keefe/go/pkg/mod/gopkg.in/check.v1@v1.0.0-20190902080502-41f04d3bba15:
+For /Users/keefe/go/pkg/mod/gopkg.in/check.v1@v1.0.0-20201130134442-10cb98267c6c:
 
 Gocheck - A rich testing framework for Go
  

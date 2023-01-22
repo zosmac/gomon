@@ -6,8 +6,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -20,8 +22,34 @@ var (
 	// Hostname identifies the host.
 	Hostname, _ = os.Hostname()
 
+	// executable identifies the full command path.
+	executable, _ = os.Executable()
+
 	// commandName is the base name of the executable.
 	commandName = filepath.Base(executable)
+
+	// module identifies the import package path for this module.
+	// Srcpath to strip from source file path in log messages.
+	module, Srcpath = func() (string, string) {
+		cmd := exec.Command("go", "list", "-m", "-f", "{{.Path}}\n{{.Dir}}")
+		_, n, _, _ := runtime.Caller(1)
+		fmt.Fprintf(os.Stderr, "depth 1 name %s\n", n)
+		cmd.Dir = filepath.Dir(n)
+		if out, err := cmd.Output(); err == nil {
+			mod, dir, _ := strings.Cut(string(out), "\n")
+			dir, _, _ = strings.Cut(dir, "@")
+			if mod != "" && dir != "" {
+				return strings.TrimSpace(mod), strings.TrimSpace(dir)
+			}
+		}
+		panic(fmt.Sprintf("no go.mod found from build directory %q", cmd.Dir))
+	}()
+
+	// buildDate sets the build date for the command.
+	buildDate = func() string {
+		info, _ := os.Stat(executable)
+		return info.ModTime().UTC().Format("2006-01-02 15:04:05 UTC")
+	}()
 
 	// Document is set by the message package to prevent import recursion.
 	Document func()

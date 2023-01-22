@@ -24,10 +24,6 @@ EOF
 go mod tidy
 license
 
-# Identify the module
-
-module=`go list -m`
-
 # Generate Dependencies
 
 dependencies=$(go list -m -f='{{.Dir}} {{.Path}} {{.Version}}' all | while read i j k;do if [[ "$i" == "${i#`pwd`}" && -n "$k" ]]; then echo $'\t//' "$j" "$k"; fi; done)
@@ -39,26 +35,7 @@ $'// Copyright © 2021 The Gomon Project.
 
 package core
 
-import (
-\t"os"
-)
-
 var (
-\t// Srcpath to strip from source file path in log messages.
-\tSrcpath = "'$srcpath$'"
-
-\t// module identifies the import package path for this module.
-\tmodule = "'$module$'"
-
-\t// executable identifies the full command path.
-\texecutable, _ = os.Executable()
-
-\t// buildDate sets the build date for the command.
-\tbuildDate = func() string {
-\t\tinfo, _ := os.Stat(executable)
-\t\treturn info.ModTime().UTC().Format("2006-01-02 15:04:05 UTC")
-\t}()
-
 \t// vmmp is "Version, Major, Minor, Patch"
 \tvmmp = "v'$version'-'`git rev-parse --short=12 HEAD`$'"
 
