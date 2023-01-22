@@ -13,6 +13,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"golang.org/x/tools/go/packages"
 )
 
 // go generate creates version.go to set vmmp and package dependencies for version.
@@ -30,19 +32,37 @@ var (
 
 	// module identifies the import package path for this module.
 	// Srcpath to strip from source file path in log messages.
-	module, Srcpath = func() (string, string) {
-		cmd := exec.Command("go", "list", "-m", "-f", "{{.Path}}\n{{.Dir}}")
+	module, Srcpath, vmmp = func() (string, string, string) {
 		_, n, _, _ := runtime.Caller(1)
-		fmt.Fprintf(os.Stderr, "depth 1 name %s\n", n)
-		cmd.Dir = filepath.Dir(n)
-		if out, err := cmd.Output(); err == nil {
-			mod, dir, _ := strings.Cut(string(out), "\n")
-			dir, _, _ = strings.Cut(dir, "@")
-			if mod != "" && dir != "" {
-				return strings.TrimSpace(mod), strings.TrimSpace(dir)
-			}
+		dir := filepath.Dir(n)
+		pkgs, err := packages.Load(&packages.Config{Mode: packages.NeedModule, Dir: dir})
+		module := pkgs[0].Module
+		mod := module.Path
+		dir = module.Dir
+		fmt.Fprintf(os.Stderr, "package Load mod %s, dir %s, ver %s, time %v, error %v\n", mod, dir, module.Version, module.Time, err)
+		if err != nil || mod == "" || dir == "" {
+			panic(fmt.Sprintf("go.mod not resolved %q, %v", dir, err))
 		}
-		panic(fmt.Sprintf("no go.mod found from build directory %q", cmd.Dir))
+		dir, vers, ok := strings.Cut(dir, "@")
+		if ok {
+			return strings.TrimSpace(mod), strings.TrimSpace(dir), vers
+		}
+
+		cmd := exec.Command("git", "show", "-s", "--format=%cI %H")
+		cmd.Dir = dir
+		out, err := cmd.Output()
+		if err != nil {
+			panic(fmt.Sprintf("git show failed %q, %v", dir, err))
+		}
+
+		tm, h, _ := strings.Cut(string(out), " ")
+		t, err := time.Parse(time.RFC3339, tm)
+		if err != nil {
+			panic(fmt.Sprintf("time parse failed %s %v", out, err))
+		}
+		return strings.TrimSpace(mod),
+			strings.TrimSpace(dir),
+			t.UTC().Format("v0.0.0-2006010150405-") + h[:12]
 	}()
 
 	// buildDate sets the build date for the command.

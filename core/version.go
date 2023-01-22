@@ -6,7 +6,7 @@ package core
 
 var (
 	// vmmp is "Version, Major, Minor, Patch"
-	vmmp = "v3.0.0-9924576c6c20"
+	// vmmp = "v3.0.0-9924576c6c20"
 
 	// Dependencies import paths and versions
 	// github.com/StackExchange/wmi v1.2.1
