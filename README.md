@@ -42,11 +42,7 @@ The inspection of process relationships is also available if *[Graphviz](<https:
 To set up *Gomon*, first download and install *[Go](https://golang.org/dl/)*. Then proceed with the following Terminal commands to download and install *Gomon*. *(On [macOS](https://www.apple.com/macos/), you may be prompted to install the [Xcode Command Line Tools](https://developer.apple.com/download/more/?=Command%20Line%20Tools).)*
 
 ```zsh
-git clone https://github.com/zosmac/gomon
-cd gomon
-go mod init github.com/zosmac/gomon
-go generate ./...
-go install ./...
+go install github.com/zosmac/gomon/cmd/gomon@latest
 ```
 
 As performing several of the measurements and observations requires root authority, use `sudo` to invoke `gomon`:
