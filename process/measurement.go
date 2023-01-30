@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	message.Document(&measurement{})
+	message.Define(&measurement{})
 }
 
 type (

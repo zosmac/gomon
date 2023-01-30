@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
@@ -6,7 +6,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 
 	"github.com/StackExchange/wmi"
 
@@ -95,24 +95,24 @@ const (
 func (pid Pid) metrics() (Id, Properties, Metrics) {
 	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION|windows.PROCESS_VM_READ, false, uint32(pid))
 	if err != nil {
-		core.LogError(core.Error("OpenProcess", err))
+		gocore.LogError(gocore.Error("OpenProcess", err))
 		return Id{Pid: pid}, Properties{}, Metrics{}
 	}
 	defer windows.CloseHandle(handle)
 
 	var token windows.Token
 	if err = windows.OpenProcessToken(handle, windows.TOKEN_QUERY, &token); err != nil {
-		core.LogInfo(core.Error("OpenProcessToken", err))
+		gocore.LogInfo(gocore.Error("OpenProcessToken", err))
 	}
 
 	u, err := token.GetTokenUser()
 	if err != nil {
-		core.LogInfo(core.Error("GetTokenUser", err))
+		gocore.LogInfo(gocore.Error("GetTokenUser", err))
 	}
 
 	account, domain, _, err := u.User.Sid.LookupAccount("")
 	if err != nil {
-		core.LogInfo(core.Error("LookupAccount", err))
+		gocore.LogInfo(gocore.Error("LookupAccount", err))
 	}
 
 	var name [windows.MAX_PATH + 1]uint16
@@ -122,7 +122,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 		windows.MAX_PATH+1,
 	)
 	if n == 0 {
-		core.LogInfo(core.Error("GetProcessImageFileName", err))
+		gocore.LogInfo(gocore.Error("GetProcessImageFileName", err))
 	}
 
 	var lpCreationTime, lpExitTime, lpKernelTime, lpUserTime windows.Filetime
@@ -134,7 +134,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 		&lpUserTime,
 	)
 	if err != nil {
-		core.LogInfo(core.Error("GetProcessTimes", err))
+		gocore.LogInfo(gocore.Error("GetProcessTimes", err))
 	}
 
 	processMemoryCounters := processMemoryCountersEx{
@@ -146,7 +146,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 		uintptr(unsafe.Sizeof(processMemoryCounters)),
 	)
 	if err != nil {
-		core.LogInfo(core.Error("GetProcessMemoryInfo", err))
+		gocore.LogInfo(gocore.Error("GetProcessMemoryInfo", err))
 	}
 
 	wp := []win32Process{}
@@ -157,7 +157,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 		),
 		&wp,
 	); err != nil {
-		core.LogInfo(core.Error("Win32_Process", err))
+		gocore.LogInfo(gocore.Error("Win32_Process", err))
 		wp = []win32Process{win32Process{}}
 	}
 
@@ -194,7 +194,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 func (pid Pid) io() Io {
 	handle, err := windows.OpenProcess(processAllAccess, false, uint32(pid))
 	if err != nil {
-		core.LogError(core.Error("OpenProcess", err))
+		gocore.LogError(gocore.Error("OpenProcess", err))
 		return Io{}
 	}
 	defer windows.CloseHandle(handle)
@@ -205,7 +205,7 @@ func (pid Pid) io() Io {
 		uintptr(unsafe.Pointer(&ioCounters)),
 	)
 	if ret == 0 {
-		core.LogError(core.Error("GetProcessIoCounters", err))
+		gocore.LogError(gocore.Error("GetProcessIoCounters", err))
 		return Io{}
 	}
 
@@ -236,7 +236,7 @@ func getPids() ([]Pid, error) {
 		bytes *= 2
 		ps = make([]uint32, bytes/4)
 		if err := windows.EnumProcesses(ps, &bytes); err != nil {
-			return nil, core.Error("EnumProcesses", err)
+			return nil, gocore.Error("EnumProcesses", err)
 		}
 		if int(bytes) < len(ps)*4 {
 			break

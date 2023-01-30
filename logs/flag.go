@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package logs
 
@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
@@ -17,15 +17,15 @@ var (
 		logLevel
 		// following flags are for linux only
 		logDirectory    string
-		logRegex        core.Regexp
-		logRegexExclude core.Regexp
+		logRegex        gocore.Regexp
+		logRegexExclude gocore.Regexp
 	}{
 		logLevel:     levelError,
 		logDirectory: "/var/log",
-		logRegex: core.Regexp{
+		logRegex: gocore.Regexp{
 			Regexp: regexp.MustCompile(`^.*\.log$`),
 		},
-		logRegexExclude: core.Regexp{
+		logRegexExclude: gocore.Regexp{
 			Regexp: regexp.MustCompile(`^$`),
 		},
 	}
@@ -34,7 +34,7 @@ var (
 // init initializes the command line flags.
 func init() {
 	s := strings.Join(logLevels.ValidValues(), "|")
-	core.Flags.Var(
+	gocore.Flags.Var(
 		&flags.logLevel,
 		"loglevel",
 		"[-loglevel "+s+"]",
@@ -42,19 +42,19 @@ func init() {
 	)
 
 	if runtime.GOOS == "linux" {
-		core.Flags.Var(
+		gocore.Flags.Var(
 			&flags.logDirectory,
 			"logdirectory",
 			"[-logdirectory <path>]",
 			"The `path` to the top of a directory hierarchy of log files to tail with names matching -logregex",
 		)
-		core.Flags.Var(
+		gocore.Flags.Var(
 			&flags.logRegex,
 			"logregex",
 			"[-logregex <expression>]",
 			"A regular `expression` for selecting log files from the directory hierarchy to watch",
 		)
-		core.Flags.Var(
+		gocore.Flags.Var(
 			&flags.logRegexExclude,
 			"logregexexclude",
 			"[-logregexexclude <expression>]",

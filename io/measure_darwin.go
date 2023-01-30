@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package io
 
@@ -19,7 +19,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
@@ -30,7 +30,7 @@ func Measure() (ms []message.Content) {
 
 	plane := C.CString(C.kIOServicePlane)
 	defer C.free(unsafe.Pointer(plane))
-	keyStats := core.CreateCFString(C.kIOBlockStorageDriverStatisticsKey)
+	keyStats := gocore.CreateCFString(C.kIOBlockStorageDriverStatisticsKey)
 	defer C.CFRelease(C.CFTypeRef(keyStats))
 
 	var drives C.io_iterator_t
@@ -69,7 +69,7 @@ func Measure() (ms []message.Content) {
 				break
 			}
 
-			var properties core.CFDictionaryRef
+			var properties gocore.CFDictionaryRef
 			if C.IORegistryEntryCreateCFProperties(
 				child,
 				(*C.CFMutableDictionaryRef)(&properties),
@@ -78,7 +78,7 @@ func Measure() (ms []message.Content) {
 			) != 0 {
 				continue
 			}
-			cp := core.GetCFDictionary(properties)
+			cp := gocore.GetCFDictionary(properties)
 			C.CFRelease(C.CFTypeRef(properties))
 
 			name, ok := cp[C.kIOBSDNameKey]
@@ -91,7 +91,7 @@ func Measure() (ms []message.Content) {
 			size := cp[C.kIOMediaSizeKey]
 			blockSize := cp[C.kIOMediaPreferredBlockSizeKey]
 
-			stats := core.GetCFDictionary(core.CFDictionaryRef(C.CFDictionaryGetValue(dictionary, keyStats)))
+			stats := gocore.GetCFDictionary(gocore.CFDictionaryRef(C.CFDictionaryGetValue(dictionary, keyStats)))
 			if stats == nil {
 				continue
 			}

@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package main
 
@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 	"gopkg.in/yaml.v2"
 )
@@ -62,7 +62,7 @@ func prometheusMetric(m message.Content, name, tag string, val reflect.Value) pr
 			metric = 0.0
 		} else {
 			metric = float64(v.UnixNano()) / 1e9 // convert to seconds
-			property = v.Format(core.TimeFormat)
+			property = v.Format(gocore.TimeFormat)
 		}
 	case int, int8, int16, int32, int64:
 		metric = float64(val.Int())
@@ -133,15 +133,15 @@ func prometheusMetric(m message.Content, name, tag string, val reflect.Value) pr
 }
 
 // scrapeInterval asks Prometheus for the scrape interval it will query gomon for metrics.
-func scrapeInterval() (core.Sample, error) {
+func scrapeInterval() (sample, error) {
 	resp, err := http.Get("http://localhost:9090/api/v1/status/config")
 	if err != nil {
-		return 0, core.Error("prometheus query", err)
+		return 0, gocore.Error("prometheus query", err)
 	}
 	body, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		return 0, core.Error("prometheus query", err)
+		return 0, gocore.Error("prometheus query", err)
 	}
 
 	j := struct {
@@ -151,29 +151,29 @@ func scrapeInterval() (core.Sample, error) {
 		}
 	}{}
 	if err := json.Unmarshal(body, &j); err != nil || j.Status != "success" {
-		return 0, core.Error("prometheus query "+j.Status, err)
+		return 0, gocore.Error("prometheus query "+j.Status, err)
 	}
 
 	ms := yaml.MapSlice{}
 	if err := yaml.Unmarshal([]byte(j.Data.Yaml), &ms); err != nil {
-		return 0, core.Error("prometheus yaml", err)
+		return 0, gocore.Error("prometheus yaml", err)
 	}
 
-	val := core.ValueYaml([]string{"scrape_configs", "job_name", "gomon"}, []byte(j.Data.Yaml))
+	val := gocore.ValueYaml([]string{"scrape_configs", "job_name", "gomon"}, []byte(j.Data.Yaml))
 	if val == "" {
-		return 0, core.Error("prometheus", errors.New("not configured for gomon collection"))
+		return 0, gocore.Error("prometheus", errors.New("not configured for gomon collection"))
 	}
 
 	var si time.Duration
-	val = core.ValueYaml([]string{"global", "scrape_interval"}, ms)
+	val = gocore.ValueYaml([]string{"global", "scrape_interval"}, ms)
 	if dur, err := time.ParseDuration(val); err == nil {
 		si = dur
 	}
 
-	val = core.ValueYaml([]string{"scrape_configs", "job_name", "gomon", "scrape_interval"}, []byte(j.Data.Yaml))
+	val = gocore.ValueYaml([]string{"scrape_configs", "job_name", "gomon", "scrape_interval"}, []byte(j.Data.Yaml))
 	if dur, err := time.ParseDuration(val); err == nil {
 		si = dur
 	}
 
-	return core.Sample(si), nil
+	return sample(si), nil
 }

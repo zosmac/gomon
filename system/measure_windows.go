@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package system
 
@@ -7,7 +7,7 @@ import (
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"golang.org/x/sys/windows"
 )
 
@@ -78,7 +78,7 @@ func uname() string {
 
 // loadAverage gets the system load averages.
 func loadAverage() LoadAverage {
-	core.LogInfo(core.Unsupported())
+	gocore.LogInfo(gocore.Unsupported())
 	return LoadAverage{}
 }
 
@@ -125,7 +125,7 @@ func contextSwitches() int {
 }
 
 func rlimits() Rlimits {
-	core.LogInfo(core.Unsupported())
+	gocore.LogInfo(gocore.Unsupported())
 	return Rlimits{}
 }
 
@@ -138,7 +138,7 @@ func cpu() CPU {
 		uintptr(unsafe.Pointer(&lpUserTime)),
 	)
 	if err != nil {
-		core.LogError(core.Error("GetSystemTimes", err))
+		gocore.LogError(gocore.Error("GetSystemTimes", err))
 		return CPU{}
 	}
 
@@ -153,7 +153,7 @@ func cpu() CPU {
 
 // cpus captures individual CPU metrics.
 func cpus() []CPU {
-	core.LogInfo(core.Unsupported())
+	gocore.LogInfo(gocore.Unsupported())
 	return nil
 }
 
@@ -164,7 +164,7 @@ func memory() (Memory, Swap) {
 		uintptr(unsafe.Pointer(&memoryStatusEx)),
 	)
 	if err != nil {
-		core.LogError(core.Error("GlobalMemoryStatusEx", err))
+		gocore.LogError(gocore.Error("GlobalMemoryStatusEx", err))
 	}
 
 	total := memoryStatusEx.ullTotalPhys

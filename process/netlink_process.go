@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 //go:build linux
 
@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"golang.org/x/net/bpf"
 	"golang.org/x/sys/unix"
 )
@@ -177,7 +177,7 @@ func nlmsgAlign(l int) uintptr {
 func nlGeneric() (int, error) {
 	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_DGRAM, syscall.NETLINK_GENERIC)
 	if err != nil {
-		return -1, core.Error("socket", err)
+		return -1, gocore.Error("socket", err)
 	}
 	if err := syscall.Bind(fd,
 		&syscall.SockaddrNetlink{
@@ -187,7 +187,7 @@ func nlGeneric() (int, error) {
 		},
 	); err != nil {
 		syscall.Close(fd)
-		return -1, core.Error("bind", err)
+		return -1, gocore.Error("bind", err)
 	}
 
 	return fd, nil
@@ -230,7 +230,7 @@ func genlFamily(fd int, name string) (int, error) {
 		return -1, err
 	}
 
-	return int(core.HostEndian.Uint16(attr)), nil
+	return int(gocore.HostEndian.Uint16(attr)), nil
 }
 
 // nlAttr finds netlink attribute by key in netlink message.
@@ -242,7 +242,7 @@ func nlAttr(nlMsg []byte, key int) ([]byte, error) {
 		}
 		for _, m := range msgs {
 			if m.Header.Type == syscall.NLMSG_ERROR {
-				return nil, syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4])))
+				return nil, syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4])))
 			}
 
 			data := m.Data[unix.GENL_HDRLEN:]
@@ -291,7 +291,7 @@ func nlGenericObserve(fd, id int, on bool) error {
 // nlTaskstats queries a specific process for its taskstats.
 func nlTaskstats(pid Pid) error {
 	data := make([]byte, 4)
-	core.HostEndian.PutUint32(data, uint32(pid))
+	gocore.HostEndian.PutUint32(data, uint32(pid))
 	req := nlGenlRequest{
 		NlMsghdr: syscall.NlMsghdr{
 			Len:   uint32(syscall.NLMSG_HDRLEN + unix.GENL_HDRLEN + syscall.NLA_HDRLEN + len(data)),
@@ -322,7 +322,7 @@ func nlTaskstats(pid Pid) error {
 func nlProcess() (int, error) {
 	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_DGRAM, syscall.NETLINK_CONNECTOR)
 	if err != nil {
-		return -1, core.Error("socket", err)
+		return -1, gocore.Error("socket", err)
 	}
 
 	if err := syscall.Bind(fd,
@@ -332,17 +332,17 @@ func nlProcess() (int, error) {
 		},
 	); err != nil {
 		syscall.Close(fd)
-		return -1, core.Error("bind", err)
+		return -1, gocore.Error("bind", err)
 	}
 
 	if err := nlProcessFilter(fd); err != nil {
 		syscall.Close(fd)
-		return -1, core.Error("setsockopt attach filter", err)
+		return -1, gocore.Error("setsockopt attach filter", err)
 	}
 
 	if err := nlProcessObserve(fd, true); err != nil {
 		syscall.Close(fd)
-		return -1, core.Error("netlink process connector", err)
+		return -1, gocore.Error("netlink process connector", err)
 	}
 
 	return fd, nil

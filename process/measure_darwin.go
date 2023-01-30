@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
@@ -14,7 +14,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
@@ -37,7 +37,7 @@ func (pid Pid) id() (Id, error) {
 		unsafe.Pointer(&bsd),
 		C.int(C.PROC_PIDTBSDINFO_SIZE),
 	); n != C.int(C.PROC_PIDTBSDINFO_SIZE) {
-		return Id{Pid: pid}, core.Error("proc_pidinfo PROC_PIDTBSDINFO failed", err)
+		return Id{Pid: pid}, gocore.Error("proc_pidinfo PROC_PIDTBSDINFO failed", err)
 	}
 
 	name := C.GoString(&bsd.pbi_name[0])
@@ -92,8 +92,8 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 			Tty:         fmt.Sprintf("%#.8X", tai.pbsd.e_tdev),
 			UID:         int(tai.pbsd.pbi_uid),
 			GID:         int(tai.pbsd.pbi_gid),
-			Username:    core.Username(int(tai.pbsd.pbi_uid)),
-			Groupname:   core.Groupname(int(tai.pbsd.pbi_gid)),
+			Username:    gocore.Username(int(tai.pbsd.pbi_uid)),
+			Groupname:   gocore.Groupname(int(tai.pbsd.pbi_gid)),
 			Status:      status[tai.pbsd.pbi_status],
 			Nice:        int(tai.pbsd.pbi_nice),
 			CommandLine: pid.commandLine(),
@@ -239,13 +239,13 @@ func (pid Pid) directories() Directories {
 func getPids() ([]Pid, error) {
 	n, err := C.proc_listpids(C.PROC_ALL_PIDS, 0, nil, 0)
 	if n <= 0 {
-		return nil, core.Error("proc_listpids PROC_ALL_PIDS failed", err)
+		return nil, gocore.Error("proc_listpids PROC_ALL_PIDS failed", err)
 	}
 
 	var pid C.int
 	buf := make([]C.int, n/C.int(unsafe.Sizeof(pid))+10)
 	if n, err = C.proc_listpids(C.PROC_ALL_PIDS, 0, unsafe.Pointer(&buf[0]), n); n <= 0 {
-		return nil, core.Error("proc_listpids PROC_ALL_PIDS failed", err)
+		return nil, gocore.Error("proc_listpids PROC_ALL_PIDS failed", err)
 	}
 	n /= C.int(unsafe.Sizeof(pid))
 	if int(n) < len(buf) {

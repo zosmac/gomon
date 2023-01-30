@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package message
 
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 type (
@@ -37,7 +37,7 @@ const (
 
 var (
 	// MeasureEvents has only the single type "measure".
-	MeasureEvents = core.ValidValue[MeasureEvent]{}.Define(measure)
+	MeasureEvents = gocore.ValidValue[MeasureEvent]{}.Define(measure)
 )
 
 // Measurement initializes the message header for measurement.
@@ -45,7 +45,7 @@ var (
 func Measurement() Header[MeasureEvent] {
 	return Header[MeasureEvent]{
 		Timestamp: time.Now(),
-		Host:      core.Hostname,
+		Host:      gocore.Hostname,
 		Source:    source(),
 		Event:     measure,
 	}
@@ -57,7 +57,7 @@ func Measurement() Header[MeasureEvent] {
 func Observation[T ~string](t time.Time, event T) Header[T] {
 	return Header[T]{
 		Timestamp: t,
-		Host:      core.Hostname,
+		Host:      gocore.Hostname,
 		Source:    source(),
 		Event:     event,
 	}

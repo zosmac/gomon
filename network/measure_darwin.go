@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package network
 
@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
@@ -37,7 +37,7 @@ func Measure() (ms []message.Content) {
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			core.LogError(core.Error("IF info", err))
+			gocore.LogError(gocore.Error("IF info", err))
 			continue
 		}
 
@@ -52,7 +52,7 @@ func Measure() (ms []message.Content) {
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			core.LogError(core.Error("IF info", err))
+			gocore.LogError(gocore.Error("IF info", err))
 			continue
 		}
 		if i.ifm_type != syscall.RTM_IFINFO2 {

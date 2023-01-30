@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package logs
 
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
@@ -81,18 +81,18 @@ var (
 // Observer starts the log monitor.
 func Observer(ctx context.Context) error {
 	if err := open(); err != nil {
-		return core.Error("open", err)
+		return gocore.Error("open", err)
 	}
 
 	if err := observe(ctx); err != nil {
-		return core.Error("observe", err)
+		return gocore.Error("observe", err)
 	}
 
 	go func() {
 		for {
 			select {
 			case err := <-errorChan:
-				core.LogError(err)
+				gocore.LogError(err)
 			case obs := <-messageChan:
 				message.Encode([]message.Content{obs})
 			}

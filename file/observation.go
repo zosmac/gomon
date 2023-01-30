@@ -1,14 +1,14 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package file
 
 import (
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
 func init() {
-	message.Document(&observation{})
+	message.Define(&observation{})
 }
 
 type (
@@ -38,7 +38,7 @@ const (
 
 var (
 	// fileEvents valid event values for messages.
-	fileEvents = core.ValidValue[fileEvent]{}.Define(
+	fileEvents = gocore.ValidValue[fileEvent]{}.Define(
 		fileCreate,
 		fileRename,
 		fileUpdate,

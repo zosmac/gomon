@@ -1,11 +1,11 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package system
 
 import (
 	"runtime"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 	"github.com/zosmac/gomon/process"
 )
@@ -18,10 +18,10 @@ func Measure(ps process.ProcStats) message.Content {
 		Header: header,
 		Properties: Properties{
 			Uname:    uname(),
-			Boottime: core.Boottime,
+			Boottime: gocore.Boottime,
 		},
 		Metrics: Metrics{
-			Uptime:          header.Timestamp.Sub(core.Boottime),
+			Uptime:          header.Timestamp.Sub(gocore.Boottime),
 			Rlimits:         rlimits(),
 			LoadAverage:     loadAverage(),
 			ContextSwitches: contextSwitches(),

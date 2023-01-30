@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 //go:build !windows
 
@@ -7,14 +7,14 @@ package filesystem
 import (
 	"syscall"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 // metrics captures a filesystem's metrics.
 func metrics(path string) Metrics {
 	var stat syscall.Statfs_t
 	if err := syscall.Statfs(path, &stat); err != nil {
-		core.LogError(core.Error("statfs", err))
+		gocore.LogError(gocore.Error("statfs", err))
 		return Metrics{}
 	}
 

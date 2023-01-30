@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package message
 
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 type (
@@ -35,11 +35,11 @@ func (writer) Write(buf []byte) (int, error) { return os.Stdout.Write(buf) }
 func Encoder(ctx context.Context) error {
 	info, err := os.Stdout.Stat()
 	if err != nil {
-		return core.Error("Stat", err)
+		return gocore.Error("Stat", err)
 	}
 
 	if info.Mode().IsRegular() {
-		if path, err := core.FdPath(int(os.Stdout.Fd())); err == nil {
+		if path, err := gocore.FdPath(int(os.Stdout.Fd())); err == nil {
 			if strings.ToLower(filepath.Ext(path)) == ".json" {
 				// if writing json to file, must cache all objects to produce valid json as array
 				if flags.rotate.String() == "0s" {
@@ -101,7 +101,7 @@ func encode(ctx context.Context) {
 			Rotate(t)
 		case <-ctx.Done():
 			Close()
-			core.LogInfo(fmt.Errorf(
+			gocore.LogInfo(fmt.Errorf(
 				"Encoder() err=%w",
 				ctx.Err(),
 			))
@@ -137,7 +137,7 @@ func Rotate(t time.Time) error {
 
 	info, err := os.Stdout.Stat()
 	if err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return err
 	}
 
@@ -145,9 +145,9 @@ func Rotate(t time.Time) error {
 		return nil
 	}
 
-	oldpath, err := core.FdPath(int(os.Stdout.Fd()))
+	oldpath, err := gocore.FdPath(int(os.Stdout.Fd()))
 	if err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return err
 	}
 
@@ -156,13 +156,13 @@ func Rotate(t time.Time) error {
 	newpath := filepath.Join(filepath.Dir(oldpath), base+"-"+timestamp+ext)
 
 	if err := os.Rename(oldpath, newpath); err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return err
 	}
 
 	sout, err := os.Create(oldpath)
 	if err != nil {
-		return core.Error("Create", err)
+		return gocore.Error("Create", err)
 	}
 	chown(sout, info)
 

@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
@@ -8,7 +8,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 	"golang.org/x/sys/unix"
 )
@@ -35,14 +35,14 @@ func open() error {
 	// enable the netlink process connector
 	fd, err := nlProcess()
 	if err != nil {
-		return core.Error("nlProcess()", err)
+		return gocore.Error("nlProcess()", err)
 	}
 
 	// enable the netlink generic connector
 	gd, err := nlGeneric()
 	if err != nil {
 		syscall.Close(fd)
-		return core.Error("nlGeneric()", err)
+		return gocore.Error("nlGeneric()", err)
 	}
 
 	// determine the taskstats family id
@@ -50,14 +50,14 @@ func open() error {
 	if err != nil {
 		syscall.Close(fd)
 		syscall.Close(gd)
-		return core.Error("genlFamily()", err)
+		return gocore.Error("genlFamily()", err)
 	}
 
 	// start observing taskstats responses
 	if err = nlGenericObserve(gd, id, true); err != nil {
 		syscall.Close(fd)
 		syscall.Close(gd)
-		return core.Error("nlGenericObserve()", err)
+		return gocore.Error("nlGenericObserve()", err)
 	}
 
 	h = handle{fd: fd, gd: gd, id: id}
@@ -84,14 +84,14 @@ func observe(ctx context.Context) error {
 			nlMsg := make([]byte, connectorMaxMessageSize)
 			n, _, err := syscall.Recvfrom(h.fd, nlMsg, 0)
 			if err != nil {
-				errorChan <- core.Error("Recvfrom()", err)
+				errorChan <- gocore.Error("Recvfrom()", err)
 				return
 			}
 			msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
 			for _, m := range msgs {
 				if m.Header.Type == syscall.NLMSG_ERROR {
-					errorChan <- core.Error("netlink", syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4]))))
+					errorChan <- gocore.Error("netlink", syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4]))))
 					break
 				}
 
@@ -175,14 +175,14 @@ func taskstats() {
 		nlMsg := make([]byte, 1024)
 		n, _, err := syscall.Recvfrom(h.gd, nlMsg, 0)
 		if err != nil {
-			errorChan <- core.Error("Recvfrom()", err)
+			errorChan <- gocore.Error("Recvfrom()", err)
 			return
 		}
 		msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
 		for _, m := range msgs {
 			if m.Header.Type == syscall.NLMSG_ERROR {
-				errorChan <- core.Error("netlink", syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4]))))
+				errorChan <- gocore.Error("netlink", syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4]))))
 				break
 			}
 			data := m.Data[unix.GENL_HDRLEN:]
@@ -207,7 +207,7 @@ func taskstats() {
 					Header: message.Observation(time.Now(), netlinkTaskstats),
 					Id: Id{
 						ppid:      Pid(tsMsg.ts.Ac_ppid),
-						Name:      core.FromCString((*(*[len(tsMsg.ts.Ac_comm)]int8)(unsafe.Pointer(&tsMsg.ts.Ac_comm[0])))[:]),
+						Name:      gocore.GoStringN((*byte)(unsafe.Pointer(&tsMsg.ts.Ac_comm[0])), len(tsMsg.ts.Ac_comm)),
 						Pid:       Pid(tsMsg.pid),
 						Starttime: time.Unix(int64(tsMsg.ts.Ac_btime), 0),
 					},
@@ -222,8 +222,8 @@ func taskstats() {
 				// ts.HiwaterRss *= 1024
 				// ts.HiwaterVM *= 1024
 
-				ts.Uname = core.Username(int(ts.Ac_uid))
-				ts.Gname = core.Groupname(int(ts.Ac_gid))
+				ts.Uname = gocore.Username(int(ts.Ac_uid))
+				ts.Gname = gocore.Groupname(int(ts.Ac_gid))
 
 				message.Encode([]message.Content{&ts})
 			}

@@ -1,6 +1,10 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package file
+
+// import (
+// 	"C"
+// )
 
 import (
 	"bufio"
@@ -11,7 +15,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
@@ -57,7 +61,7 @@ type handle struct {
 func open(directory string) (*handle, error) {
 	fd, err := syscall.InotifyInit()
 	if err != nil {
-		return nil, core.Error("inotify_init", err)
+		return nil, gocore.Error("inotify_init", err)
 	}
 
 	// IN_DELETE_SELF evidently not sent to root directory, therefore watch its parent directory for IN_DELETE.
@@ -67,7 +71,7 @@ func open(directory string) (*handle, error) {
 		syscall.IN_ONLYDIR|syscall.IN_MOVED_FROM|syscall.IN_DELETE,
 	)
 	if err != nil {
-		return nil, core.Error("inotify_add_watch", err)
+		return nil, gocore.Error("inotify_add_watch", err)
 	}
 
 	return &handle{
@@ -93,7 +97,7 @@ func observe(ctx context.Context) error {
 			events := make([]byte, 16384)
 			n, err := syscall.Read(obs.fd, events)
 			if err != nil {
-				errorChan <- core.Error("read", err)
+				errorChan <- gocore.Error("read", err)
 				return
 			}
 
@@ -107,8 +111,10 @@ func observe(ctx context.Context) error {
 
 				var abs string
 				if event.Len > 0 {
-					arr := (*[1024]int8)(unsafe.Add(unsafe.Pointer(event), syscall.SizeofInotifyEvent))
-					abs = core.FromCString(arr[:event.Len])
+					abs = gocore.GoStringN(
+						(*byte)(unsafe.Add(unsafe.Pointer(event), syscall.SizeofInotifyEvent)),
+						event.Len,
+					)
 				}
 
 				// IN_DELETE_SELF evidently not sent to root, therefore test if its parent received IN_DELETE
@@ -168,7 +174,7 @@ func addDir(abs string) error {
 	wd, err := syscall.InotifyAddWatch(obs.fd, abs, mask)
 	if err != nil {
 		// if ENOSPC, archive unused files or increase fs.inotify.max_user_watches
-		return core.Error("inotify_add_watch", err)
+		return gocore.Error("inotify_add_watch", err)
 	}
 	obs.watches[wd] = abs
 	return nil

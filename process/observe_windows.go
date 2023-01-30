@@ -1,11 +1,11 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
 import (
 	"context"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
@@ -17,7 +17,7 @@ type handle struct {
 
 // open the OS process monitor.
 func open() error {
-	return core.Unsupported()
+	return gocore.Unsupported()
 }
 
 // close stops observing process events.
@@ -26,15 +26,15 @@ func (h *handle) close() {
 
 // observe for events and notify observer's callbacks.
 func endpoints(ctx context.Context) error {
-	return core.Unsupported()
+	return gocore.Unsupported()
 }
 
 // observe for events and notify observer's callbacks.
 func observe(ctx context.Context) error {
-	return core.Unsupported()
+	return gocore.Unsupported()
 }
 
 // userGroup determines user name and group for a running process
 func (pid Pid) userGroup() (string, string, error) {
-	return "", "", core.Unsupported()
+	return "", "", gocore.Unsupported()
 }

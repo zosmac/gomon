@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package message
 
@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 type (
@@ -44,7 +44,7 @@ func lokiTest() bool {
 	return false
 }
 
-// lokiFormatter complies with core.Formatter function prototype for encoding properties as Loki stream labels and values.
+// lokiFormatter complies with gocore.Formatter function prototype for encoding properties as Loki stream labels and values.
 func lokiFormatter(name, tag string, val reflect.Value) interface{} {
 	if strings.HasPrefix(tag, "property") {
 		if val.Kind() == reflect.String {
@@ -68,7 +68,7 @@ func lokiFormatter(name, tag string, val reflect.Value) interface{} {
 				return tuple{name, strconv.FormatFloat(val.Float(), 'e', -1, 64)}
 			}
 		}
-		core.LogError(fmt.Errorf("lokiMessage property type not recognized %s %v", name, val.Interface()))
+		gocore.LogError(fmt.Errorf("lokiMessage property type not recognized %s %v", name, val.Interface()))
 	}
 	return nil
 }
@@ -78,7 +78,7 @@ func lokiEncode(os []Content) bool {
 	var s streams
 	for _, o := range os {
 		ls := map[string]string{}
-		for _, l := range core.Format("", "", reflect.ValueOf(o), lokiFormatter) {
+		for _, l := range gocore.Format("", "", reflect.ValueOf(o), lokiFormatter) {
 			l := l.(tuple)
 			ls[l[0]] = l[1]
 		}

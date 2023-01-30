@@ -1,14 +1,14 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
 import (
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
 func init() {
-	message.Document(&observation{})
+	message.Define(&observation{})
 }
 
 type (
@@ -34,7 +34,7 @@ const (
 
 var (
 	// processEvents valid event values for messages.
-	processEvents = core.ValidValue[processEvent]{}.Define(
+	processEvents = gocore.ValidValue[processEvent]{}.Define(
 		processFork,
 		processExec,
 		processExit,

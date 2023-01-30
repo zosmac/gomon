@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package system
 
@@ -17,7 +17,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 type (
@@ -37,7 +37,7 @@ var (
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			core.LogError(core.Error("sysctl kern.version", err))
+			gocore.LogError(gocore.Error("sysctl kern.version", err))
 			return ""
 		}
 
@@ -50,7 +50,7 @@ var (
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			core.LogError(core.Error("sysctl kern.version", err))
+			gocore.LogError(gocore.Error("sysctl kern.version", err))
 			return ""
 		}
 
@@ -82,7 +82,7 @@ var (
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			core.LogError(core.Error("sysctl kern.clockrate", err))
+			gocore.LogError(gocore.Error("sysctl kern.clockrate", err))
 			return 10000 * time.Microsecond // just guess
 		}
 
@@ -135,7 +135,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(core.Error("sysctl kern.maxproc", err))
+		gocore.LogError(gocore.Error("sysctl kern.maxproc", err))
 		return l
 	}
 
@@ -148,7 +148,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(core.Error("sysctl kern.maxfiles", err))
+		gocore.LogError(gocore.Error("sysctl kern.maxfiles", err))
 		return l
 	}
 
@@ -161,7 +161,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(core.Error("sysctl kern.maxfilesperproc", err))
+		gocore.LogError(gocore.Error("sysctl kern.maxfilesperproc", err))
 		return l
 	}
 
@@ -174,7 +174,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(core.Error("sysctl kern.maxprocperuid", err))
+		gocore.LogError(gocore.Error("sysctl kern.maxprocperuid", err))
 		return l
 	}
 
@@ -187,7 +187,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(core.Error("sysctl kern.num_files", err))
+		gocore.LogError(gocore.Error("sysctl kern.num_files", err))
 		return l
 	}
 
@@ -213,7 +213,7 @@ func cpu() CPU {
 	)
 
 	if status != C.KERN_SUCCESS {
-		core.LogError(core.Error("host_statistics", kernReturn(status)))
+		gocore.LogError(gocore.Error("host_statistics", kernReturn(status)))
 		return CPU{}
 	}
 
@@ -235,7 +235,7 @@ func cpus() []CPU {
 	)
 
 	if status != C.KERN_SUCCESS {
-		core.LogError(core.Error("host_processor_info", kernReturn(status)))
+		gocore.LogError(gocore.Error("host_processor_info", kernReturn(status)))
 		return nil
 	}
 
@@ -277,7 +277,7 @@ func memory() (Memory, Swap) {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(core.Error("sysctl hw.memsize", err))
+		gocore.LogError(gocore.Error("sysctl hw.memsize", err))
 	}
 
 	var vmi C.struct_vm_statistics64
@@ -290,7 +290,7 @@ func memory() (Memory, Swap) {
 		&number,
 	)
 	if status != C.KERN_SUCCESS {
-		core.LogError(core.Error("host_statistics", kernReturn(status)))
+		gocore.LogError(gocore.Error("host_statistics", kernReturn(status)))
 	}
 
 	total := int(memsize)
@@ -310,7 +310,7 @@ func memory() (Memory, Swap) {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		core.LogError(core.Error("sysctl vm.swapusage", err))
+		gocore.LogError(gocore.Error("sysctl vm.swapusage", err))
 	}
 
 	return Memory{

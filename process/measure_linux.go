@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
@@ -32,7 +32,7 @@ var (
 func (pid Pid) id() Id {
 	buf, err := os.ReadFile(filepath.Join("/proc", pid.String(), "stat"))
 	if err != nil {
-		core.LogError(core.Error("ReadFile", err))
+		gocore.LogError(gocore.Error("ReadFile", err))
 		return Id{}
 	}
 
@@ -44,7 +44,7 @@ func (pid Pid) id() Id {
 		ppid:      Pid(ppid),
 		Name:      fields[1][1 : len(fields[1])-1],
 		Pid:       pid,
-		Starttime: core.Boottime.Add(time.Duration(start) * factor),
+		Starttime: gocore.Boottime.Add(time.Duration(start) * factor),
 	}
 }
 
@@ -52,12 +52,12 @@ func (pid Pid) id() Id {
 func (pid Pid) metrics() (Id, Properties, Metrics) {
 	buf, err := os.ReadFile(filepath.Join("/proc", pid.String(), "stat"))
 	if err != nil {
-		core.LogError(core.Error("ReadFile", err))
+		gocore.LogError(gocore.Error("ReadFile", err))
 		return Id{Pid: pid}, Properties{}, Metrics{}
 	}
 	fields := strings.Fields(string(buf))
 
-	m, _ := core.Measures(filepath.Join("/proc", pid.String(), "status"))
+	m, _ := gocore.Measures(filepath.Join("/proc", pid.String(), "status"))
 
 	ppid, _ := strconv.Atoi(fields[3])
 	pgid, _ := strconv.Atoi(fields[4])
@@ -89,7 +89,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 			ppid:      Pid(ppid),
 			Name:      fields[1][1 : len(fields[1])-1],
 			Pid:       pid,
-			Starttime: core.Boottime.Add(time.Duration(start) * factor),
+			Starttime: gocore.Boottime.Add(time.Duration(start) * factor),
 		},
 		Properties{
 			Ppid:        Pid(ppid),
@@ -98,8 +98,8 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 			Tty:         fmt.Sprintf("%#.8X", tty),
 			UID:         uid,
 			GID:         gid,
-			Username:    core.Username(uid),
-			Groupname:   core.Groupname(gid),
+			Username:    gocore.Username(uid),
+			Groupname:   gocore.Groupname(gid),
 			Status:      status[fields[2][0]],
 			Nice:        nice,
 			CommandLine: pid.commandLine(),
@@ -129,9 +129,9 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 // io captures process I/O counts.
 func (pid Pid) io() Io {
 	i := Io{}
-	m, err := core.Measures(filepath.Join("/proc", pid.String(), "io"))
+	m, err := gocore.Measures(filepath.Join("/proc", pid.String(), "io"))
 	if err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return i
 	}
 
@@ -184,12 +184,12 @@ func (pid Pid) directories() Directories {
 func getPids() ([]Pid, error) {
 	dir, err := os.Open("/proc")
 	if err != nil {
-		return nil, core.Error("/proc", err)
+		return nil, gocore.Error("/proc", err)
 	}
 	ns, err := dir.Readdirnames(0)
 	dir.Close()
 	if err != nil {
-		return nil, core.Error("/proc", err)
+		return nil, gocore.Error("/proc", err)
 	}
 
 	pids := make([]Pid, len(ns))

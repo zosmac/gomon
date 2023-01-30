@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package file
 
@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
@@ -44,15 +44,15 @@ var (
 func Observer(ctx context.Context) error {
 	var err error
 	if flags.fileDirectory, err = filepath.Abs(flags.fileDirectory); err != nil {
-		return core.Error("Abs", err)
+		return gocore.Error("Abs", err)
 	}
 	if flags.fileDirectory, err = filepath.EvalSymlinks(flags.fileDirectory); err != nil {
-		return core.Error("EvalSymlinks", err)
+		return gocore.Error("EvalSymlinks", err)
 	}
 
 	h, err := open(flags.fileDirectory)
 	if err != nil {
-		return core.Error("open", err)
+		return gocore.Error("open", err)
 	}
 
 	obs = &observer{
@@ -62,20 +62,20 @@ func Observer(ctx context.Context) error {
 	}
 
 	if err := watchDir("."); err != nil {
-		return core.Error("watch", err)
+		return gocore.Error("watch", err)
 	}
 
-	core.LogInfo(fmt.Errorf("observing files in %s", flags.fileDirectory))
+	gocore.LogInfo(fmt.Errorf("observing files in %s", flags.fileDirectory))
 
 	if err := observe(ctx); err != nil {
-		return core.Error("observer()", err)
+		return gocore.Error("observer()", err)
 	}
 
 	go func() {
 		for {
 			select {
 			case err := <-errorChan:
-				core.LogError(err)
+				gocore.LogError(err)
 			case obs := <-messageChan:
 				message.Encode([]message.Content{obs})
 			}
@@ -118,7 +118,7 @@ func watchDir(rel string) error {
 	err := filepath.WalkDir(filepath.Join(obs.root, rel), func(abs string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, fs.ErrPermission) {
-				core.LogError(core.Error("WalkDir", err))
+				gocore.LogError(gocore.Error("WalkDir", err))
 			}
 			return filepath.SkipDir
 		}

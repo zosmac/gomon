@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package main
 
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/file"
 	"github.com/zosmac/gomon/filesystem"
 	"github.com/zosmac/gomon/io"
@@ -24,11 +24,17 @@ import (
 
 // main
 func main() {
-	core.Main(Main)
+	gocore.Main(Main)
 }
 
-// Main called from core.Main.
+// Main called from gocore.Main.
 func Main(ctx context.Context) {
+	if gocore.Flags.FlagSet.Lookup("document").Value.String() == "true" {
+		message.Document()
+		os.Exit(0)
+		return
+	}
+
 	cmd, err := os.Executable()
 	if err != nil {
 		cmd = os.Args[0]
@@ -36,25 +42,25 @@ func Main(ctx context.Context) {
 	if len(os.Args) > 1 {
 		cmd += " " + strings.Join(os.Args[1:], " ")
 	}
-	core.LogInfo(fmt.Errorf("start %q[%d]", cmd, os.Getpid()))
+	gocore.LogInfo(fmt.Errorf("start %q[%d]", cmd, os.Getpid()))
 
 	if err := message.Encoder(ctx); err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return
 	}
 
 	if err := logs.Observer(ctx); err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return
 	}
 
 	if err := file.Observer(ctx); err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return
 	}
 
 	if err := process.Observer(ctx); err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return
 	}
 
@@ -62,46 +68,44 @@ func Main(ctx context.Context) {
 	server := serve()
 
 	// capture and write with encoder
-	go func() {
-		ticker := core.Flags.Sample.AlignTicker()
-		for {
-			select {
-			case <-ctx.Done():
-				server.Shutdown(ctx)
-				return
-			case t := <-ticker.C:
-				start := time.Now()
-				last, ok := lastPrometheusCollection.Load().(time.Time)
-				if !ok || t.Sub(last) > time.Duration(2*core.Flags.Sample) {
-					ms := measure()
-					message.Encode(ms)
-					fmt.Fprintf(os.Stderr, "ENCODE %d measurements at %s\n\trequired %v\n",
-						len(ms), start.Format(core.TimeFormat), time.Since(start))
-				}
-
-			case ch := <-prometheusChan:
-				start := time.Now()
-				var count int
-				for _, m := range measure() {
-					core.Format(
-						"gomon_"+path.Base(reflect.Indirect(reflect.ValueOf(m)).Type().PkgPath()),
-						"",
-						reflect.ValueOf(m),
-						func(name, tag string, val reflect.Value) interface{} {
-							if !strings.HasPrefix(tag, "property") {
-								ch <- prometheusMetric(m, name, tag, val)
-								count++
-							}
-							return nil
-						},
-					)
-				}
-				prometheusDone <- struct{}{}
-				fmt.Fprintf(os.Stderr, "COLLECT %d metrics at %s\n\trequired %v\n",
-					count, start.Format(core.TimeFormat), time.Since(start))
+	ticker := flags.sample.alignTicker()
+	for {
+		select {
+		case <-ctx.Done():
+			server.Shutdown(ctx)
+			return
+		case t := <-ticker.C:
+			start := time.Now()
+			last, ok := lastPrometheusCollection.Load().(time.Time)
+			if !ok || t.Sub(last) > time.Duration(2*flags.sample) {
+				ms := measure()
+				message.Encode(ms)
+				fmt.Fprintf(os.Stderr, "ENCODE %d measurements at %s\n\trequired %v\n",
+					len(ms), start.Format(gocore.TimeFormat), time.Since(start))
 			}
+
+		case ch := <-prometheusChan:
+			start := time.Now()
+			var count int
+			for _, m := range measure() {
+				gocore.Format(
+					"gomon_"+path.Base(reflect.Indirect(reflect.ValueOf(m)).Type().PkgPath()),
+					"",
+					reflect.ValueOf(m),
+					func(name, tag string, val reflect.Value) interface{} {
+						if !strings.HasPrefix(tag, "property") {
+							ch <- prometheusMetric(m, name, tag, val)
+							count++
+						}
+						return nil
+					},
+				)
+			}
+			prometheusDone <- struct{}{}
+			fmt.Fprintf(os.Stderr, "COLLECT %d metrics at %s\n\trequired %v\n",
+				count, start.Format(gocore.TimeFormat), time.Since(start))
 		}
-	}()
+	}
 }
 
 // measure gathers measurements of each subsystem.

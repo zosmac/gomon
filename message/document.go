@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package message
 
@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
@@ -27,13 +27,9 @@ var (
 	}{len("- properties "), len(" units "), len(" type ")}
 )
 
-func init() {
-	core.Document = document // assign function to core to prevent message -> core -> message import recursion
-}
-
-// Document a Message's Content.
-func Document(m Content) {
-	fs := core.Format("", "", reflect.ValueOf(m),
+// Define a Message's Content.
+func Define(m Content) {
+	fs := gocore.Format("", "", reflect.ValueOf(m),
 		func(name, tag string, val reflect.Value) interface{} {
 			return documentField(m, name, tag)
 		},
@@ -56,8 +52,8 @@ type field struct {
 	Unit     string // metric unit
 }
 
-// document the messages when the document flag specified on the command line.
-func document() {
+// Document the messages when the document flag specified on the command line.
+func Document() {
 	sort.SliceStable(fields, func(i, j int) bool {
 		if fields[i].key != fields[j].key {
 			return fields[i].key < fields[j].key

@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package logs
 
@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
@@ -47,13 +47,13 @@ var (
 func open() error {
 	var err error
 	if flags.logDirectory, err = filepath.Abs(flags.logDirectory); err != nil {
-		return core.Error("Abs", err)
+		return gocore.Error("Abs", err)
 	}
 	if flags.logDirectory, err = filepath.EvalSymlinks(flags.logDirectory); err != nil {
-		return core.Error("EvalSymlinks", err)
+		return gocore.Error("EvalSymlinks", err)
 	}
 
-	core.LogInfo(
+	gocore.LogInfo(
 		fmt.Errorf(
 			"watching logs in directory %s, include pattern: %s, exclude pattern: %s",
 			flags.logDirectory,
@@ -64,7 +64,7 @@ func open() error {
 
 	nd, err = syscall.InotifyInit()
 	if err != nil {
-		return core.Error("inotify_init", err)
+		return gocore.Error("inotify_init", err)
 	}
 
 	return nil
@@ -93,7 +93,7 @@ func observe(ctx context.Context) error {
 			events := make([]byte, 16384)
 			n, err := syscall.Read(nd, events)
 			if err != nil {
-				errorChan <- core.Error("read", err)
+				errorChan <- gocore.Error("read", err)
 				return
 			}
 

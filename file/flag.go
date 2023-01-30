@@ -1,9 +1,9 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package file
 
 import (
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 
 // init initializes the command line flags.
 func init() {
-	core.Flags.Var(
+	gocore.Flags.Var(
 		&flags.fileDirectory,
 		"filedirectory",
 		"[-filedirectory <path>]",

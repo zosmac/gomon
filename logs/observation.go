@@ -1,16 +1,16 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package logs
 
 import (
 	"strconv"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
 func init() {
-	message.Document(&observation{})
+	message.Define(&observation{})
 }
 
 type (
@@ -44,7 +44,7 @@ const (
 
 var (
 	// logLevels valid event values for messages, in severity order.
-	logLevels = core.ValidValue[logLevel]{}.Define(
+	logLevels = gocore.ValidValue[logLevel]{}.Define(
 		levelTrace,
 		levelDebug,
 		levelInfo,

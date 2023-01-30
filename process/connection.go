@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 // Connections creates a slice of local to remote connections.
@@ -16,7 +16,7 @@ func Connections(pt Table) {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
-			core.LogError(fmt.Errorf("Connections() panicked, %v\n%s", r, buf))
+			gocore.LogError(fmt.Errorf("Connections() panicked, %v\n%s", r, buf))
 		}
 	}()
 

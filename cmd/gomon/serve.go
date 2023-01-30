@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package main
 
@@ -6,11 +6,13 @@ import (
 	"bytes"
 	"net/http"
 	"net/url"
+	"path/filepath"
+	"runtime"
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"golang.org/x/net/websocket"
 
 	// enable web server to handle /debug/pprof queries
@@ -28,7 +30,7 @@ func prometheusHandler() {
 	)
 
 	if si, err := scrapeInterval(); err == nil {
-		core.Flags.Sample = si // sync sample interval default with Prometheus'
+		flags.sample = si // sync sample interval default with Prometheus'
 	}
 }
 
@@ -94,10 +96,12 @@ func wsHandler() {
 	)
 }
 
-// assetHandler serves up files from the gomoo assets directory
+// assetHandler serves up files from the gomon assets directory
 func assetHandler() {
+	_, n, _, _ := runtime.Caller(2)
+	mod := gocore.Modules(filepath.Dir(n))
 	http.Handle("/assets/",
-		http.FileServer(http.Dir(core.Srcpath)),
+		http.FileServer(http.Dir(mod.Dir)),
 	)
 }
 
@@ -110,17 +114,17 @@ func serve() *http.Server {
 	assetHandler()
 
 	server := &http.Server{
-		Addr: "localhost:" + strconv.Itoa(core.Flags.Port),
+		Addr: "localhost:" + strconv.Itoa(flags.port),
 	}
 	go func() {
-		core.LogError(server.ListenAndServe())
+		gocore.LogError(server.ListenAndServe())
 		// to enable https/wss for these handlers, follow these steps:
 		// 1. cmd/generate_cert/generate_cert -host localhost
 		// 2. cp cmd/generate_cert/cert.pem cmd_generate_cert/key.pem ~/Developer/testdir
 		// 3. add cert.pem to keychain
 		// 4. in Safari, visit https://localhost:1234
 		// 5. authorize untrusted self-signed certificate
-		// core.LogError(http.ListenAndServeTLS("localhost:"+port, "cert.pem", "key.pem", nil))
+		// gocore.LogError(http.ListenAndServeTLS("localhost:"+port, "cert.pem", "key.pem", nil))
 	}()
 
 	return server

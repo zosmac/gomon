@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 type (
@@ -53,12 +53,12 @@ func watch(kd int, pid Pid) error {
 func observe(ctx context.Context) error {
 	pids, err := getPids()
 	if err != nil {
-		return core.Error("getPids", err)
+		return gocore.Error("getPids", err)
 	}
 
 	kd, err := syscall.Kqueue()
 	if err != nil {
-		return core.Error("Kqueue", err)
+		return gocore.Error("Kqueue", err)
 	}
 
 	go func() {
@@ -71,11 +71,11 @@ func observe(ctx context.Context) error {
 			for pid := range pids {
 				id, err := pid.id()
 				if err != nil {
-					errorChan <- core.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
+					errorChan <- gocore.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
 					continue
 				}
 				if err := watch(kd, pid); err != nil {
-					errorChan <- core.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
+					errorChan <- gocore.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
 					continue
 				}
 				id.ppid = ppid // preserve in case child reassigned to init process
@@ -89,14 +89,14 @@ func observe(ctx context.Context) error {
 				if errors.Is(err, syscall.EINTR) {
 					continue
 				}
-				errorChan <- core.Error("Kevent()", err)
+				errorChan <- gocore.Error("Kevent()", err)
 				return
 			}
 
 			for _, event := range events[:n] {
 				pid := Pid(event.Ident)
 				if event.Flags&syscall.EV_ERROR != 0 {
-					errorChan <- core.Error("Kevent()", fmt.Errorf("pid: %d, %#v", pid, event))
+					errorChan <- gocore.Error("Kevent()", fmt.Errorf("pid: %d, %#v", pid, event))
 					continue
 				}
 
@@ -117,7 +117,7 @@ func observe(ctx context.Context) error {
 
 				if event.Fflags&syscall.NOTE_EXEC != 0 {
 					if id, err = pid.id(); err != nil {
-						errorChan <- core.Error("Kevent", fmt.Errorf("exec pid: %d, err: %w", pid, err))
+						errorChan <- gocore.Error("Kevent", fmt.Errorf("exec pid: %d, err: %w", pid, err))
 						if ok {
 							delete(youth, pid)
 						}
@@ -157,7 +157,7 @@ func newKids(kd int, ppid Pid) {
 		}
 		if err != nil {
 			if !errors.Is(err, syscall.ESRCH) {
-				errorChan <- core.Error("Kevent()", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
+				errorChan <- gocore.Error("Kevent()", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
 			}
 			continue
 		}

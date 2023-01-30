@@ -17,7 +17,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 type (
@@ -65,13 +65,13 @@ func main() {
 func getPids() ([]Pid, error) {
 	n, err := C.proc_listpids(C.PROC_ALL_PIDS, 0, nil, 0)
 	if n <= 0 {
-		return nil, core.Error("proc_listpids PROC_ALL_PIDS failed", err)
+		return nil, gocore.Error("proc_listpids PROC_ALL_PIDS failed", err)
 	}
 
 	var pid C.int
 	buf := make([]C.int, n/C.int(unsafe.Sizeof(pid))+10)
 	if n, err = C.proc_listpids(C.PROC_ALL_PIDS, 0, unsafe.Pointer(&buf[0]), n); n <= 0 {
-		return nil, core.Error("proc_listpids PROC_ALL_PIDS failed", err)
+		return nil, gocore.Error("proc_listpids PROC_ALL_PIDS failed", err)
 	}
 	n /= C.int(unsafe.Sizeof(pid))
 	if int(n) < len(buf) {

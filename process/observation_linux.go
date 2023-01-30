@@ -1,17 +1,17 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
 import (
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 	"golang.org/x/sys/unix"
 )
 
 func init() {
-	message.Document(&tsMeasurement{})
+	message.Define(&tsMeasurement{})
 }
 
 type (
@@ -96,7 +96,7 @@ const (
 
 var (
 	// netlinkEvents valid event values for messages.
-	netlinkEvents = core.ValidValue[netlinkEvent]{}.Define(
+	netlinkEvents = gocore.ValidValue[netlinkEvent]{}.Define(
 		netlinkTaskstats,
 	)
 )

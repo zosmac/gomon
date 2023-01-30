@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package process
 
@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
@@ -22,7 +22,7 @@ var (
 // Observer starts capture of process event observations.
 func Observer(ctx context.Context) error {
 	if err := open(); err != nil {
-		return core.Error("process observer", err)
+		return gocore.Error("process observer", err)
 	}
 
 	if err := endpoints(ctx); err != nil {
@@ -37,7 +37,7 @@ func Observer(ctx context.Context) error {
 		for {
 			select {
 			case err := <-errorChan:
-				core.LogError(err)
+				gocore.LogError(err)
 			case obs := <-messageChan:
 				message.Encode([]message.Content{obs})
 			}

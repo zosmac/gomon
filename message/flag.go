@@ -1,17 +1,18 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package message
 
 import (
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
 	// flags defines the command line flags.
 	flags = struct {
-		pretty bool
+		document bool
+		pretty   bool
 		rotate
 	}{
 		rotate: rotate{interval: 0 * time.Hour},
@@ -58,7 +59,18 @@ func (r *rotate) String() string {
 
 // init initializes the command line flags.
 func init() {
-	core.Flags.Var(&flags.pretty, "pretty", "[-pretty]", "Produce output in human readable format")
+	gocore.Flags.Var(
+		&flags.document,
+		"document",
+		"[-document]",
+		"Document the measurements and observations and exit",
+	)
+	gocore.Flags.Var(
+		&flags.pretty,
+		"pretty",
+		"[-pretty]",
+		"Produce output in human readable format",
+	)
 
 	var def string
 	if flags.rotate.interval == 0 {
@@ -67,7 +79,7 @@ func init() {
 		flags.rotate.interval = time.Second
 	}
 	flags.rotate.Set(flags.rotate.interval.String())
-	core.Flags.Var(
+	gocore.Flags.Var(
 		&flags.rotate,
 		"rotate",
 		"[-rotate <interval>]",

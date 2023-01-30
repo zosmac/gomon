@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package main
 
@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/process"
 )
 
@@ -71,7 +71,7 @@ func NodeGraph(req *http.Request) []byte {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
-			core.LogError(fmt.Errorf("NodeGraph() panicked, %v\n%s", r, buf))
+			gocore.LogError(fmt.Errorf("NodeGraph() panicked, %v\n%s", r, buf))
 		}
 	}()
 
@@ -262,7 +262,7 @@ func NodeGraph(req *http.Request) []byte {
       %d [shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="http://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
 			pid,
 			color(pid),
-			core.Flags.Port,
+			flags.port,
 			pt[pid].Id.Name,
 			longname(pt, pid),
 		)
@@ -327,7 +327,7 @@ func NodeGraph(req *http.Request) []byte {
 
 	glabel := fmt.Sprintf(
 		`"External and Inter-Process Connections\lHost: %s%s%s`,
-		core.Hostname,
+		gocore.Hostname,
 		pslabel,
 		time.Now().Local().Format(`\lMon Jan 02 2006 at 03:04:05PM MST\l"`),
 	)
@@ -373,7 +373,7 @@ func dot(graphviz string) []byte {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	if err := cmd.Run(); err != nil {
-		core.LogError(fmt.Errorf("dot command failed %w\n%s", err, stderr.Bytes()))
+		gocore.LogError(fmt.Errorf("dot command failed %w\n%s", err, stderr.Bytes()))
 		sc := bufio.NewScanner(strings.NewReader(graphviz))
 		for i := 1; sc.Scan(); i++ {
 			fmt.Fprintf(os.Stderr, "%4.d %s\n", i, sc.Text())

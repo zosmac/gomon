@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package io
 
@@ -7,7 +7,7 @@ import (
 	"unsafe"
 
 	"github.com/StackExchange/wmi"
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 	"golang.org/x/sys/windows"
 )
@@ -132,7 +132,7 @@ func Measure() (ms []message.Content) {
 
 	wos := []win32LogicalDisk{}
 	if err := wmi.Query(wmi.CreateQuery(&wos, ""), &wos); err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return
 	}
 
@@ -175,7 +175,7 @@ func Measure() (ms []message.Content) {
 			0,
 		)
 		if err != nil {
-			core.LogError(core.Error("CreateFile", err))
+			gocore.LogError(gocore.Error("CreateFile", err))
 			continue
 		}
 
@@ -195,7 +195,7 @@ func Measure() (ms []message.Content) {
 			nil,
 		)
 		if err != nil {
-			core.LogError(core.Error("DeviceIoControl", err))
+			gocore.LogError(gocore.Error("DeviceIoControl", err))
 			return
 		}
 
@@ -215,7 +215,7 @@ func Measure() (ms []message.Content) {
 			},
 			Properties: Properties{
 				Drive:          w.Name,
-				DriveType:      core.DriveTypes[*w.DriveType],
+				DriveType:      gocore.DriveTypes[*w.DriveType],
 				Path:           windows.UTF16ToString(path[:]),
 				FilesystemType: windows.UTF16ToString(fsType[:]),
 				TotalSize:      int(*wos[0].Size),

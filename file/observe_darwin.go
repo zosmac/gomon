@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package file
 
@@ -31,7 +31,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 // handle defines host specific observer properties.
@@ -54,7 +54,7 @@ func observe(ctx context.Context) error {
 		runtime.LockOSThread() // tie this goroutine to an OS thread
 		defer runtime.UnlockOSThread()
 
-		cname := core.CreateCFString(flags.fileDirectory + "\x00")
+		cname := gocore.CreateCFString(flags.fileDirectory + "\x00")
 		defer C.CFRelease(C.CFTypeRef(cname))
 		context := C.malloc(C.sizeof_struct_FSEventStreamContext)
 		defer C.free(context)
@@ -90,7 +90,7 @@ func observe(ctx context.Context) error {
 		C.QueueStream(stream)
 
 		<-ctx.Done()
-		core.LogInfo(core.Error("observer()", ctx.Err()))
+		gocore.LogInfo(gocore.Error("observer()", ctx.Err()))
 	}()
 
 	return nil
@@ -179,7 +179,7 @@ func callback(stream C.ConstFSEventStreamRef, _ unsafe.Pointer, count C.size_t, 
 		}
 
 		if flag&C.kFSEventStreamEventFlagMustScanSubDirs != 0 {
-			core.LogInfo(errors.New("events coalesced, requiring rescan of subdirectories"))
+			gocore.LogInfo(errors.New("events coalesced, requiring rescan of subdirectories"))
 			obs.watched = map[string]file{}
 			watchDir(".")
 		}

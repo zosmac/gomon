@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 //go:build !windows
 
@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/logs"
 )
 
@@ -120,21 +120,21 @@ func endpoints(ctx context.Context) error {
 	cmd := hostCommand(ctx) // perform OS specific customizations for command
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return core.Error("StdoutPipe()", err)
+		return gocore.Error("StdoutPipe()", err)
 	}
 	cmd.Stderr = nil // sets to /dev/null
 
 	if err = cmd.Start(); err != nil {
-		return core.Error("Start()", err)
+		return gocore.Error("Start()", err)
 	}
 
-	core.LogInfo(fmt.Errorf(
+	gocore.LogInfo(fmt.Errorf(
 		"Start() command=%q pid=%d",
 		cmd.String(),
 		cmd.Process.Pid),
 	)
 
-	go core.Wait(cmd)
+	go gocore.Wait(cmd)
 
 	go parseLsof(stdout)
 
@@ -148,7 +148,7 @@ func parseLsof(stdout io.ReadCloser) {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
-			core.LogError(fmt.Errorf("parseLsof() panicked, %v\n%s", r, buf))
+			gocore.LogError(fmt.Errorf("parseLsof() panicked, %v\n%s", r, buf))
 		}
 	}()
 

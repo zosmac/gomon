@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package file
 
@@ -10,7 +10,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 
 	"golang.org/x/sys/windows"
 )
@@ -53,7 +53,7 @@ func open(directory string) (*handle, error) {
 		0,
 	)
 	if err != nil {
-		return nil, core.Error("CreateFile", err)
+		return nil, gocore.Error("CreateFile", err)
 	}
 
 	return &handle{h}, nil
@@ -103,7 +103,7 @@ func observe(ctx context.Context) error {
 			); err != nil {
 				windows.Close(obs.Handle)
 				obs.Handle = windows.InvalidHandle
-				errorChan <- core.Error("ReadDirectoryChanges", err)
+				errorChan <- gocore.Error("ReadDirectoryChanges", err)
 				return
 			}
 

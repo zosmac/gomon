@@ -1,11 +1,11 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package filesystem
 
 import (
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
@@ -13,7 +13,7 @@ import (
 func Measure() []message.Content {
 	qs, err := filesystems()
 	if err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return nil
 	}
 

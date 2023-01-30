@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 //go:build linux
 
@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 /*
@@ -202,7 +202,7 @@ func nlInetPeerInode(addr net.Addr) (int, error) {
 
 	s, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_DGRAM, syscall.NETLINK_SOCK_DIAG)
 	if err != nil {
-		return 0, core.Error("netlink socket", err)
+		return 0, gocore.Error("netlink socket", err)
 	}
 	defer syscall.Close(s)
 
@@ -228,25 +228,25 @@ func nlInetPeerInode(addr net.Addr) (int, error) {
 
 	buf := (*[unsafe.Sizeof(req)]byte)(unsafe.Pointer(&req))[:]
 	if err := syscall.Sendto(s, buf, 0, &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK}); err != nil {
-		return 0, core.Error("sendto", err)
+		return 0, gocore.Error("sendto", err)
 	}
 
 	for {
 		nlMsg := make([]byte, 1024)
 		n, _, err := syscall.Recvfrom(s, nlMsg, 0)
 		if n <= 0 || err != nil {
-			return 0, core.Error("recvfrom", err)
+			return 0, gocore.Error("recvfrom", err)
 		}
 		msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
 		for _, m := range msgs {
 			switch m.Header.Type {
 			case syscall.NLMSG_ERROR:
-				err := syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4])))
+				err := syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4])))
 				if errors.Is(err, syscall.EINVAL) {
 					return 0, nil // ignore invalid argument, probably an old version of Linux
 				}
-				return 0, core.Error("netlink", err)
+				return 0, gocore.Error("netlink", err)
 			case syscall.NLMSG_DONE:
 				return 0, nil
 			case sockDiagByFamily:
@@ -264,7 +264,7 @@ func nlInetPeerInode(addr net.Addr) (int, error) {
 func nlUnixPeerInode(inode int) (int, error) {
 	s, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_DGRAM, syscall.NETLINK_SOCK_DIAG)
 	if err != nil {
-		return 0, core.Error("netlink socket", err)
+		return 0, gocore.Error("netlink socket", err)
 	}
 	defer syscall.Close(s)
 
@@ -286,25 +286,25 @@ func nlUnixPeerInode(inode int) (int, error) {
 
 	buf := (*[unsafe.Sizeof(req)]byte)(unsafe.Pointer(&req))[:]
 	if err := syscall.Sendto(s, buf, 0, &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK}); err != nil {
-		return 0, core.Error("sendto", err)
+		return 0, gocore.Error("sendto", err)
 	}
 
 	for {
 		nlMsg := make([]byte, 16384) // returns everything even with udiagIno set in query :(
 		n, _, err := syscall.Recvfrom(s, nlMsg, 0)
 		if n <= 0 || err != nil {
-			return 0, core.Error("recvfrom", err)
+			return 0, gocore.Error("recvfrom", err)
 		}
 		msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
 		for _, m := range msgs {
 			switch m.Header.Type {
 			case syscall.NLMSG_ERROR:
-				err := syscall.Errno(-int32(core.HostEndian.Uint32(m.Data[:4])))
+				err := syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4])))
 				if errors.Is(err, syscall.EINVAL) {
 					return 0, nil // ignore invalid argument, probably an old version of Linux
 				}
-				return 0, core.Error("netlink", err)
+				return 0, gocore.Error("netlink", err)
 			case syscall.NLMSG_DONE:
 				return 0, nil
 			case sockDiagByFamily:
@@ -313,7 +313,7 @@ func nlUnixPeerInode(inode int) (int, error) {
 				for i := rtaAlign(int(unsafe.Sizeof(unixDiagMsg{}))); i < len(m.Data); i += rtaAlign(int(attr.Len)) {
 					attr = (*syscall.RtAttr)(unsafe.Pointer(&m.Data[i]))
 					if attr.Type == unixDiagPeer &&
-						inode == int(core.HostEndian.Uint32(m.Data[i+4:i+int(attr.Len)])) {
+						inode == int(gocore.HostEndian.Uint32(m.Data[i+4:i+int(attr.Len)])) {
 						return int(msg.udiagIno), nil
 					}
 				}

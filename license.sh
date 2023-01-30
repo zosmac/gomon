@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright © 2021 The Gomon Project.
+# Copyright © 2021-2023 The Gomon Project.
 
 # Create LICENSE file
 
@@ -7,8 +7,6 @@ license() {
    file=`mktemp`
    rm -f LICENSE
    cat <<EOF >$file
-Copyright © 2021 The Gomon Project.
-
 This product includes software with separate copyright notices and license terms as noted below.
 EOF
 

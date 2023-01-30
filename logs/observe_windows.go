@@ -1,17 +1,17 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package logs
 
 import (
 	"context"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
 // open obtains a watch handle for observer
 func open() error {
-	return core.Unsupported()
+	return gocore.Unsupported()
 }
 
 func observe(ctx context.Context) error {
@@ -24,5 +24,5 @@ func report() []message.Content {
 
 // Remove exited processes' logs from observation, which is unsupported for Windows.
 func Remove(pids []int) {
-	core.LogInfo(core.Unsupported())
+	gocore.LogInfo(gocore.Unsupported())
 }

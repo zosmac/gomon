@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package network
 
@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
@@ -16,7 +16,7 @@ import (
 func interfaces() (ms []*measurement) {
 	nis, err := net.Interfaces()
 	if err != nil {
-		core.LogError(err)
+		gocore.LogError(err)
 		return
 	}
 

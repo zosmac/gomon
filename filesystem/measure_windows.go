@@ -1,9 +1,9 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package filesystem
 
 import (
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 	"golang.org/x/sys/windows"
 )
@@ -20,7 +20,7 @@ func filesystems() ([]message.Request, error) {
 		&driveStrings[0],
 	)
 	if n == 0 {
-		return nil, core.Error("GetLogicalDriveStrings", err)
+		return nil, gocore.Error("GetLogicalDriveStrings", err)
 	}
 
 	var qs []message.Request
@@ -60,7 +60,7 @@ func filesystems() ([]message.Request, error) {
 						},
 						Properties: Properties{
 							Type:      windows.UTF16ToString(fsType[:]),
-							DriveType: core.DriveTypes[driveType],
+							DriveType: gocore.DriveTypes[driveType],
 							Device:    windows.UTF16ToString(target[:l]),
 						},
 					},

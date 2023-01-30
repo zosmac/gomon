@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package system
 
@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
@@ -22,12 +22,12 @@ var (
 		}
 
 		ss := []string{
-			core.FromCString(uname.Sysname[:]),
-			core.FromCString(uname.Nodename[:]),
-			core.FromCString(uname.Release[:]),
-			core.FromCString(uname.Version[:]),
-			core.FromCString(uname.Machine[:]),
-			core.FromCString(uname.Domainname[:]),
+			gocore.GoStringN(&uname.Sysname[0], len(uname.Sysname)),
+			gocore.GoStringN(&uname.Nodename[0], len(uname.Nodename)),
+			gocore.GoStringN(&uname.Release[0], len(uname.Release)),
+			gocore.GoStringN(&uname.Version[0], len(uname.Version)),
+			gocore.GoStringN(&uname.Machine[0], len(uname.Machine)),
+			gocore.GoStringN(&uname.Domainname[0], len(uname.Domainname)),
 		}
 
 		return strings.Join(ss, " ")
@@ -46,7 +46,7 @@ func uname() string {
 func loadAverage() LoadAverage {
 	buf, err := os.ReadFile("/proc/loadavg")
 	if err != nil {
-		core.LogError(core.Error("/proc/loadavg", err))
+		gocore.LogError(gocore.Error("/proc/loadavg", err))
 		return LoadAverage{}
 	}
 	f := strings.Fields(string(buf))
@@ -108,7 +108,7 @@ func rlimits() Rlimits {
 func cpu() CPU {
 	f, err := os.Open("/proc/stat")
 	if err != nil {
-		core.LogError(core.Error("/proc/stat open", err))
+		gocore.LogError(gocore.Error("/proc/stat open", err))
 		return CPU{}
 	}
 	defer f.Close()
@@ -123,7 +123,7 @@ func cpu() CPU {
 		}
 	}
 
-	core.LogError(core.Error("/proc/stat cpu", sc.Err()))
+	gocore.LogError(gocore.Error("/proc/stat cpu", sc.Err()))
 	return CPU{}
 }
 
@@ -131,7 +131,7 @@ func cpu() CPU {
 func cpus() []CPU {
 	f, err := os.Open("/proc/stat")
 	if err != nil {
-		core.LogError(core.Error("/proc/stat open", err))
+		gocore.LogError(gocore.Error("/proc/stat open", err))
 		return nil
 	}
 	defer f.Close()
@@ -146,7 +146,7 @@ func cpus() []CPU {
 		}
 	}
 	if len(cpus) == 0 && sc.Err() != nil {
-		core.LogError(core.Error("/proc/stat cpu", sc.Err()))
+		gocore.LogError(gocore.Error("/proc/stat cpu", sc.Err()))
 		return nil
 	}
 	return cpus
@@ -180,9 +180,9 @@ func scale(stat string) CPU {
 
 // memory captures system's memory and swap metrics.
 func memory() (Memory, Swap) {
-	i, err := core.Measures("/proc/meminfo")
+	i, err := gocore.Measures("/proc/meminfo")
 	if err != nil {
-		core.LogError(core.Error("/proc/meminfo", err))
+		gocore.LogError(gocore.Error("/proc/meminfo", err))
 	}
 
 	total, _ := strconv.Atoi(i["MemTotal"])

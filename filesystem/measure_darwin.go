@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package filesystem
 
@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
@@ -21,11 +21,11 @@ import (
 func filesystems() ([]message.Request, error) {
 	n, err := syscall.Getfsstat(nil, C.MNT_NOWAIT)
 	if err != nil {
-		return nil, core.Error("getfsstat", err)
+		return nil, gocore.Error("getfsstat", err)
 	}
 	fss := make([]syscall.Statfs_t, n)
 	if _, err = syscall.Getfsstat(fss, C.MNT_NOWAIT); err != nil {
-		return nil, core.Error("getfsstat", err)
+		return nil, gocore.Error("getfsstat", err)
 	}
 
 	var qs []message.Request

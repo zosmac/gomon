@@ -1,4 +1,4 @@
-// Copyright © 2021 The Gomon Project.
+// Copyright © 2021-2023 The Gomon Project.
 
 package logs
 
@@ -16,7 +16,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/zosmac/gomon/core"
+	"github.com/zosmac/gocore"
 )
 
 var (
@@ -88,7 +88,7 @@ func logCommand(ctx context.Context) {
 
 	sc, err := startCommand(ctx, append(strings.Fields("log stream --predicate"), predicate))
 	if err != nil {
-		core.LogError(fmt.Errorf(
+		gocore.LogError(fmt.Errorf(
 			"startCommand(log stream) err=%q",
 			err,
 		))
@@ -109,7 +109,7 @@ func syslogCommand(ctx context.Context) {
 		syslogLevels[flags.logLevel]),
 	)
 	if err != nil {
-		core.LogError(fmt.Errorf(
+		gocore.LogError(fmt.Errorf(
 			"startCommand(syslog) err=%q",
 			err,
 		))
@@ -135,20 +135,20 @@ func startCommand(ctx context.Context, cmdline []string) (*bufio.Scanner, error)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, core.Error("StdoutPipe()", err)
+		return nil, gocore.Error("StdoutPipe()", err)
 	}
 	cmd.Stderr = nil // sets to /dev/null
 	if err := cmd.Start(); err != nil {
-		return nil, core.Error("Start()", err)
+		return nil, gocore.Error("Start()", err)
 	}
 
-	core.LogInfo(fmt.Errorf(
+	gocore.LogInfo(fmt.Errorf(
 		"Start() command=%q pid=%d",
 		cmd.String(),
 		cmd.Process.Pid,
 	))
 
-	go core.Wait(cmd)
+	go gocore.Wait(cmd)
 
 	return bufio.NewScanner(stdout), nil
 }
