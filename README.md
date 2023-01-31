@@ -174,8 +174,8 @@ To download and install *[Graphviz](<https://graphviz.org/download/source/>)*, s
 *Note: `gomon` specifies `-Tsvgz` to the `dot` command. Ensure that the zlib development library is installed on your system, e.g. on Ubuntu `sudo apt install zlib1g-dev`, on Fedora `sudo yum install zlib devel`.*
 
 ```zsh
-tar xzvf =(curl -L "https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/7.0.6/graphviz-7.0.6.tar.gz")
-cd graphviz-7.0.6
+tar xzvf =(curl -L "https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/7.1.0/graphviz-7.1.0.tar.gz")
+cd graphviz-7.1.0
 ./configure
 make
 sudo make install

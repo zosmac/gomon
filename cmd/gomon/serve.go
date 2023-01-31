@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -99,7 +100,15 @@ func wsHandler() {
 // assetHandler serves up files from the gomon assets directory
 func assetHandler() {
 	_, n, _, _ := runtime.Caller(2)
-	mod := gocore.Modules(filepath.Dir(n))
+	mod, err := gocore.Modules(filepath.Dir(n))
+	if err == nil {
+		_, err = os.Stat(filepath.Join(mod.Dir, "assets"))
+	}
+	if err != nil {
+		gocore.LogWarn(gocore.Error("http assets unresolved", err))
+		return
+	}
+
 	http.Handle("/assets/",
 		http.FileServer(http.Dir(mod.Dir)),
 	)
