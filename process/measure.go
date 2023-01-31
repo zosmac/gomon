@@ -21,9 +21,9 @@ type (
 )
 
 var (
-	// clMap caches process command lines, which are expensive to query.
+	// clMap caches process command lines, which can be expensive to query.
 	clMap  = map[Pid]CommandLine{}
-	clLock sync.RWMutex
+	clLock sync.Mutex
 
 	// oldTimes used to limit reporting only to processes that consumed CPU since the previous measurement.
 	oldTimes = map[Pid]time.Duration{}

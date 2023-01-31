@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/user"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -126,14 +127,25 @@ func serve() *http.Server {
 		Addr: "localhost:" + strconv.Itoa(flags.port),
 	}
 	go func() {
-		gocore.LogError(server.ListenAndServe())
+		// gocore.LogError(server.ListenAndServe())
+
 		// to enable https/wss for these handlers, follow these steps:
-		// 1. cmd/generate_cert/generate_cert -host localhost
-		// 2. cp cmd/generate_cert/cert.pem cmd_generate_cert/key.pem ~/Developer/testdir
-		// 3. add cert.pem to keychain
-		// 4. in Safari, visit https://localhost:1234
-		// 5. authorize untrusted self-signed certificate
-		// gocore.LogError(http.ListenAndServeTLS("localhost:"+port, "cert.pem", "key.pem", nil))
+		// 1. cd /usr/local/go/src/crypto/tls
+		// 2. go build -o ~/go/bin generate_cert.go
+		// 3. cd ~/.ssh
+		// 4. generate_cert -host localhost
+		// 5. add cert.pem to keychain
+		// 6. in Safari, visit https://localhost:1234/gomon
+		// 7. authorize untrusted self-signed certificate
+
+		u, _ := user.Current()
+		dir := filepath.Join(u.HomeDir, ".ssh")
+		gocore.LogError(http.ListenAndServeTLS(
+			"localhost:"+strconv.Itoa(flags.port),
+			filepath.Join(dir, "cert.pem"),
+			filepath.Join(dir, "key.pem"),
+			nil,
+		))
 	}()
 
 	return server

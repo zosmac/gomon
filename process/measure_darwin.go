@@ -170,10 +170,9 @@ func (pid Pid) io() Io {
 
 // commandLine retrieves process command, arguments, and environment.
 func (pid Pid) commandLine() CommandLine {
-	clLock.RLock()
-	cl, ok := clMap[pid]
-	clLock.RUnlock()
-	if ok {
+	clLock.Lock()
+	defer clLock.Unlock()
+	if cl, ok := clMap[pid]; ok {
 		return cl
 	}
 
@@ -205,14 +204,12 @@ func (pid Pid) commandLine() CommandLine {
 		}
 	}
 
-	cl = CommandLine{
+	cl := CommandLine{
 		Executable: executable,
 		Args:       args,
 		Envs:       envs,
 	}
-	clLock.Lock()
 	clMap[pid] = cl
-	clLock.Unlock()
 	return cl
 }
 
