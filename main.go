@@ -31,7 +31,6 @@ func main() {
 func Main(ctx context.Context) {
 	if gocore.Flags.FlagSet.Lookup("document").Value.String() == "true" {
 		message.Document()
-		os.Exit(0)
 		return
 	}
 
