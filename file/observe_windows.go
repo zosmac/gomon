@@ -70,9 +70,8 @@ func owner(info os.FileInfo) (string, string) {
 }
 
 // observe events and notify observer's callbacks.
-func observe(ctx context.Context) error {
+func observe(_ context.Context) error {
 	go func() {
-		defer obs.close()
 		runtime.LockOSThread() // tie this goroutine to an OS thread
 		defer runtime.UnlockOSThread()
 

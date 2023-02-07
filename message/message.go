@@ -45,7 +45,7 @@ var (
 func Measurement() Header[MeasureEvent] {
 	return Header[MeasureEvent]{
 		Timestamp: time.Now(),
-		Host:      gocore.Hostname,
+		Host:      gocore.Host,
 		Source:    source(),
 		Event:     measure,
 	}
@@ -57,7 +57,7 @@ func Measurement() Header[MeasureEvent] {
 func Observation[T ~string](t time.Time, event T) Header[T] {
 	return Header[T]{
 		Timestamp: t,
-		Host:      gocore.Hostname,
+		Host:      gocore.Host,
 		Source:    source(),
 		Event:     event,
 	}

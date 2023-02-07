@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"math"
 	"net"
 	"os"
@@ -117,24 +116,10 @@ const (
 
 // endpoints starts the lsof command to capture process connections.
 func endpoints(ctx context.Context) error {
-	cmd := hostCommand(ctx) // perform OS specific customizations for command
-	stdout, err := cmd.StdoutPipe()
+	stdout, err := gocore.StartCommand(ctx, lsofCommand())
 	if err != nil {
-		return gocore.Error("StdoutPipe()", err)
+		return err
 	}
-	cmd.Stderr = nil // sets to /dev/null
-
-	if err = cmd.Start(); err != nil {
-		return gocore.Error("Start()", err)
-	}
-
-	gocore.LogInfo(fmt.Errorf(
-		"Start() command=%q pid=%d",
-		cmd.String(),
-		cmd.Process.Pid),
-	)
-
-	go gocore.Wait(cmd)
 
 	go parseLsof(stdout)
 
@@ -142,7 +127,7 @@ func endpoints(ctx context.Context) error {
 }
 
 // parseLsof parses each line of stdout from the command.
-func parseLsof(stdout io.ReadCloser) {
+func parseLsof(sc *bufio.Scanner) {
 	defer func() {
 		if r := recover(); r != nil {
 			buf := make([]byte, 4096)
@@ -155,7 +140,6 @@ func parseLsof(stdout io.ReadCloser) {
 	epm := map[Pid][]Connection{}
 	var indexUser, indexFd, indexMode /* indexLock, */, indexType, indexDevice, indexSize, indexNode, indexName int
 
-	sc := bufio.NewScanner(stdout)
 	for sc.Scan() {
 		text := sc.Text()
 		if strings.HasPrefix(text, "COMMAND") {

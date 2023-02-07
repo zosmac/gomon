@@ -82,17 +82,14 @@ func open(directory string) (*handle, error) {
 }
 
 // close OS resources.
-func (h *handle) close() error {
+func (h *handle) close() {
 	syscall.InotifyRmWatch(h.fd, uint32(h.wd))
 	syscall.Close(h.fd)
-	return nil
 }
 
 // observe inotify events and notify observer's callbacks.
-func observe(ctx context.Context) error {
+func observe(_ context.Context) error {
 	go func() {
-		defer obs.close()
-
 		for {
 			events := make([]byte, 16384)
 			n, err := syscall.Read(obs.fd, events)

@@ -8,27 +8,26 @@ package file
 #import <CoreServices/CoreServices.h>
 #include <dispatch/dispatch.h>
 
-// Evidently cannot use dispatch_queue_t type in Go code.
-// Therefore, define queue and dispatch FS stream here.
-static void
+// Cannot resolve C.dispatch_queue_t type in Go code.
+// Therefore, get queue and dispatch FS stream here.
+static bool
 QueueStream(FSEventStreamRef stream) {
 	dispatch_queue_t queue;
-	queue = dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0);
+	queue = dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0);
 	FSEventStreamSetDispatchQueue(stream, queue);
-	FSEventStreamStart(stream);
+	return FSEventStreamStart(stream);
 }
 
-// callback handles events sent on stream
+// callback handles events sent on FSEventStream
 extern void callback(ConstFSEventStreamRef, void *, size_t, char **, FSEventStreamEventFlags *, FSEventStreamEventId *);
-
 */
 import "C"
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
-	"runtime"
 	"unsafe"
 
 	"github.com/zosmac/gocore"
@@ -36,31 +35,19 @@ import (
 
 // handle defines host specific observer properties.
 type handle struct {
+	stream C.FSEventStreamRef
 }
 
 // open obtains a directory handle for observer.
 func open(directory string) (*handle, error) {
-	return &handle{}, nil
-}
+	cname := gocore.CreateCFString(flags.fileDirectory + "\x00")
+	defer C.CFRelease(C.CFTypeRef(cname))
+	context := C.malloc(C.sizeof_struct_FSEventStreamContext)
+	defer C.free(context)
+	C.memset(context, 0, C.sizeof_struct_FSEventStreamContext)
 
-// close OS resources.
-func (h *handle) close() {
-}
-
-// observe events and notify observer's callbacks.
-func observe(ctx context.Context) error {
-	go func() {
-		defer obs.close()
-		runtime.LockOSThread() // tie this goroutine to an OS thread
-		defer runtime.UnlockOSThread()
-
-		cname := gocore.CreateCFString(flags.fileDirectory + "\x00")
-		defer C.CFRelease(C.CFTypeRef(cname))
-		context := C.malloc(C.sizeof_struct_FSEventStreamContext)
-		defer C.free(context)
-		C.memset(context, 0, C.sizeof_struct_FSEventStreamContext)
-
-		stream := C.FSEventStreamCreate(
+	return &handle{
+		stream: C.FSEventStreamCreate(
 			0,
 			(*[0]byte)(C.callback),
 			(*C.FSEventStreamContext)(context),
@@ -68,30 +55,33 @@ func observe(ctx context.Context) error {
 			C.kFSEventStreamEventIdSinceNow,
 			C.CFTimeInterval(1.0),
 			C.kFSEventStreamCreateFlagFileEvents|C.kFSEventStreamCreateFlagWatchRoot, // |C.kFSEventStreamCreateFlagNoDefer,
-		)
-		defer func() {
-			C.FSEventStreamStop(stream)
-			C.FSEventStreamInvalidate(stream)
-			C.FSEventStreamRelease(stream)
-		}()
+		),
+	}, nil
+}
 
-		// NOTE: KEEP THIS AS A USEFUL EXAMPLE
-		// paths := C.FSEventStreamCopyPathsBeingWatched(stream)
-		// defer C.CFRelease(C.CFTypeRef(paths))
-		// var buf [1024]C.char
-		// C.CFStringGetCString(
-		// 	C.CFStringRef(C.CFArrayGetValueAtIndex(paths, 0)),
-		// 	&buf[0],
-		// 	C.CFIndex(len(buf)),
-		// 	C.kCFStringEncodingUTF8,
-		// )
-		// fmt.Fprintf(os.Stderr, "top level path is %s\n", C.GoString(&buf[0]))
+// close OS resources.
+func (h *handle) close() {
+	C.FSEventStreamStop(h.stream)
+	C.FSEventStreamInvalidate(h.stream)
+	C.FSEventStreamRelease(h.stream)
+}
 
-		C.QueueStream(stream)
+// observe events and notify observer's callbacks.
+func observe(_ context.Context) error {
+	if ok := bool(C.QueueStream(obs.stream)); !ok {
+		return gocore.Error("FSEventStreamStart failed", fmt.Errorf(obs.root))
+	}
 
-		<-ctx.Done()
-		gocore.LogInfo(gocore.Error("observer()", ctx.Err()))
-	}()
+	paths := C.FSEventStreamCopyPathsBeingWatched(obs.stream)
+	defer C.CFRelease(C.CFTypeRef(paths))
+	var buf [1024]C.char
+	C.CFStringGetCString(
+		C.CFStringRef(C.CFArrayGetValueAtIndex(paths, 0)),
+		&buf[0],
+		C.CFIndex(len(buf)),
+		C.kCFStringEncodingUTF8,
+	)
+	gocore.LogInfo(fmt.Errorf("FSEventStream monitoring %q", C.GoString(&buf[0])))
 
 	return nil
 }

@@ -26,18 +26,14 @@ type (
 		root string
 		*handle
 		watched map[string]file
+		msgChan chan *observation
+		errChan chan error
 	}
 )
 
 var (
 	// obs anchors the observer.
 	obs *observer
-
-	// messageChan queues file event observations for periodic reporting.
-	messageChan = make(chan *observation, 100)
-
-	// errorChan communicates errors from the observe goroutine.
-	errorChan = make(chan error, 10)
 )
 
 // Observer starts capture of file update observations.
@@ -59,13 +55,15 @@ func Observer(ctx context.Context) error {
 		root:    flags.fileDirectory,
 		handle:  h,
 		watched: map[string]file{},
+		msgChan: make(chan *observation, 100),
+		errChan: make(chan error, 10),
 	}
 
 	if err := watchDir("."); err != nil {
 		return gocore.Error("watch", err)
 	}
 
-	gocore.LogInfo(fmt.Errorf("observing files in %s", flags.fileDirectory))
+	gocore.LogInfo(fmt.Errorf("observing files in %q", flags.fileDirectory))
 
 	if err := observe(ctx); err != nil {
 		return gocore.Error("observer()", err)
@@ -74,10 +72,19 @@ func Observer(ctx context.Context) error {
 	go func() {
 		for {
 			select {
-			case err := <-errorChan:
+			case <-ctx.Done():
+				obs.close()
+				return
+			case err, ok := <-obs.errChan:
+				if !ok {
+					return
+				}
 				gocore.LogError(err)
-			case obs := <-messageChan:
-				message.Encode([]message.Content{obs})
+			case msg, ok := <-obs.msgChan:
+				if !ok {
+					return
+				}
+				message.Encode([]message.Content{msg})
 			}
 		}
 	}()
@@ -86,9 +93,10 @@ func Observer(ctx context.Context) error {
 }
 
 // close stops file observing.
-func (obs *observer) close() error {
+func (obs *observer) close() {
 	obs.handle.close()
-	return nil
+	close(obs.msgChan)
+	close(obs.errChan)
 }
 
 // notify assembles a message and encodes it
@@ -104,7 +112,7 @@ func notify(ev fileEvent, f file, oldname string) {
 	case fileDelete:
 		msg = f.name
 	}
-	messageChan <- &observation{
+	obs.msgChan <- &observation{
 		Header: message.Observation(time.Now(), ev),
 		Id: Id{
 			Name: f.name,

@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/url"
 	"os"
@@ -101,11 +102,8 @@ func wsHandler() {
 // assetHandler serves up files from the gomon assets directory
 func assetHandler() {
 	_, n, _, _ := runtime.Caller(2)
-	mod, err := gocore.Modules(filepath.Dir(n))
-	if err == nil {
-		_, err = os.Stat(filepath.Join(mod.Dir, "assets"))
-	}
-	if err != nil {
+	mod := gocore.Module(filepath.Dir(n))
+	if _, err := os.Stat(filepath.Join(mod.Dir, "assets")); err != nil {
 		gocore.LogWarn(gocore.Error("http assets unresolved", err))
 		return
 	}
@@ -115,8 +113,8 @@ func assetHandler() {
 	)
 }
 
-// serve sets up the web REST endpoints.
-func serve() *http.Server {
+// serve sets up gomon's endpoints and starts the server.
+func serve(ctx context.Context) {
 	// define http request handlers
 	prometheusHandler()
 	gomonHandler()
@@ -126,6 +124,12 @@ func serve() *http.Server {
 	server := &http.Server{
 		Addr: "localhost:" + strconv.Itoa(flags.port),
 	}
+
+	go func() {
+		<-ctx.Done()
+		server.Shutdown(context.Background()) // let server perform cleanup with timeout
+	}()
+
 	go func() {
 		// gocore.LogError(server.ListenAndServe())
 
@@ -140,13 +144,9 @@ func serve() *http.Server {
 
 		u, _ := user.Current()
 		dir := filepath.Join(u.HomeDir, ".ssh")
-		gocore.LogError(http.ListenAndServeTLS(
-			"localhost:"+strconv.Itoa(flags.port),
+		gocore.LogError(server.ListenAndServeTLS(
 			filepath.Join(dir, "cert.pem"),
 			filepath.Join(dir, "key.pem"),
-			nil,
 		))
 	}()
-
-	return server
 }
