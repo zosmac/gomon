@@ -8,11 +8,8 @@ package logs
 import "C"
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 
@@ -73,26 +70,24 @@ func open() error {
 
 // observe starts the macOS log and syslog commands as sub-processes to stream log entries.
 func observe(ctx context.Context) error {
-	go logCommand(ctx)
-	go syslogCommand(ctx)
-	return nil
+	err := logCommand(ctx)
+	if err == nil {
+		err = syslogCommand(ctx)
+	}
+	return err
 }
 
 // logCommand starts the log command to capture OSLog entries (using OSLogStore API directly is MUCH slower)
-func logCommand(ctx context.Context) {
+func logCommand(ctx context.Context) error {
 	predicate := fmt.Sprintf(
 		"(eventType == 'logEvent') AND (messageType >= %d) AND (NOT eventMessage BEGINSWITH[cd] '%s')",
 		osLogLevels[flags.logLevel],
 		"System Policy: gomon",
 	)
 
-	sc, err := startCommand(ctx, append(strings.Fields("log stream --predicate"), predicate))
+	sc, err := gocore.StartCommand(ctx, append(strings.Fields("log stream --predicate"), predicate))
 	if err != nil {
-		gocore.LogError(fmt.Errorf(
-			"startCommand(log stream) err=%q",
-			err,
-		))
-		return
+		return gocore.Error("StartCommand(log stream)", err)
 	}
 
 	sc.Scan() // ignore first output line from log command
@@ -100,57 +95,23 @@ func logCommand(ctx context.Context) {
 	sc.Scan() // ignore second output line
 	sc.Text() //  (it is column headers)
 
-	parseLog(sc, logRegex, "2006-01-02 15:04:05Z0700")
+	go parseLog(ctx, sc, logRegex, "2006-01-02 15:04:05Z0700")
+
+	return nil
 }
 
 // syslogCommand starts the syslog command to capture syslog entries
-func syslogCommand(ctx context.Context) {
-	sc, err := startCommand(ctx, append(strings.Fields("syslog -w 0 -T utc.3 -k Level Nle"),
+func syslogCommand(ctx context.Context) error {
+	sc, err := gocore.StartCommand(ctx, append(strings.Fields("syslog -w 0 -T utc.3 -k Level Nle"),
 		syslogLevels[flags.logLevel]),
 	)
 	if err != nil {
-		gocore.LogError(fmt.Errorf(
-			"startCommand(syslog) err=%q",
-			err,
-		))
-		return
+		return gocore.Error("StartCommand(syslog)", err)
 	}
 
-	parseLog(sc, syslogRegex, "2006-01-02 15:04:05Z")
-}
+	go parseLog(ctx, sc, syslogRegex, "2006-01-02 15:04:05Z")
 
-func startCommand(ctx context.Context, cmdline []string) (*bufio.Scanner, error) {
-	cmd := exec.CommandContext(ctx, cmdline[0], cmdline[1:]...)
-
-	// ensure that no open descriptors propagate to child
-	if n := C.proc_pidinfo(
-		C.int(os.Getpid()),
-		C.PROC_PIDLISTFDS,
-		0,
-		nil,
-		0,
-	); n >= 3*C.PROC_PIDLISTFD_SIZE {
-		cmd.ExtraFiles = make([]*os.File, (n/C.PROC_PIDLISTFD_SIZE)-3) // close gomon files in child
-	}
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, gocore.Error("StdoutPipe()", err)
-	}
-	cmd.Stderr = nil // sets to /dev/null
-	if err := cmd.Start(); err != nil {
-		return nil, gocore.Error("Start()", err)
-	}
-
-	gocore.LogInfo(fmt.Errorf(
-		"Start() command=%q pid=%d",
-		cmd.String(),
-		cmd.Process.Pid,
-	))
-
-	go gocore.Wait(cmd)
-
-	return bufio.NewScanner(stdout), nil
+	return nil
 }
 
 // Watch adds a process' logs to watch to the observer, which is a noop for Darwin.

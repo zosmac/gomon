@@ -15,7 +15,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/zosmac/gocore"
@@ -33,10 +32,6 @@ type (
 )
 
 var (
-	// hnMap caches resolver host name lookup.
-	hnMap  = map[string]string{}
-	hnLock sync.Mutex
-
 	// colors on HSV spectrum that work well in light and dark mode
 	colors = []string{
 		"0.0 0.75 0.80",
@@ -146,7 +141,7 @@ func NodeGraph(req *http.Request) []byte {
 						color(conn.Peer.Pid),
 						conn.Type,
 						port,
-						hostname(host),
+						gocore.Hostname(host),
 						conn.Peer.Name,
 					)
 				}
@@ -259,7 +254,7 @@ func NodeGraph(req *http.Request) []byte {
 		}
 
 		node := fmt.Sprintf(`
-      %d [shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="http://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
+      %d [shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="https://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
 			pid,
 			color(pid),
 			flags.port,
@@ -327,7 +322,7 @@ func NodeGraph(req *http.Request) []byte {
 
 	glabel := fmt.Sprintf(
 		`"External and Inter-Process Connections\lHost: %s%s%s`,
-		gocore.Hostname,
+		gocore.Host,
 		pslabel,
 		time.Now().Local().Format(`\lMon Jan 02 2006 at 03:04:05PM MST\l"`),
 	)
@@ -431,24 +426,4 @@ func shortname(pt process.Table, pid Pid) string {
 		return fmt.Sprintf("%s[%d]", p.Id.Name, pid)
 	}
 	return ""
-}
-
-// hostname resolves the host name for an ip address.
-func hostname(ip string) string {
-	hnLock.Lock()
-	defer hnLock.Unlock()
-	if host, ok := hnMap[ip]; ok {
-		return host
-	}
-
-	hnMap[ip] = ip
-	go func() { // initiate hostname lookup
-		if hosts, err := net.LookupAddr(ip); err == nil {
-			hnLock.Lock()
-			hnMap[ip] = hosts[0]
-			hnLock.Unlock()
-		}
-	}()
-
-	return ip
 }

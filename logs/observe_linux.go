@@ -71,7 +71,7 @@ func open() error {
 }
 
 // close OS resources.
-func close() error {
+func close() {
 	for _, wds := range watched {
 		for wd, l := range wds {
 			l.Close()
@@ -81,7 +81,6 @@ func close() error {
 	watched = nil
 	syscall.Close(nd)
 	nd = -1
-	return nil
 }
 
 // observe inotify events and notify observer's callbacks.
@@ -125,14 +124,14 @@ func observe(ctx context.Context) error {
 				}
 			}
 
-			report(ready)
+			report(ctx, ready)
 		}
 	}()
 
 	return nil
 }
 
-func report(ready map[int]*os.File) {
+func report(ctx context.Context, ready map[int]*os.File) {
 	for _, l := range ready {
 		if info, err := l.Stat(); err == nil {
 			current, _ := l.Seek(0, io.SeekCurrent)
@@ -144,7 +143,7 @@ func report(ready map[int]*os.File) {
 
 			sc := bufio.NewScanner(l)
 
-			go parseLog(sc, regex, "")
+			go parseLog(ctx, sc, regex, "")
 		}
 	}
 }

@@ -113,12 +113,12 @@ func encode(ctx context.Context) {
 }
 
 // Close completes the jsonEncoder's operation.
-func Close() error {
-	return Rotate(time.Now())
+func Close() {
+	Rotate(time.Now())
 }
 
 // Rotate obtains lock and calls encoder's rotate method.
-func Rotate(t time.Time) error {
+func Rotate(t time.Time) {
 	if len(cache) > 0 {
 		var i interface{}
 		if len(cache) == 1 {
@@ -129,7 +129,8 @@ func Rotate(t time.Time) error {
 		err := jsonEncoder.Encode(i)
 		cache = nil
 		if err != nil {
-			return err
+			gocore.LogError(err)
+			return
 		}
 	}
 
@@ -138,17 +139,17 @@ func Rotate(t time.Time) error {
 	info, err := os.Stdout.Stat()
 	if err != nil {
 		gocore.LogError(err)
-		return err
+		return
 	}
 
 	if !info.Mode().IsRegular() {
-		return nil
+		return
 	}
 
 	oldpath, err := gocore.FdPath(int(os.Stdout.Fd()))
 	if err != nil {
 		gocore.LogError(err)
-		return err
+		return
 	}
 
 	ext := filepath.Ext(oldpath)
@@ -157,18 +158,17 @@ func Rotate(t time.Time) error {
 
 	if err := os.Rename(oldpath, newpath); err != nil {
 		gocore.LogError(err)
-		return err
+		return
 	}
 
 	sout, err := os.Create(oldpath)
 	if err != nil {
-		return gocore.Error("Create", err)
+		gocore.LogError(err)
+		return
 	}
 	chown(sout, info)
 
 	old := os.Stdout
 	os.Stdout = sout
 	old.Close()
-
-	return nil
 }

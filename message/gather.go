@@ -13,12 +13,9 @@ type Request func() []Content
 
 // Gather metrics from each Request, waiting for results for at most timeout duration. If timeout is 0, wait until all requests complete.
 func Gather(fs []Request, timeout time.Duration) []Content {
-	var ctx context.Context
-	var cancel context.CancelFunc
-	if timeout == 0 {
-		ctx, cancel = context.WithCancel(context.Background())
-	} else {
-		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithCancel(context.Background())
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, timeout)
 	}
 	defer cancel()
 

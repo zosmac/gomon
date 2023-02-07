@@ -91,9 +91,17 @@ func Observer(ctx context.Context) error {
 	go func() {
 		for {
 			select {
-			case err := <-errorChan:
+			case <-ctx.Done():
+				return
+			case err, ok := <-errorChan:
+				if !ok {
+					return
+				}
 				gocore.LogError(err)
-			case obs := <-messageChan:
+			case obs, ok := <-messageChan:
+				if !ok {
+					return
+				}
 				message.Encode([]message.Content{obs})
 			}
 		}
@@ -102,7 +110,7 @@ func Observer(ctx context.Context) error {
 	return nil
 }
 
-func parseLog(sc *bufio.Scanner, regex *regexp.Regexp, format string) {
+func parseLog(ctx context.Context, sc *bufio.Scanner, regex *regexp.Regexp, format string) {
 	groups := func() map[string]int {
 		g := map[string]int{}
 		for _, name := range regex.SubexpNames() {
@@ -111,7 +119,19 @@ func parseLog(sc *bufio.Scanner, regex *regexp.Regexp, format string) {
 		return g
 	}()
 
-	for sc.Scan() {
+	readyChan := make(chan struct{})
+	go func() {
+		for sc.Scan() {
+			readyChan <- struct{}{}
+		}
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-readyChan:
+		}
 		match := regex.FindStringSubmatch(sc.Text())
 		if len(match) == 0 || match[0] == "" {
 			continue

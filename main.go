@@ -64,15 +64,15 @@ func Main(ctx context.Context) {
 	}
 
 	// fire up the http server
-	server := serve()
+	serve(ctx)
 
 	// capture and write with encoder
 	ticker := flags.sample.alignTicker()
 	for {
 		select {
 		case <-ctx.Done():
-			server.Shutdown(ctx)
 			return
+
 		case t := <-ticker.C:
 			start := time.Now()
 			last, ok := lastPrometheusCollection.Load().(time.Time)
