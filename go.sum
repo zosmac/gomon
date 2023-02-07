@@ -200,8 +200,8 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
-github.com/zosmac/gocore v0.0.0-20230207023009-65946996dfa2 h1:+QR0v1ALD9/yZokJq8ppfevu+bp+ThY7/xLWOEfAlmk=
-github.com/zosmac/gocore v0.0.0-20230207023009-65946996dfa2/go.mod h1:hwPKfeRG5s9ej9mMC10iprqUyZ+dOKaBsMjX9QlFgYI=
+github.com/zosmac/gocore v0.0.0-20230207175904-7640a1c1c4f6 h1:RJcDf5nw2EZ0oYqD5/FpZTKWvL1OMMYJLH0NJHlnYZA=
+github.com/zosmac/gocore v0.0.0-20230207175904-7640a1c1c4f6/go.mod h1:hwPKfeRG5s9ej9mMC10iprqUyZ+dOKaBsMjX9QlFgYI=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
 go.opencensus.io v0.22.2/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=
