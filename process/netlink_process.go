@@ -216,18 +216,18 @@ func genlFamily(fd int, name string) (int, error) {
 
 	buf := append((*[unsafe.Sizeof(req)]byte)(unsafe.Pointer(&req))[:], data...)
 	if err := syscall.Sendto(fd, buf, 0, &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK}); err != nil {
-		return -1, err
+		return -1, gocore.Error("Sendto", err)
 	}
 
 	nlMsg := make([]byte, 256)
 	n, _, err := syscall.Recvfrom(fd, nlMsg, 0)
 	if err != nil {
-		return -1, err
+		return -1, gocore.Error("Recvfrom", err)
 	}
 
 	attr, err := nlAttr(nlMsg[:n], unix.CTRL_ATTR_FAMILY_ID)
 	if err != nil {
-		return -1, err
+		return -1, gocore.Error("nlAttr", err)
 	}
 
 	return int(gocore.HostEndian.Uint16(attr)), nil
@@ -238,7 +238,7 @@ func nlAttr(nlMsg []byte, key int) ([]byte, error) {
 	if len(nlMsg) > 0 {
 		msgs, err := syscall.ParseNetlinkMessage(nlMsg)
 		if err != nil {
-			return nil, err
+			return nil, gocore.Error("ParesNetlinkMessage", err)
 		}
 		for _, m := range msgs {
 			if m.Header.Type == syscall.NLMSG_ERROR {
@@ -399,7 +399,7 @@ func nlProcessFilter(fd int) error {
 		bpf.RetConstant{Val: 0xFFFFFFFF}, // UID, GID, SID, COMM
 	})
 	if err != nil {
-		return err
+		return gocore.Error("Assemble", err)
 	}
 
 	if _, _, err := syscall.Syscall6(
@@ -416,7 +416,7 @@ func nlProcessFilter(fd int) error {
 		unsafe.Sizeof(syscall.SockFprog{}),
 		0,
 	); err != 0 {
-		return err
+		return gocore.Error("SYS_SETSOCKOPT SO_ATTACH_FILTER", err)
 	}
 
 	return nil

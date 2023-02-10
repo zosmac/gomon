@@ -118,7 +118,7 @@ const (
 func endpoints(ctx context.Context) error {
 	stdout, err := gocore.StartCommand(ctx, lsofCommand())
 	if err != nil {
-		return err
+		return gocore.Error("StartCommand(lsof)", err)
 	}
 
 	go parseLsof(stdout)

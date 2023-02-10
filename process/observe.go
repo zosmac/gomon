@@ -22,7 +22,7 @@ var (
 // Observer starts capture of process event observations.
 func Observer(ctx context.Context) error {
 	if err := open(); err != nil {
-		return gocore.Error("process observer", err)
+		return err
 	}
 
 	if err := endpoints(ctx); err != nil {

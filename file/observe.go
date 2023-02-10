@@ -66,7 +66,7 @@ func Observer(ctx context.Context) error {
 	gocore.LogInfo(fmt.Errorf("observing files in %q", flags.fileDirectory))
 
 	if err := observe(ctx); err != nil {
-		return gocore.Error("observer()", err)
+		return gocore.Error("observe", err)
 	}
 
 	go func() {
@@ -142,7 +142,7 @@ func watchDir(rel string) error {
 		return nil
 	})
 
-	return err
+	return gocore.Error("watchDir", err)
 }
 
 // add adds a file to the observer.

@@ -31,7 +31,7 @@ type (
 func (r *rotate) Set(s string) error {
 	d, err := time.ParseDuration(s)
 	if err != nil {
-		return err
+		return gocore.Error("ParseDuration", err)
 	}
 	if d > 0 && d < time.Second {
 		d = time.Second

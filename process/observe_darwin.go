@@ -46,7 +46,7 @@ func watch(kd int, pid Pid) error {
 		nil,
 	)
 
-	return err
+	return gocore.Error("Kevent", err)
 }
 
 // observe events and notify observer's callbacks.

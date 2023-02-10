@@ -23,7 +23,7 @@ var (
 	localTypes = map[string]struct{}{"rootfs": {}, "aufs": {}}
 
 	// mountTypes identifies types of mount points.
-	mountTypes = map[string]string{}
+	mountTypes, _ = gocore.MountMap()
 )
 
 // init initializes the local filesystem types and the mount types.
@@ -36,16 +36,6 @@ func init() {
 			if f[0] != "nodev" {
 				localTypes[f[1]] = struct{}{}
 			}
-		}
-	}
-
-	// build map of mounts and their types
-	if f, err := os.Open("/etc/mtab"); err == nil {
-		defer f.Close()
-		sc := bufio.NewScanner(f)
-		for sc.Scan() {
-			f := strings.Fields(sc.Text())
-			mountTypes[f[1]] = f[2]
 		}
 	}
 }
@@ -94,7 +84,7 @@ func observe(_ context.Context) error {
 			events := make([]byte, 16384)
 			n, err := syscall.Read(obs.fd, events)
 			if err != nil {
-				errorChan <- gocore.Error("read", err)
+				obs.errChan <- gocore.Error("read", err)
 				return
 			}
 

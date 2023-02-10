@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
@@ -33,7 +34,7 @@ func init() {
 func filesystems() ([]message.Request, error) {
 	m, err := os.Open("/etc/mtab")
 	if err != nil {
-		return nil, err
+		return nil, gocore.Error("Open /etc/mtab", err)
 	}
 	defer m.Close()
 
