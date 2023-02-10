@@ -5,12 +5,11 @@ go 1.20
 require (
 	github.com/StackExchange/wmi v1.2.1
 	github.com/prometheus/client_golang v1.14.0
-	github.com/zosmac/gocore v0.0.0-unpublished
+	github.com/zosmac/gocore v0.0.0-20230210040400-ef47f37da99b
 	golang.org/x/net v0.5.0
 	golang.org/x/sys v0.5.0
 	gopkg.in/yaml.v2 v2.4.0
 )
-replace github.com/zosmac/gocore v0.0.0-unpublished => ../../gocore
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
