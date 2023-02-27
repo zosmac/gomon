@@ -31,6 +31,9 @@ var (
 	// lastPrometheusCollection functions as a dead man's switch.
 	lastPrometheusCollection atomic.Value
 
+	// prometheusSample is the configured duration between prometheus samples.
+	prometheusSample time.Duration
+
 	// prometheusChan passes the Collect channel to main's measure loop.
 	prometheusChan = make(chan chan<- prometheus.Metric, 1)
 
@@ -49,6 +52,10 @@ func (c *prometheusCollector) Collect(ch chan<- prometheus.Metric) {
 	lastPrometheusCollection.Store(time.Now())
 	prometheusChan <- ch
 	<-prometheusDone
+
+	if prometheusSample == 0 {
+		prometheusSample, _ = scrapeInterval()
+	}
 }
 
 // prometheusMetric complies with Formatter function prototype for encoding metrics as Prometheus metrics.
@@ -133,7 +140,7 @@ func prometheusMetric(m message.Content, name, tag string, val reflect.Value) pr
 }
 
 // scrapeInterval asks Prometheus for the scrape interval it will query gomon for metrics.
-func scrapeInterval() (sample, error) {
+func scrapeInterval() (time.Duration, error) {
 	resp, err := http.Get("http://localhost:9090/api/v1/status/config")
 	if err != nil {
 		return 0, gocore.Error("prometheus query", err)
@@ -164,16 +171,11 @@ func scrapeInterval() (sample, error) {
 		return 0, gocore.Error("prometheus", errors.New("not configured for gomon collection"))
 	}
 
-	var si time.Duration
 	val = gocore.ValueYaml([]string{"global", "scrape_interval"}, ms)
 	if dur, err := time.ParseDuration(val); err == nil {
-		si = dur
+		return dur, nil
 	}
 
 	val = gocore.ValueYaml([]string{"scrape_configs", "job_name", "gomon", "scrape_interval"}, []byte(j.Data.Yaml))
-	if dur, err := time.ParseDuration(val); err == nil {
-		si = dur
-	}
-
-	return sample(si), nil
+	return time.ParseDuration(val)
 }

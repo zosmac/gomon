@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -22,23 +23,29 @@ import (
 	_ "net/http/pprof"
 )
 
+var (
+	// scheme is http/s based on whether certicate and key are defined in the user's .ssh directory.
+	scheme = "http" // default
+)
+
 // prometheusHandler responds to Prometheus Collect requests.
-func prometheusHandler() {
+func prometheusHandler() error {
 	// enable Prometheus collection (we don't use the default registry as it adds Go runtime metrics)
 	registry := prometheus.NewRegistry()
-	registry.MustRegister(&prometheusCollector{})
+	if err := registry.Register(&prometheusCollector{}); err != nil {
+		return gocore.Error("Prometheus Registry", err)
+	}
+
 	http.Handle(
 		"/metrics",
 		promhttp.HandlerFor(registry, promhttp.HandlerOpts{}),
 	)
 
-	if si, err := scrapeInterval(); err == nil {
-		flags.sample = si // sync sample interval default with Prometheus'
-	}
+	return nil
 }
 
 // gomonHandler retrieves the process NodeGraph.
-func gomonHandler() {
+func gomonHandler() error {
 	http.HandleFunc(
 		"/gomon/",
 		func(w http.ResponseWriter, r *http.Request) {
@@ -48,21 +55,26 @@ func gomonHandler() {
 			w.Write(NodeGraph(r))
 		},
 	)
+	return nil
 }
 
 // wsHandler opens a web socket for delivering periodically an updated process NodeGraph.
-func wsHandler() {
+func wsHandler() error {
+	wsscheme := "ws"
+	if scheme == "https" {
+		wsscheme = "wss"
+	}
 	http.Handle(
 		"/ws",
 		websocket.Server{
 			Config: websocket.Config{
 				Location: &url.URL{
-					Scheme: "ws",
+					Scheme: wsscheme,
 					Host:   "localhost:1234",
 					Path:   "/ws",
 				},
 				Origin: &url.URL{
-					Scheme: "http",
+					Scheme: scheme,
 					Host:   "localhost",
 				},
 				Version: websocket.ProtocolVersionHybi,
@@ -80,14 +92,16 @@ func wsHandler() {
 				buf := make([]byte, websocket.DefaultMaxPayloadBytes)
 				for {
 					if err := websocket.Message.Receive(ws, &buf); err != nil {
+						gocore.LogWarn(gocore.Error("websocket Receive", err))
 						ws.Close()
 						return
-					}
-					if bytes.HasPrefix(buf, []byte("suspend")) {
+					} else if bytes.HasPrefix(buf, []byte("suspend")) {
 						continue
 					}
 
 					if err := websocket.Message.Send(ws, NodeGraph(ws.Request())); err != nil {
+						gocore.LogWarn(gocore.Error("websocket Send", err))
+						ws.Close()
 						return
 					}
 				}
@@ -97,29 +111,39 @@ func wsHandler() {
 			},
 		},
 	)
+	return nil
 }
 
 // assetHandler serves up files from the gomon assets directory
-func assetHandler() {
+func assetHandler() error {
 	_, n, _, _ := runtime.Caller(2)
 	mod := gocore.Module(filepath.Dir(n))
 	if _, err := os.Stat(filepath.Join(mod.Dir, "assets")); err != nil {
-		gocore.LogWarn(gocore.Error("http assets unresolved", err))
-		return
+		return gocore.Error("http assets unresolved", err)
 	}
 
 	http.Handle("/assets/",
 		http.FileServer(http.Dir(mod.Dir)),
 	)
+
+	return nil
 }
 
 // serve sets up gomon's endpoints and starts the server.
 func serve(ctx context.Context) {
 	// define http request handlers
-	prometheusHandler()
-	gomonHandler()
-	wsHandler()
-	assetHandler()
+	if err := prometheusHandler(); err != nil {
+		gocore.LogWarn(err)
+	}
+	if err := gomonHandler(); err != nil {
+		gocore.LogWarn(err)
+	}
+	if err := wsHandler(); err != nil {
+		gocore.LogWarn(err)
+	}
+	if err := assetHandler(); err != nil {
+		gocore.LogWarn(err)
+	}
 
 	server := &http.Server{
 		Addr: "localhost:" + strconv.Itoa(flags.port),
@@ -131,8 +155,6 @@ func serve(ctx context.Context) {
 	}()
 
 	go func() {
-		// gocore.LogError(server.ListenAndServe())
-
 		// to enable https/wss for these handlers, follow these steps:
 		// 1. cd /usr/local/go/src/crypto/tls
 		// 2. go build -o ~/go/bin generate_cert.go
@@ -143,10 +165,18 @@ func serve(ctx context.Context) {
 		// 7. authorize untrusted self-signed certificate
 
 		u, _ := user.Current()
-		dir := filepath.Join(u.HomeDir, ".ssh")
-		gocore.LogError(server.ListenAndServeTLS(
-			filepath.Join(dir, "cert.pem"),
-			filepath.Join(dir, "key.pem"),
-		))
+		serve := func() error { return server.ListenAndServe() }
+		certfile := filepath.Join(u.HomeDir, ".ssh", "cert.pem")
+		keyfile := filepath.Join(u.HomeDir, ".ssh", "key.pem")
+		if _, err := os.Stat(filepath.Join(u.HomeDir, ".ssh")); err == nil {
+			if _, err := os.Stat(certfile); err == nil {
+				if _, err := os.Stat(keyfile); err == nil {
+					scheme = "https"
+					serve = func() error { return server.ListenAndServeTLS(certfile, keyfile) }
+				}
+			}
+		}
+		gocore.LogInfo(fmt.Errorf("gomon server listening on %s://%s", scheme, server.Addr))
+		gocore.LogError(serve())
 	}()
 }

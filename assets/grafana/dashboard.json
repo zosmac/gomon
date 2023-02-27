@@ -35,7 +35,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "5L6f3JVVk"
+               "uid" : "JBvRr714k"
             },
             "description" : "",
             "fieldConfig" : {
@@ -93,12 +93,12 @@
                },
                "textMode" : "value_and_name"
             },
-            "pluginVersion" : "9.2.0-beta.1",
+            "pluginVersion" : "9.4.0-beta1",
             "targets" : [
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -113,7 +113,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -132,7 +132,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "5L6f3JVVk"
+               "uid" : "JBvRr714k"
             },
             "description" : "",
             "fieldConfig" : {
@@ -210,11 +210,11 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
-                  "expr" : "rate(gomon_io_read_bytes[1m])",
+                  "expr" : "rate(gomon_io_read_bytes[$__rate_interval])",
                   "interval" : "",
                   "legendFormat" : "I/O read {{id}}",
                   "range" : true,
@@ -223,11 +223,11 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
-                  "expr" : "-rate(gomon_io_write_bytes[1m])",
+                  "expr" : "-rate(gomon_io_write_bytes[$__rate_interval])",
                   "interval" : "",
                   "legendFormat" : "I/O write {{id}}",
                   "range" : true,
@@ -236,11 +236,11 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
-                  "expr" : "rate(gomon_network_receive_bytes{id='en0'}[1m])",
+                  "expr" : "rate(gomon_network_receive_bytes{id='en0'}[$__rate_interval])",
                   "interval" : "",
                   "legendFormat" : "receive {{id}}",
                   "range" : true,
@@ -249,11 +249,11 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
-                  "expr" : "-rate(gomon_network_transmit_bytes{id='en0'}[1m])",
+                  "expr" : "-rate(gomon_network_transmit_bytes{id='en0'}[$__rate_interval])",
                   "interval" : "",
                   "legendFormat" : "transmit {{id}}",
                   "range" : true,
@@ -262,10 +262,10 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
-                  "expr" : "rate(gomon_network_receive_bytes{id='lo0'}[1m])",
+                  "expr" : "rate(gomon_network_receive_bytes{id='lo0'}[$__rate_interval])",
                   "interval" : "",
                   "legendFormat" : "receive {{id}}",
                   "range" : true,
@@ -274,10 +274,10 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
-                  "expr" : "-rate(gomon_network_transmit_bytes{id='lo0'}[1m])",
+                  "expr" : "-rate(gomon_network_transmit_bytes{id='lo0'}[$__rate_interval])",
                   "interval" : "",
                   "legendFormat" : "transmit {{id}}",
                   "range" : true,
@@ -291,7 +291,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "5L6f3JVVk"
+               "uid" : "JBvRr714k"
             },
             "description" : "",
             "fieldConfig" : {
@@ -330,10 +330,8 @@
                         "mode" : "off"
                      }
                   },
-                  "decimals" : 1,
+                  "decimals" : "auto",
                   "mappings" : [],
-                  "max" : 1,
-                  "min" : 0,
                   "thresholds" : {
                      "mode" : "percentage",
                      "steps" : [
@@ -343,7 +341,7 @@
                         }
                      ]
                   },
-                  "unit" : "percentunit"
+                  "unit" : "percent"
                },
                "overrides" : []
             },
@@ -372,7 +370,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "builder",
                   "exemplar" : false,
@@ -391,7 +389,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "5L6f3JVVk"
+               "uid" : "JBvRr714k"
             },
             "description" : "",
             "fieldConfig" : {
@@ -479,12 +477,12 @@
                },
                "textMode" : "value_and_name"
             },
-            "pluginVersion" : "9.2.0-beta.1",
+            "pluginVersion" : "9.4.0-beta1",
             "targets" : [
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -500,7 +498,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -514,7 +512,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -534,7 +532,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "5L6f3JVVk"
+               "uid" : "JBvRr714k"
             },
             "description" : "",
             "fieldConfig" : {
@@ -622,12 +620,12 @@
                },
                "textMode" : "value_and_name"
             },
-            "pluginVersion" : "9.2.0-beta.1",
+            "pluginVersion" : "9.4.0-beta1",
             "targets" : [
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -641,11 +639,11 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
-                  "expr" : "(rate(gomon_system_cpu_system_seconds[1m])+rate(gomon_system_cpu_user_seconds[1m]))/rate(gomon_system_cpu_total_seconds[1m])",
+                  "expr" : "(rate(gomon_system_cpu_system_seconds[$__rate_interval])+rate(gomon_system_cpu_user_seconds[$__rate_interval]))/rate(gomon_system_cpu_total_seconds[$__rate_interval])",
                   "hide" : false,
                   "instant" : true,
                   "interval" : "",
@@ -661,7 +659,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "5L6f3JVVk"
+               "uid" : "JBvRr714k"
             },
             "fieldConfig" : {
                "defaults" : {
@@ -738,7 +736,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "builder",
                   "exemplar" : true,
@@ -751,7 +749,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -765,7 +763,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "builder",
                   "exemplar" : true,
@@ -778,7 +776,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -797,7 +795,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "5L6f3JVVk"
+               "uid" : "JBvRr714k"
             },
             "description" : "",
             "fieldConfig" : {
@@ -875,7 +873,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -893,7 +891,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "5L6f3JVVk"
+               "uid" : "JBvRr714k"
             },
             "fieldConfig" : {
                "defaults" : {
@@ -931,7 +929,7 @@
                         "mode" : "off"
                      }
                   },
-                  "decimals" : 1,
+                  "decimals" : "auto",
                   "mappings" : [],
                   "thresholds" : {
                      "mode" : "absolute",
@@ -971,7 +969,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "exemplar" : true,
                   "expr" : "gomon_system_load_average_one_minute",
@@ -982,7 +980,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "exemplar" : true,
                   "expr" : "gomon_system_load_average_five_minute",
@@ -993,7 +991,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "5L6f3JVVk"
+                     "uid" : "JBvRr714k"
                   },
                   "exemplar" : true,
                   "expr" : "gomon_system_load_average_fifteen_minute",
@@ -1009,7 +1007,7 @@
          {
             "datasource" : {
                "type" : "loki",
-               "uid" : "5Um8qJVVk"
+               "uid" : "t7gGr714k"
             },
             "gridPos" : {
                "h" : 21,
@@ -1033,10 +1031,10 @@
                {
                   "datasource" : {
                      "type" : "loki",
-                     "uid" : "5Um8qJVVk"
+                     "uid" : "t7gGr714k"
                   },
                   "expr" : "{source=~\"(file|log|oslog|syslog|process)\"}",
-                  "legendFormat" : "",
+                  "queryType" : "range",
                   "refId" : "A"
                }
             ],
@@ -1045,7 +1043,8 @@
          }
       ],
       "refresh" : "15s",
-      "schemaVersion" : 37,
+      "revision" : 1,
+      "schemaVersion" : 38,
       "style" : "light",
       "tags" : [
          "gomon",
@@ -1075,7 +1074,7 @@
       "timezone" : "",
       "title" : "Gomon Dashboard",
       "uid" : "g-Il9JVVz",
-      "version" : 1,
+      "version" : 6,
       "weekStart" : ""
    },
    "meta" : {
@@ -1096,7 +1095,7 @@
       "canEdit" : true,
       "canSave" : true,
       "canStar" : true,
-      "created" : "2022-10-03T10:38:46-04:00",
+      "created" : "2023-02-12T10:22:00-05:00",
       "createdBy" : "admin",
       "expires" : "0001-01-01T00:00:00Z",
       "folderId" : 0,
@@ -1112,9 +1111,9 @@
       "publicDashboardUid" : "",
       "slug" : "gomon-dashboard",
       "type" : "db",
-      "updated" : "2022-10-19T14:52:57-04:00",
+      "updated" : "2023-02-13T21:33:29-05:00",
       "updatedBy" : "admin",
       "url" : "/d/g-Il9JVVz/gomon-dashboard",
-      "version" : 1
+      "version" : 9
    }
 }

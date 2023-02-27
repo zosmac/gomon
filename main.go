@@ -28,10 +28,10 @@ func main() {
 }
 
 // Main called from gocore.Main.
-func Main(ctx context.Context) {
+func Main(ctx context.Context) error {
 	if gocore.Flags.FlagSet.Lookup("document").Value.String() == "true" {
 		message.Document()
-		return
+		return nil
 	}
 
 	cmd, err := os.Executable()
@@ -44,23 +44,19 @@ func Main(ctx context.Context) {
 	gocore.LogInfo(fmt.Errorf("start %q[%d]", cmd, os.Getpid()))
 
 	if err := message.Encoder(ctx); err != nil {
-		gocore.LogError(err)
-		return
+		return gocore.Error("Encoder", err)
 	}
 
 	if err := logs.Observer(ctx); err != nil {
-		gocore.LogError(err)
-		return
+		return gocore.Error("logs Observer", err)
 	}
 
 	if err := file.Observer(ctx); err != nil {
-		gocore.LogError(err)
-		return
+		return gocore.Error("files Observer", err)
 	}
 
 	if err := process.Observer(ctx); err != nil {
-		gocore.LogError(err)
-		return
+		return gocore.Error("processes Observer", err)
 	}
 
 	// fire up the http server
@@ -71,12 +67,12 @@ func Main(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return gocore.Error("Exited", ctx.Err())
 
 		case t := <-ticker.C:
 			start := time.Now()
 			last, ok := lastPrometheusCollection.Load().(time.Time)
-			if !ok || t.Sub(last) > time.Duration(2*flags.sample) {
+			if !ok || prometheusSample == 0 || t.Sub(last) > 2*prometheusSample {
 				ms := measure()
 				message.Encode(ms)
 				fmt.Fprintf(os.Stderr, "ENCODE %d measurements at %s\n\trequired %v\n",

@@ -123,7 +123,7 @@ func notify(ev fileEvent, f file, oldname string) {
 
 // watchDir adds directory to observe
 func watchDir(rel string) error {
-	err := filepath.WalkDir(filepath.Join(obs.root, rel), func(abs string, entry fs.DirEntry, err error) error {
+	if err := filepath.WalkDir(filepath.Join(obs.root, rel), func(abs string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, fs.ErrPermission) {
 				gocore.LogError(gocore.Error("WalkDir", err))
@@ -140,9 +140,11 @@ func watchDir(rel string) error {
 			}
 		}
 		return nil
-	})
+	}); err != nil {
+		return gocore.Error("watchDir", err)
+	}
 
-	return gocore.Error("watchDir", err)
+	return nil
 }
 
 // add adds a file to the observer.

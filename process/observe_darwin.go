@@ -34,7 +34,7 @@ func open() error {
 
 // watch adds a process to watch to the observer.
 func watch(kd int, pid Pid) error {
-	_, err := syscall.Kevent(
+	if _, err := syscall.Kevent(
 		kd,
 		[]syscall.Kevent_t{{
 			Ident:  uint64(pid),
@@ -44,9 +44,11 @@ func watch(kd int, pid Pid) error {
 		}},
 		nil,
 		nil,
-	)
+	); err != nil {
+		return gocore.Error("Kevent", err)
+	}
 
-	return gocore.Error("Kevent", err)
+	return nil
 }
 
 // observe events and notify observer's callbacks.
