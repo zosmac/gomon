@@ -7,16 +7,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
 
 var (
 	// messageChan queues process event observations for periodic reporting.
 	messageChan = make(chan *observation, 100)
-
-	// errorChan communicates errors from the observe goroutine.
-	errorChan = make(chan error, 10)
 )
 
 // Observer starts capture of process event observations.
@@ -29,18 +25,13 @@ func Observer(ctx context.Context) error {
 		return err
 	}
 
-	if err := observe(ctx); err != nil {
+	if err := observe(); err != nil {
 		return err
 	}
 
 	go func() {
-		for {
-			select {
-			case err := <-errorChan:
-				gocore.LogError(err)
-			case obs := <-messageChan:
-				message.Encode([]message.Content{obs})
-			}
+		for obs := range messageChan {
+			message.Encode([]message.Content{obs})
 		}
 	}()
 

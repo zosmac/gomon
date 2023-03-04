@@ -24,7 +24,6 @@ extern void callback(ConstFSEventStreamRef, void *, size_t, char **, FSEventStre
 import "C"
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -67,7 +66,7 @@ func (h *handle) close() {
 }
 
 // observe events and notify observer's callbacks.
-func observe(_ context.Context) error {
+func observe() error {
 	if ok := bool(C.QueueStream(obs.stream)); !ok {
 		return gocore.Error("FSEventStreamStart failed", fmt.Errorf(obs.root))
 	}
@@ -81,7 +80,7 @@ func observe(_ context.Context) error {
 		C.CFIndex(len(buf)),
 		C.kCFStringEncodingUTF8,
 	)
-	gocore.LogInfo(fmt.Errorf("FSEventStream monitoring %q", C.GoString(&buf[0])))
+	gocore.LogInfo("FSEventStream monitoring", errors.New(C.GoString(&buf[0])))
 
 	return nil
 }
@@ -169,7 +168,7 @@ func callback(stream C.ConstFSEventStreamRef, _ unsafe.Pointer, count C.size_t, 
 		}
 
 		if flag&C.kFSEventStreamEventFlagMustScanSubDirs != 0 {
-			gocore.LogInfo(errors.New("events coalesced, requiring rescan of subdirectories"))
+			gocore.LogInfo("FSEvents coalesced", errors.New("subdirectories rescanned"))
 			obs.watched = map[string]file{}
 			watchDir(".")
 		}

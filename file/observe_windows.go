@@ -3,7 +3,6 @@
 package file
 
 import (
-	"context"
 	"os"
 	"runtime"
 	"syscall"
@@ -70,7 +69,7 @@ func owner(info os.FileInfo) (string, string) {
 }
 
 // observe events and notify observer's callbacks.
-func observe(_ context.Context) error {
+func observe() error {
 	go func() {
 		runtime.LockOSThread() // tie this goroutine to an OS thread
 		defer runtime.UnlockOSThread()
@@ -102,7 +101,7 @@ func observe(_ context.Context) error {
 			); err != nil {
 				windows.Close(obs.Handle)
 				obs.Handle = windows.InvalidHandle
-				errorChan <- gocore.Error("ReadDirectoryChanges", err)
+				gocore.LogError("ReadDirectoryChanges", err)
 				return
 			}
 

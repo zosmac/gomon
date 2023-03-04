@@ -46,7 +46,7 @@ func uname() string {
 func loadAverage() LoadAverage {
 	buf, err := os.ReadFile("/proc/loadavg")
 	if err != nil {
-		gocore.LogError(gocore.Error("/proc/loadavg", err))
+		gocore.LogError("/proc/loadavg", err)
 		return LoadAverage{}
 	}
 	f := strings.Fields(string(buf))
@@ -108,7 +108,7 @@ func rlimits() Rlimits {
 func cpu() CPU {
 	f, err := os.Open("/proc/stat")
 	if err != nil {
-		gocore.LogError(gocore.Error("/proc/stat open", err))
+		gocore.LogError("/proc/stat open", err)
 		return CPU{}
 	}
 	defer f.Close()
@@ -123,7 +123,7 @@ func cpu() CPU {
 		}
 	}
 
-	gocore.LogError(gocore.Error("/proc/stat cpu", sc.Err()))
+	gocore.LogError("/proc/stat cpu", sc.Err())
 	return CPU{}
 }
 
@@ -131,7 +131,7 @@ func cpu() CPU {
 func cpus() []CPU {
 	f, err := os.Open("/proc/stat")
 	if err != nil {
-		gocore.LogError(gocore.Error("/proc/stat open", err))
+		gocore.LogError("/proc/stat open", err)
 		return nil
 	}
 	defer f.Close()
@@ -146,7 +146,7 @@ func cpus() []CPU {
 		}
 	}
 	if len(cpus) == 0 && sc.Err() != nil {
-		gocore.LogError(gocore.Error("/proc/stat cpu", sc.Err()))
+		gocore.LogError("/proc/stat cpu", sc.Err())
 		return nil
 	}
 	return cpus
@@ -182,7 +182,7 @@ func scale(stat string) CPU {
 func memory() (Memory, Swap) {
 	i, err := gocore.Measures("/proc/meminfo")
 	if err != nil {
-		gocore.LogError(gocore.Error("/proc/meminfo", err))
+		gocore.LogError("/proc/meminfo", err)
 	}
 
 	total, _ := strconv.Atoi(i["MemTotal"])

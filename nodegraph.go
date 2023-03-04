@@ -66,7 +66,7 @@ func NodeGraph(req *http.Request) []byte {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
-			gocore.LogError(fmt.Errorf("NodeGraph() panicked, %v\n%s", r, buf))
+			gocore.LogError("nodegraph", fmt.Errorf("%v\n%s", r, buf))
 		}
 	}()
 
@@ -254,9 +254,10 @@ func NodeGraph(req *http.Request) []byte {
 		}
 
 		node := fmt.Sprintf(`
-      %d [shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="https://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
+      %d [shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="%s://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
 			pid,
 			color(pid),
+			scheme,
 			flags.port,
 			pt[pid].Id.Name,
 			longname(pt, pid),
@@ -368,7 +369,7 @@ func dot(graphviz string) []byte {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	if err := cmd.Run(); err != nil {
-		gocore.LogError(fmt.Errorf("dot command failed %w\n%s", err, stderr.Bytes()))
+		gocore.LogError("dot", fmt.Errorf("%w\n%s", err, stderr.Bytes()))
 		sc := bufio.NewScanner(strings.NewReader(graphviz))
 		for i := 1; sc.Scan(); i++ {
 			fmt.Fprintf(os.Stderr, "%4.d %s\n", i, sc.Text())

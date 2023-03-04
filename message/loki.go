@@ -68,7 +68,10 @@ func lokiFormatter(name, tag string, val reflect.Value) interface{} {
 				return tuple{name, strconv.FormatFloat(val.Float(), 'e', -1, 64)}
 			}
 		}
-		gocore.LogError(fmt.Errorf("lokiMessage property type not recognized %s %v", name, val.Interface()))
+		gocore.LogError(
+			"lokiMessage property type not recognized",
+			fmt.Errorf("%s %v", name, val.Interface()),
+		)
 	}
 	return nil
 }

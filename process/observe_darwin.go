@@ -9,7 +9,6 @@ package process
 import "C"
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"syscall"
@@ -52,7 +51,7 @@ func watch(kd int, pid Pid) error {
 }
 
 // observe events and notify observer's callbacks.
-func observe(ctx context.Context) error {
+func observe() error {
 	pids, err := getPids()
 	if err != nil {
 		return gocore.Error("getPids", err)
@@ -73,11 +72,11 @@ func observe(ctx context.Context) error {
 			for pid := range pids {
 				id, err := pid.id()
 				if err != nil {
-					errorChan <- gocore.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
+					gocore.LogError("fork", fmt.Errorf("ppid %d pid %d err %w", ppid, pid, err))
 					continue
 				}
 				if err := watch(kd, pid); err != nil {
-					errorChan <- gocore.Error("Kevent", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
+					gocore.LogError("fork", fmt.Errorf("ppid %d pid %d err %w", ppid, pid, err))
 					continue
 				}
 				id.ppid = ppid // preserve in case child reassigned to init process
@@ -91,14 +90,14 @@ func observe(ctx context.Context) error {
 				if errors.Is(err, syscall.EINTR) {
 					continue
 				}
-				errorChan <- gocore.Error("Kevent()", err)
+				gocore.LogError("Kevent", err)
 				return
 			}
 
 			for _, event := range events[:n] {
 				pid := Pid(event.Ident)
 				if event.Flags&syscall.EV_ERROR != 0 {
-					errorChan <- gocore.Error("Kevent()", fmt.Errorf("pid: %d, %#v", pid, event))
+					gocore.LogError("Kevent", fmt.Errorf("pid %d event %#v", pid, event))
 					continue
 				}
 
@@ -119,7 +118,7 @@ func observe(ctx context.Context) error {
 
 				if event.Fflags&syscall.NOTE_EXEC != 0 {
 					if id, err = pid.id(); err != nil {
-						errorChan <- gocore.Error("Kevent", fmt.Errorf("exec pid: %d, err: %w", pid, err))
+						gocore.LogError("exec", fmt.Errorf("pid %d, err %w", pid, err))
 						if ok {
 							delete(youth, pid)
 						}
@@ -159,7 +158,7 @@ func newKids(kd int, ppid Pid) {
 		}
 		if err != nil {
 			if !errors.Is(err, syscall.ESRCH) {
-				errorChan <- gocore.Error("Kevent()", fmt.Errorf("fork ppid %d pid: %d, err: %w", ppid, pid, err))
+				gocore.LogError("fork", fmt.Errorf("ppid %d pid %d err %w", ppid, pid, err))
 			}
 			continue
 		}

@@ -35,9 +35,6 @@ var (
 	// messageChan queues log messages for encoding.
 	messageChan = make(chan *observation, 100)
 
-	// errorChan communicates errors from the observe goroutine.
-	errorChan = make(chan error, 10)
-
 	// levelMap maps various applications' log levels to a common set fatal/error/warn/info/debug/trace.
 	levelMap = map[string]logLevel{
 		"emerg":      levelFatal, // Apache
@@ -84,7 +81,7 @@ func Observer(ctx context.Context) error {
 		return gocore.Error("open", err)
 	}
 
-	if err := observe(ctx); err != nil {
+	if err := observe(); err != nil {
 		return gocore.Error("observe", err)
 	}
 
@@ -92,12 +89,8 @@ func Observer(ctx context.Context) error {
 		for {
 			select {
 			case <-ctx.Done():
+				close()
 				return
-			case err, ok := <-errorChan:
-				if !ok {
-					return
-				}
-				gocore.LogError(err)
 			case obs, ok := <-messageChan:
 				if !ok {
 					return
@@ -110,7 +103,7 @@ func Observer(ctx context.Context) error {
 	return nil
 }
 
-func parseLog(ctx context.Context, sc *bufio.Scanner, regex *regexp.Regexp, format string) {
+func parseLog(sc *bufio.Scanner, regex *regexp.Regexp, format string) {
 	groups := func() map[string]int {
 		g := map[string]int{}
 		for _, name := range regex.SubexpNames() {
@@ -119,19 +112,7 @@ func parseLog(ctx context.Context, sc *bufio.Scanner, regex *regexp.Regexp, form
 		return g
 	}()
 
-	readyChan := make(chan struct{})
-	go func() {
-		for sc.Scan() {
-			readyChan <- struct{}{}
-		}
-	}()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-readyChan:
-		}
+	for sc.Scan() {
 		match := regex.FindStringSubmatch(sc.Text())
 		if len(match) == 0 || match[0] == "" {
 			continue

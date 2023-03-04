@@ -16,7 +16,7 @@ func Connections(pt Table) {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
-			gocore.LogError(fmt.Errorf("Connections() panicked, %v\n%s", r, buf))
+			gocore.LogError("connections", fmt.Errorf("%v\n%s", r, buf))
 		}
 	}()
 

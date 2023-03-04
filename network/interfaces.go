@@ -16,7 +16,7 @@ import (
 func interfaces() (ms []*measurement) {
 	nis, err := net.Interfaces()
 	if err != nil {
-		gocore.LogError(err)
+		gocore.LogError("Interfaces", err)
 		return
 	}
 

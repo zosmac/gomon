@@ -5,10 +5,9 @@ go 1.20
 require (
 	github.com/StackExchange/wmi v1.2.1
 	github.com/prometheus/client_golang v1.14.0
-	github.com/zosmac/gocore v0.0.0-20230227024425-8fd85fbb0292
+	github.com/zosmac/gocore v0.0.0-20230304015349-0a98a3036adc
 	golang.org/x/net v0.7.0
 	golang.org/x/sys v0.5.0
-	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -23,4 +22,5 @@ require (
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

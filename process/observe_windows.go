@@ -30,7 +30,7 @@ func endpoints(ctx context.Context) error {
 }
 
 // observe for events and notify observer's callbacks.
-func observe(ctx context.Context) error {
+func observe() error {
 	return gocore.Unsupported()
 }
 

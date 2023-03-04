@@ -14,7 +14,7 @@ import (
 func metrics(path string) Metrics {
 	var stat syscall.Statfs_t
 	if err := syscall.Statfs(path, &stat); err != nil {
-		gocore.LogError(gocore.Error("statfs", err))
+		gocore.LogError("statfs", err)
 		return Metrics{}
 	}
 

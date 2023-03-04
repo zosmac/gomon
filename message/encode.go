@@ -5,7 +5,6 @@ package message
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -101,10 +100,7 @@ func encode(ctx context.Context) {
 			Rotate(t)
 		case <-ctx.Done():
 			Close()
-			gocore.LogInfo(fmt.Errorf(
-				"Encoder() err=%w",
-				ctx.Err(),
-			))
+			gocore.LogInfo("Encoder", ctx.Err())
 			return
 		}
 
@@ -129,7 +125,7 @@ func Rotate(t time.Time) {
 		err := jsonEncoder.Encode(i)
 		cache = nil
 		if err != nil {
-			gocore.LogError(err)
+			gocore.LogError("Encode", err)
 			return
 		}
 	}
@@ -138,7 +134,7 @@ func Rotate(t time.Time) {
 
 	info, err := os.Stdout.Stat()
 	if err != nil {
-		gocore.LogError(err)
+		gocore.LogError("Stat", err)
 		return
 	}
 
@@ -148,7 +144,7 @@ func Rotate(t time.Time) {
 
 	oldpath, err := gocore.FdPath(int(os.Stdout.Fd()))
 	if err != nil {
-		gocore.LogError(err)
+		gocore.LogError("FdPath", err)
 		return
 	}
 
@@ -157,13 +153,13 @@ func Rotate(t time.Time) {
 	newpath := filepath.Join(filepath.Dir(oldpath), base+"-"+timestamp+ext)
 
 	if err := os.Rename(oldpath, newpath); err != nil {
-		gocore.LogError(err)
+		gocore.LogError("Rename", err)
 		return
 	}
 
 	sout, err := os.Create(oldpath)
 	if err != nil {
-		gocore.LogError(err)
+		gocore.LogError("Create", err)
 		return
 	}
 	chown(sout, info)

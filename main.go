@@ -34,14 +34,7 @@ func Main(ctx context.Context) error {
 		return nil
 	}
 
-	cmd, err := os.Executable()
-	if err != nil {
-		cmd = os.Args[0]
-	}
-	if len(os.Args) > 1 {
-		cmd += " " + strings.Join(os.Args[1:], " ")
-	}
-	gocore.LogInfo(fmt.Errorf("start %q[%d]", cmd, os.Getpid()))
+	gocore.LogInfo("start", fmt.Errorf("pid=%d", os.Getpid()))
 
 	if err := message.Encoder(ctx); err != nil {
 		return gocore.Error("Encoder", err)
@@ -67,7 +60,7 @@ func Main(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return gocore.Error("Exited", ctx.Err())
+			return gocore.Error("exit "+os.Args[0], ctx.Err())
 
 		case t := <-ticker.C:
 			start := time.Now()

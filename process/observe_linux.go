@@ -3,7 +3,6 @@
 package process
 
 import (
-	"context"
 	"syscall"
 	"time"
 	"unsafe"
@@ -35,14 +34,14 @@ func open() error {
 	// enable the netlink process connector
 	fd, err := nlProcess()
 	if err != nil {
-		return gocore.Error("nlProcess()", err)
+		return gocore.Error("nlProcess", err)
 	}
 
 	// enable the netlink generic connector
 	gd, err := nlGeneric()
 	if err != nil {
 		syscall.Close(fd)
-		return gocore.Error("nlGeneric()", err)
+		return gocore.Error("nlGeneric", err)
 	}
 
 	// determine the taskstats family id
@@ -50,14 +49,14 @@ func open() error {
 	if err != nil {
 		syscall.Close(fd)
 		syscall.Close(gd)
-		return gocore.Error("genlFamily()", err)
+		return gocore.Error("genlFamily", err)
 	}
 
 	// start observing taskstats responses
 	if err = nlGenericObserve(gd, id, true); err != nil {
 		syscall.Close(fd)
 		syscall.Close(gd)
-		return gocore.Error("nlGenericObserve()", err)
+		return gocore.Error("nlGenericObserve", err)
 	}
 
 	h = handle{fd: fd, gd: gd, id: id}
@@ -74,7 +73,7 @@ func (h *handle) close() {
 }
 
 // observe events and notify observer's callbacks.
-func observe(ctx context.Context) error {
+func observe() error {
 	go taskstats()
 
 	go func() {
@@ -84,14 +83,14 @@ func observe(ctx context.Context) error {
 			nlMsg := make([]byte, connectorMaxMessageSize)
 			n, _, err := syscall.Recvfrom(h.fd, nlMsg, 0)
 			if err != nil {
-				errorChan <- gocore.Error("Recvfrom()", err)
+				gocore.LogError("Recvfrom", err)
 				return
 			}
 			msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
 			for _, m := range msgs {
 				if m.Header.Type == syscall.NLMSG_ERROR {
-					errorChan <- gocore.Error("netlink", syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4]))))
+					gocore.LogError("netlink", syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4]))))
 					break
 				}
 
@@ -175,14 +174,14 @@ func taskstats() {
 		nlMsg := make([]byte, 1024)
 		n, _, err := syscall.Recvfrom(h.gd, nlMsg, 0)
 		if err != nil {
-			errorChan <- gocore.Error("Recvfrom()", err)
+			gocore.LogError("Recvfrom", err)
 			return
 		}
 		msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
 		for _, m := range msgs {
 			if m.Header.Type == syscall.NLMSG_ERROR {
-				errorChan <- gocore.Error("netlink", syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4]))))
+				gocore.LogError("netlink", syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4]))))
 				break
 			}
 			data := m.Data[unix.GENL_HDRLEN:]

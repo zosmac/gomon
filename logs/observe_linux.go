@@ -4,7 +4,7 @@ package logs
 
 import (
 	"bufio"
-	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -43,7 +43,7 @@ var (
 	}()
 )
 
-// open obtains a watch handle for observer
+// open obtains a watch handle for observer.
 func open() error {
 	var err error
 	if flags.logDirectory, err = filepath.Abs(flags.logDirectory); err != nil {
@@ -53,9 +53,8 @@ func open() error {
 		return gocore.Error("EvalSymlinks", err)
 	}
 
-	gocore.LogInfo(
-		fmt.Errorf(
-			"watching logs in directory %s, include pattern: %s, exclude pattern: %s",
+	gocore.LogInfo("observing logs",
+		fmt.Errorf("%q, include pattern: %s, exclude pattern: %s",
 			flags.logDirectory,
 			flags.logRegex,
 			flags.logRegexExclude,
@@ -84,15 +83,15 @@ func close() {
 }
 
 // observe inotify events and notify observer's callbacks.
-func observe(ctx context.Context) error {
+func observe() error {
 	go func() {
-		defer close()
-
 		for {
 			events := make([]byte, 16384)
 			n, err := syscall.Read(nd, events)
 			if err != nil {
-				errorChan <- gocore.Error("read", err)
+				if !errors.Is(err, syscall.EBADF) {
+					gocore.LogError("Read", err)
+				}
 				return
 			}
 
@@ -124,14 +123,14 @@ func observe(ctx context.Context) error {
 				}
 			}
 
-			report(ctx, ready)
+			report(ready)
 		}
 	}()
 
 	return nil
 }
 
-func report(ctx context.Context, ready map[int]*os.File) {
+func report(ready map[int]*os.File) {
 	for _, l := range ready {
 		if info, err := l.Stat(); err == nil {
 			current, _ := l.Seek(0, io.SeekCurrent)
@@ -143,7 +142,7 @@ func report(ctx context.Context, ready map[int]*os.File) {
 
 			sc := bufio.NewScanner(l)
 
-			go parseLog(ctx, sc, regex, "")
+			go parseLog(sc, regex, "")
 		}
 	}
 }
@@ -152,7 +151,7 @@ func report(ctx context.Context, ready map[int]*os.File) {
 func Watch(name string, pid int) {
 	for _, l := range watched[pid] {
 		if name == l.Name() { // already watching
-			continue
+			return
 		}
 	}
 	if err := filter(name); err != nil {

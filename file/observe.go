@@ -27,7 +27,6 @@ type (
 		*handle
 		watched map[string]file
 		msgChan chan *observation
-		errChan chan error
 	}
 )
 
@@ -56,16 +55,15 @@ func Observer(ctx context.Context) error {
 		handle:  h,
 		watched: map[string]file{},
 		msgChan: make(chan *observation, 100),
-		errChan: make(chan error, 10),
 	}
 
 	if err := watchDir("."); err != nil {
 		return gocore.Error("watch", err)
 	}
 
-	gocore.LogInfo(fmt.Errorf("observing files in %q", flags.fileDirectory))
+	gocore.LogInfo("observing files", errors.New(flags.fileDirectory))
 
-	if err := observe(ctx); err != nil {
+	if err := observe(); err != nil {
 		return gocore.Error("observe", err)
 	}
 
@@ -75,11 +73,6 @@ func Observer(ctx context.Context) error {
 			case <-ctx.Done():
 				obs.close()
 				return
-			case err, ok := <-obs.errChan:
-				if !ok {
-					return
-				}
-				gocore.LogError(err)
 			case msg, ok := <-obs.msgChan:
 				if !ok {
 					return
@@ -96,7 +89,6 @@ func Observer(ctx context.Context) error {
 func (obs *observer) close() {
 	obs.handle.close()
 	close(obs.msgChan)
-	close(obs.errChan)
 }
 
 // notify assembles a message and encodes it
@@ -126,7 +118,7 @@ func watchDir(rel string) error {
 	if err := filepath.WalkDir(filepath.Join(obs.root, rel), func(abs string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, fs.ErrPermission) {
-				gocore.LogError(gocore.Error("WalkDir", err))
+				gocore.LogError("WalkDir", err)
 			}
 			return filepath.SkipDir
 		}

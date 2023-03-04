@@ -8,7 +8,7 @@ package file
 
 import (
 	"bufio"
-	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -78,13 +78,15 @@ func (h *handle) close() {
 }
 
 // observe inotify events and notify observer's callbacks.
-func observe(_ context.Context) error {
+func observe() error {
 	go func() {
 		for {
 			events := make([]byte, 16384)
 			n, err := syscall.Read(obs.fd, events)
 			if err != nil {
-				obs.errChan <- gocore.Error("read", err)
+				if !errors.Is(err, syscall.EBADF) {
+					gocore.LogError("Read", err)
+				}
 				return
 			}
 

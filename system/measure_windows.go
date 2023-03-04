@@ -76,9 +76,8 @@ func uname() string {
 	return ""
 }
 
-// loadAverage gets the system load averages.
+// loadAverage gets the system load averages. Unsupported on windows.
 func loadAverage() LoadAverage {
-	gocore.LogInfo(gocore.Unsupported())
 	return LoadAverage{}
 }
 
@@ -124,8 +123,8 @@ func contextSwitches() int {
 	return pdhFmtCountervalue.largeValue
 }
 
+// rlimits gets system resource limits. Unsupported on windows.
 func rlimits() Rlimits {
-	gocore.LogInfo(gocore.Unsupported())
 	return Rlimits{}
 }
 
@@ -138,7 +137,7 @@ func cpu() CPU {
 		uintptr(unsafe.Pointer(&lpUserTime)),
 	)
 	if err != nil {
-		gocore.LogError(gocore.Error("GetSystemTimes", err))
+		gocore.LogError("GetSystemTimes", err)
 		return CPU{}
 	}
 
@@ -151,9 +150,8 @@ func cpu() CPU {
 	return c
 }
 
-// cpus captures individual CPU metrics.
+// cpus captures individual CPU metrics. Unsupported on windows.
 func cpus() []CPU {
-	gocore.LogInfo(gocore.Unsupported())
 	return nil
 }
 
@@ -164,7 +162,7 @@ func memory() (Memory, Swap) {
 		uintptr(unsafe.Pointer(&memoryStatusEx)),
 	)
 	if err != nil {
-		gocore.LogError(gocore.Error("GlobalMemoryStatusEx", err))
+		gocore.LogError("GlobalMemoryStatusEx", err)
 	}
 
 	total := memoryStatusEx.ullTotalPhys

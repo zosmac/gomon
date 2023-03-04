@@ -92,7 +92,7 @@ func wsHandler() error {
 				buf := make([]byte, websocket.DefaultMaxPayloadBytes)
 				for {
 					if err := websocket.Message.Receive(ws, &buf); err != nil {
-						gocore.LogWarn(gocore.Error("websocket Receive", err))
+						gocore.LogWarn("websocket Receive", err)
 						ws.Close()
 						return
 					} else if bytes.HasPrefix(buf, []byte("suspend")) {
@@ -100,7 +100,7 @@ func wsHandler() error {
 					}
 
 					if err := websocket.Message.Send(ws, NodeGraph(ws.Request())); err != nil {
-						gocore.LogWarn(gocore.Error("websocket Send", err))
+						gocore.LogWarn("websocket Send", err)
 						ws.Close()
 						return
 					}
@@ -133,16 +133,16 @@ func assetHandler() error {
 func serve(ctx context.Context) {
 	// define http request handlers
 	if err := prometheusHandler(); err != nil {
-		gocore.LogWarn(err)
+		gocore.LogWarn("prometheusHandler", err)
 	}
 	if err := gomonHandler(); err != nil {
-		gocore.LogWarn(err)
+		gocore.LogWarn("gomonHandler", err)
 	}
 	if err := wsHandler(); err != nil {
-		gocore.LogWarn(err)
+		gocore.LogWarn("wsHandler", err)
 	}
 	if err := assetHandler(); err != nil {
-		gocore.LogWarn(err)
+		gocore.LogWarn("assetHandler", err)
 	}
 
 	server := &http.Server{
@@ -176,7 +176,7 @@ func serve(ctx context.Context) {
 				}
 			}
 		}
-		gocore.LogInfo(fmt.Errorf("gomon server listening on %s://%s", scheme, server.Addr))
-		gocore.LogError(serve())
+		gocore.LogInfo("gomon server listening", fmt.Errorf("%s://%s", scheme, server.Addr))
+		gocore.LogError("gomon server failed", serve())
 	}()
 }

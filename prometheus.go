@@ -16,7 +16,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
-	"gopkg.in/yaml.v2"
 )
 
 type (
@@ -151,31 +150,31 @@ func scrapeInterval() (time.Duration, error) {
 		return 0, gocore.Error("prometheus query", err)
 	}
 
-	j := struct {
+	yml := struct {
 		Status string
 		Data   struct {
 			Yaml string
 		}
 	}{}
-	if err := json.Unmarshal(body, &j); err != nil || j.Status != "success" {
-		return 0, gocore.Error("prometheus query "+j.Status, err)
+	if err := json.Unmarshal(body, &yml); err != nil || yml.Status != "success" {
+		return 0, gocore.Error("prometheus query "+yml.Status, err)
 	}
 
-	ms := yaml.MapSlice{}
-	if err := yaml.Unmarshal([]byte(j.Data.Yaml), &ms); err != nil {
+	ms, err := gocore.YamlMap(yml.Data.Yaml)
+	if err != nil {
 		return 0, gocore.Error("prometheus yaml", err)
 	}
 
-	val := gocore.ValueYaml([]string{"scrape_configs", "job_name", "gomon"}, []byte(j.Data.Yaml))
+	val := gocore.YamlValue([]string{"scrape_configs", "job_name", "gomon"}, []byte(yml.Data.Yaml))
 	if val == "" {
 		return 0, gocore.Error("prometheus", errors.New("not configured for gomon collection"))
 	}
 
-	val = gocore.ValueYaml([]string{"global", "scrape_interval"}, ms)
+	val = gocore.YamlValue([]string{"global", "scrape_interval"}, ms)
 	if dur, err := time.ParseDuration(val); err == nil {
 		return dur, nil
 	}
 
-	val = gocore.ValueYaml([]string{"scrape_configs", "job_name", "gomon", "scrape_interval"}, []byte(j.Data.Yaml))
+	val = gocore.YamlValue([]string{"scrape_configs", "job_name", "gomon", "scrape_interval"}, []byte(yml.Data.Yaml))
 	return time.ParseDuration(val)
 }
