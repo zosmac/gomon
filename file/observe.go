@@ -5,7 +5,6 @@ package file
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io/fs"
 	"path/filepath"
 	"time"
@@ -17,7 +16,7 @@ import (
 type (
 	// file identifies a file being observed.
 	file struct {
-		name  string
+		abs   string
 		isDir bool
 	}
 
@@ -57,7 +56,7 @@ func Observer(ctx context.Context) error {
 		msgChan: make(chan *observation, 100),
 	}
 
-	if err := watchDir("."); err != nil {
+	if err := watchDir(".", ""); err != nil {
 		return gocore.Error("watch", err)
 	}
 
@@ -92,29 +91,23 @@ func (obs *observer) close() {
 }
 
 // notify assembles a message and encodes it
-func notify(ev fileEvent, f file, oldname string) {
-	var msg string
-	switch ev {
-	case fileCreate:
-		msg = f.name
-	case fileRename:
-		msg = fmt.Sprintf("%s -> %s", oldname, f.name)
-	case fileUpdate:
-		msg = f.name
-	case fileDelete:
-		msg = f.name
+func notify(ev fileEvent, id, name, oldn string) {
+	msg := name
+	if ev == fileRename {
+		msg += " <- " + oldn
 	}
 	obs.msgChan <- &observation{
 		Header: message.Observation(time.Now(), ev),
 		Id: Id{
-			Name: f.name,
+			Name:    name,
+			EventID: id,
 		},
 		Message: msg,
 	}
 }
 
 // watchDir adds directory to observe
-func watchDir(rel string) error {
+func watchDir(rel, id string) error {
 	if err := filepath.WalkDir(filepath.Join(obs.root, rel), func(abs string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, fs.ErrPermission) {
@@ -128,7 +121,7 @@ func watchDir(rel string) error {
 		}
 		if f, err := add(abs, entry.IsDir()); err == nil && !entry.IsDir() {
 			if rel != "." { // skip "insert" notifications during initialization
-				notify(fileCreate, f, "")
+				notify(fileCreate, id, f.abs, "")
 			}
 		}
 		return nil
@@ -142,7 +135,7 @@ func watchDir(rel string) error {
 // add adds a file to the observer.
 func add(abs string, isDir bool) (file, error) {
 	for _, f := range obs.watched {
-		if abs == f.name {
+		if abs == f.abs {
 			return f, nil
 		}
 	}
@@ -155,7 +148,7 @@ func add(abs string, isDir bool) (file, error) {
 
 	rel, _ := filepath.Rel(obs.root, abs)
 	f := file{
-		name:  abs,
+		abs:   abs,
 		isDir: isDir,
 	}
 	obs.watched[rel] = f
@@ -163,22 +156,22 @@ func add(abs string, isDir bool) (file, error) {
 }
 
 // remove removes a file from observation.
-func remove(f file) {
-	rel, _ := filepath.Rel(obs.root, f.name)
+func remove(f file, id string) {
+	rel, _ := filepath.Rel(obs.root, f.abs)
 	delete(obs.watched, rel)
 	if f.isDir {
-		abs := f.name
+		abs := f.abs
 		for rel, f := range obs.watched {
 			f := f
-			if n, err := filepath.Rel(abs, f.name); err == nil && (len(n) < 2 || n[:2] != "..") {
+			if n, err := filepath.Rel(abs, f.abs); err == nil && (len(n) < 2 || n[:2] != "..") {
 				delete(obs.watched, rel)
 				if !f.isDir {
-					notify(fileDelete, f, "")
+					notify(fileDelete, id, f.abs, "")
 				}
 			}
 		}
 		removeDir(abs)
 	} else {
-		notify(fileDelete, f, "")
+		notify(fileDelete, id, f.abs, "")
 	}
 }

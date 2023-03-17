@@ -206,7 +206,7 @@ func taskstats() {
 					Header: message.Observation(time.Now(), netlinkTaskstats),
 					Id: Id{
 						ppid:      Pid(tsMsg.ts.Ac_ppid),
-						Name:      gocore.GoStringN((*byte)(unsafe.Pointer(&tsMsg.ts.Ac_comm[0])), len(tsMsg.ts.Ac_comm)),
+						Name:      gocore.GoStringN((&tsMsg.ts.Ac_comm[0]), len(tsMsg.ts.Ac_comm)),
 						Pid:       Pid(tsMsg.pid),
 						Starttime: time.Unix(int64(tsMsg.ts.Ac_btime), 0),
 					},

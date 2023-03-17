@@ -11,6 +11,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -93,6 +94,7 @@ func observe() error {
 			var event *syscall.InotifyEvent
 			for i := 0; i < n; i += syscall.SizeofInotifyEvent + int(event.Len) {
 				event = (*syscall.InotifyEvent)(unsafe.Pointer(&events[i]))
+				id := strconv.Itoa(int(event.Cookie))
 
 				if event.Mask&syscall.IN_IGNORED != 0 {
 					continue
@@ -100,10 +102,7 @@ func observe() error {
 
 				var abs string
 				if event.Len > 0 {
-					abs = gocore.GoStringN(
-						(*byte)(unsafe.Add(unsafe.Pointer(event), syscall.SizeofInotifyEvent)),
-						event.Len,
-					)
+					abs = gocore.GoStringN((*byte)(unsafe.Pointer(&event.Name)), event.Len)
 				}
 
 				// IN_DELETE_SELF evidently not sent to root, therefore test if its parent received IN_DELETE
@@ -115,7 +114,7 @@ func observe() error {
 
 				f, ok := obs.watched[obs.watches[int(event.Wd)]]
 				if ok {
-					abs = f.name
+					abs = f.abs
 				} else {
 					syscall.InotifyRmWatch(obs.fd, uint32(event.Wd))
 					continue
@@ -126,22 +125,22 @@ func observe() error {
 						continue
 					} else if info.IsDir() {
 						rel, _ := filepath.Rel(obs.root, abs)
-						watchDir(rel)
+						watchDir(rel, id)
 					} else {
 						add(abs, false)
 						if info.Size() > 0 {
 							event.Mask |= syscall.IN_MODIFY
 						}
-						notify(fileCreate, f, "")
+						notify(fileCreate, id, f.abs, "")
 					}
 				}
 
 				if event.Mask&syscall.IN_MODIFY != 0 {
-					notify(fileUpdate, f, "")
+					notify(fileUpdate, id, f.abs, "")
 				}
 
 				if event.Mask&(syscall.IN_DELETE|syscall.IN_MOVED_FROM) != 0 {
-					remove(f)
+					remove(f, id)
 				}
 			}
 		}

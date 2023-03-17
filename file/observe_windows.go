@@ -18,7 +18,7 @@ import (
 func (f file) RetryableError(err error) bool {
 	for wait := 250 * time.Millisecond; wait < 4*time.Second && tempError(err); wait *= 2 {
 		<-time.After(wait)
-		file, err := os.Open(f.name)
+		file, err := os.Open(f.abs)
 		if err == nil {
 			file.Close()
 			return true
@@ -61,11 +61,6 @@ func open(directory string) (*handle, error) {
 // close OS resources.
 func (h *handle) close() {
 	windows.CloseHandle(h.Handle)
-}
-
-// owner returns the username and groupname of a file's owner.
-func owner(info os.FileInfo) (string, string) {
-	return "", ""
 }
 
 // observe events and notify observer's callbacks.
@@ -115,16 +110,16 @@ func observe() error {
 					if info, err := os.Stat(name); err != nil {
 						continue
 					} else if info.IsDir() {
-						watchDir(name)
+						watchDir(name, "")
 					} else {
 						if f, err := add(name, false); err == nil {
-							notify(fileCreate, f, "")
+							notify(fileCreate, "", f.abs, "")
 						}
 					}
 				case windows.FILE_ACTION_MODIFIED:
-					notify(fileUpdate, obs.watched[name], "")
+					notify(fileUpdate, "", obs.watched[name].abs, "")
 				case windows.FILE_ACTION_REMOVED, windows.FILE_ACTION_RENAMED_OLD_NAME:
-					remove(obs.watched[name])
+					remove(obs.watched[name], "")
 				}
 
 				if event.NextEntryOffset == 0 {
@@ -162,7 +157,7 @@ func poll() {
 		// distribute stat() calls over 80% of poll interval, rather than all at once
 		i := 0
 		for range t.C {
-			os.Stat(fs[i].name)
+			os.Stat(fs[i].abs)
 			i++
 			if i >= len(fs) {
 				t.Stop()

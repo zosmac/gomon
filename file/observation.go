@@ -17,7 +17,8 @@ type (
 
 	// Id identifies the message.
 	Id struct {
-		Name string `json:"name" gomon:"property"`
+		Name    string `json:"name" gomon:"property"`
+		EventID string `json:"event_id,omitempty" gomon:"property"`
 	}
 
 	// message defines the properties of a file update message.

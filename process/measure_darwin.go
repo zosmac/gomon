@@ -180,7 +180,7 @@ func (pid Pid) commandLine() CommandLine {
 	buf := make([]byte, size)
 
 	if rv := C.sysctl(
-		(*C.int)(unsafe.Pointer(&[3]C.int{C.CTL_KERN, C.KERN_PROCARGS2, C.int(pid)})),
+		&[]C.int{C.CTL_KERN, C.KERN_PROCARGS2, C.int(pid)}[0],
 		3,
 		unsafe.Pointer(&buf[0]),
 		&size,

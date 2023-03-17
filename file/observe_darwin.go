@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"unsafe"
 
 	"github.com/zosmac/gocore"
@@ -89,21 +90,20 @@ func observe() error {
 //
 //export callback
 func callback(stream C.ConstFSEventStreamRef, _ unsafe.Pointer, count C.size_t, paths **C.char, flags *C.FSEventStreamEventFlags, ids *C.FSEventStreamEventId) {
-	var oldname string
-	var oldisdir bool
+	pths := unsafe.Slice(paths, count)
+	flgs := unsafe.Slice(flags, count)
+	idss := unsafe.Slice(ids, count)
 
-	for i := C.size_t(0); i < count; i++ {
-		abs := C.GoString(*paths)
+	oldf := file{}
+	for i, path := range pths {
+		abs := C.GoString(path)
 		rel, err := filepath.Rel(obs.root, abs)
-		flag := *flags
-		// prepare for next
-		paths = (**C.char)(unsafe.Add(unsafe.Pointer(paths), unsafe.Sizeof(*paths)))
-		flags = (*C.FSEventStreamEventFlags)(unsafe.Add(unsafe.Pointer(flags), C.sizeof_FSEventStreamEventFlags))
-		ids = (*C.FSEventStreamEventId)(unsafe.Add(unsafe.Pointer(ids), C.sizeof_FSEventStreamEventId))
-
 		if err != nil {
 			continue
 		}
+
+		flag := flgs[i]
+		id := strconv.Itoa(int(idss[i]))
 
 		// do we care about symlink changes?
 		isDir := flag&C.kFSEventStreamEventFlagItemIsDir == C.kFSEventStreamEventFlagItemIsDir
@@ -113,42 +113,44 @@ func callback(stream C.ConstFSEventStreamRef, _ unsafe.Pointer, count C.size_t, 
 		}
 
 		if flag&C.kFSEventStreamEventFlagItemRenamed == C.kFSEventStreamEventFlagItemRenamed {
-			if oldname == "" {
-				oldname = abs
-				oldisdir = isDir
-				if i+1 < count {
-					continue
+			if oldf.abs == "" {
+				oldf = file{
+					abs:   abs,
+					isDir: isDir,
+				}
+				if i+1 < int(count) {
+					continue // the next event should have the new name
 				}
 			} else {
-				rename(oldname, abs)
-				oldname = ""
+				rename(id, abs, oldf.abs)
+				oldf = file{}
 				continue
 			}
 		}
 
-		if oldname != "" {
-			rel, _ := filepath.Rel(obs.root, oldname)
+		if oldf.abs != "" {
+			rel, _ := filepath.Rel(obs.root, oldf.abs)
 			if f, ok := obs.watched[rel]; ok {
-				remove(f)
-			} else {
-				if oldisdir {
-					watchDir(rel)
+				remove(f, id) // removed from where we are watching
+			} else { // moved into where we are watching
+				if oldf.isDir {
+					watchDir(rel, id)
 				} else {
-					if f, err := add(oldname, false); err == nil {
-						notify(fileCreate, f, "")
-						notify(fileUpdate, f, "")
+					if f, err := add(oldf.abs, false); err == nil {
+						notify(fileCreate, id, f.abs, "")
+						notify(fileUpdate, id, f.abs, "")
 					}
 				}
 			}
-			oldname = ""
+			oldf = file{}
 		}
 
 		if flag&(C.kFSEventStreamEventFlagItemCreated) != 0 {
 			if isDir {
-				watchDir(rel)
+				watchDir(rel, id)
 			} else {
 				if f, err := add(abs, false); err == nil {
-					notify(fileCreate, f, "")
+					notify(fileCreate, id, f.abs, "")
 				}
 			}
 		}
@@ -156,50 +158,55 @@ func callback(stream C.ConstFSEventStreamRef, _ unsafe.Pointer, count C.size_t, 
 		if flag&C.kFSEventStreamEventFlagItemModified != 0 {
 			if isFile {
 				if f, ok := obs.watched[rel]; ok {
-					notify(fileUpdate, f, "")
+					notify(fileUpdate, id, f.abs, "")
 				}
 			}
 		}
 
 		if flag&C.kFSEventStreamEventFlagItemRemoved != 0 {
 			if f, ok := obs.watched[rel]; ok {
-				remove(f)
+				remove(f, id)
 			}
 		}
 
 		if flag&C.kFSEventStreamEventFlagMustScanSubDirs != 0 {
 			gocore.LogInfo("FSEvents coalesced", errors.New("subdirectories rescanned"))
 			obs.watched = map[string]file{}
-			watchDir(".")
+			watchDir(".", id)
 		}
 	}
 }
 
 // rename handles the rename of a file or directory.
-func rename(oldname, newname string) {
-	rel, _ := filepath.Rel(obs.root, oldname)
-	reln, _ := filepath.Rel(obs.root, newname)
-	f, ok := obs.watched[rel]
+func rename(id, absn, abso string) {
+	relo, _ := filepath.Rel(obs.root, abso)
+	reln, _ := filepath.Rel(obs.root, absn)
+	f, ok := obs.watched[relo]
 	if !ok {
 		return
 	}
-	f.name = newname
-	delete(obs.watched, rel)
+
+	f.abs = absn
+	delete(obs.watched, relo)
 	obs.watched[reln] = f
-	if f.isDir {
-		for rel, f := range obs.watched {
-			if n, err := filepath.Rel(oldname, f.name); err == nil && (len(n) < 2 || n[:2] != "..") {
-				reln := filepath.Join(reln, n)
-				delete(obs.watched, rel)
-				f.name = filepath.Join(obs.root, reln)
-				obs.watched[reln] = f
-				if !f.isDir {
-					notify(fileRename, f, rel)
-				}
+
+	if !f.isDir {
+		notify(fileRename, id, absn, abso) // file renamed
+		return
+	}
+
+	// check if directory moved, not simply renamed
+	for relo, f := range obs.watched {
+		if n, err := filepath.Rel(abso, f.abs); err == nil && (len(n) < 2 || n[:2] != "..") {
+			abso := f.abs
+			reln := filepath.Join(reln, n)
+			f.abs = filepath.Join(obs.root, reln)
+			delete(obs.watched, relo)
+			obs.watched[reln] = f
+			if !f.isDir {
+				notify(fileRename, id, absn, abso)
 			}
 		}
-	} else {
-		notify(fileRename, f, oldname)
 	}
 }
 

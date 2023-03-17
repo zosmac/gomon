@@ -30,7 +30,7 @@ var (
 	version = func() string {
 		var size C.size_t
 		if rv, err := C.sysctl(
-			(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_KERN, C.KERN_VERSION})),
+			&[]C.int{C.CTL_KERN, C.KERN_VERSION}[0],
 			2,
 			unsafe.Pointer(nil),
 			&size,
@@ -43,7 +43,7 @@ var (
 
 		version := make([]C.char, size)
 		if rv, err := C.sysctl(
-			(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_KERN, C.KERN_VERSION})),
+			&[]C.int{C.CTL_KERN, C.KERN_VERSION}[0],
 			2,
 			unsafe.Pointer(&version[0]),
 			&size,
@@ -75,7 +75,7 @@ var (
 		var info C.struct_clockinfo
 		size := C.size_t(unsafe.Sizeof(info))
 		if rv, err := C.sysctl(
-			(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_KERN, C.KERN_CLOCKRATE})),
+			&[]C.int{C.CTL_KERN, C.KERN_CLOCKRATE}[0],
 			2,
 			unsafe.Pointer(&info),
 			&size,
@@ -128,7 +128,7 @@ func rlimits() Rlimits {
 
 	size = C.size_t(unsafe.Sizeof(maxproc))
 	if rv, err := C.sysctl(
-		(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_KERN, C.KERN_MAXPROC})),
+		&[]C.int{C.CTL_KERN, C.KERN_MAXPROC}[0],
 		2,
 		unsafe.Pointer(&maxproc),
 		&size,
@@ -141,7 +141,7 @@ func rlimits() Rlimits {
 
 	size = C.size_t(unsafe.Sizeof(maxfiles))
 	if rv, err := C.sysctl(
-		(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_KERN, C.KERN_MAXFILES})),
+		&[]C.int{C.CTL_KERN, C.KERN_MAXFILES}[0],
 		2,
 		unsafe.Pointer(&maxfiles),
 		&size,
@@ -154,7 +154,7 @@ func rlimits() Rlimits {
 
 	size = C.size_t(unsafe.Sizeof(maxfilesperproc))
 	if rv, err := C.sysctl(
-		(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_KERN, C.KERN_MAXFILESPERPROC})),
+		&[]C.int{C.CTL_KERN, C.KERN_MAXFILESPERPROC}[0],
 		2,
 		unsafe.Pointer(&maxfilesperproc),
 		&size,
@@ -167,7 +167,7 @@ func rlimits() Rlimits {
 
 	size = C.size_t(unsafe.Sizeof(maxprocperuid))
 	if rv, err := C.sysctl(
-		(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_KERN, C.KERN_MAXPROCPERUID})),
+		&[]C.int{C.CTL_KERN, C.KERN_MAXPROCPERUID}[0],
 		2,
 		unsafe.Pointer(&maxprocperuid),
 		&size,
@@ -270,7 +270,7 @@ func memory() (Memory, Swap) {
 	var memsize C.int64_t
 	size := C.size_t(unsafe.Sizeof(memsize))
 	if rv, err := C.sysctl(
-		(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_HW, C.HW_MEMSIZE})),
+		&[]C.int{C.CTL_HW, C.HW_MEMSIZE}[0],
 		2,
 		unsafe.Pointer(&memsize),
 		&size,
@@ -303,7 +303,7 @@ func memory() (Memory, Swap) {
 	size = C.size_t(unsafe.Sizeof(usage))
 
 	if rv, err := C.sysctl(
-		(*C.int)(unsafe.Pointer(&[2]C.int{C.CTL_VM, C.VM_SWAPUSAGE})),
+		&[]C.int{C.CTL_VM, C.VM_SWAPUSAGE}[0],
 		2,
 		unsafe.Pointer(&usage),
 		&size,
