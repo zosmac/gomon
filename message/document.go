@@ -30,7 +30,7 @@ var (
 // Define a Message's Content.
 func Define(m Content) {
 	fs := gocore.Format("", "", reflect.ValueOf(m),
-		func(name, tag string, val reflect.Value) interface{} {
+		func(name, tag string, val reflect.Value) any {
 			return documentField(m, name, tag)
 		},
 	)

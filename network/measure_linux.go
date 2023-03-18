@@ -20,7 +20,7 @@ func Measure() (ms []message.Content) {
 	defer f.Close()
 
 	nums := make([]int, 16)
-	numa := make([]interface{}, 16)
+	numa := make([]any, 16)
 	for i := range numa {
 		numa[i] = &nums[i]
 	}

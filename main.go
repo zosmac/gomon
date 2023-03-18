@@ -80,7 +80,7 @@ func Main(ctx context.Context) error {
 					"gomon_"+path.Base(reflect.Indirect(reflect.ValueOf(m)).Type().PkgPath()),
 					"",
 					reflect.ValueOf(m),
-					func(name, tag string, val reflect.Value) interface{} {
+					func(name, tag string, val reflect.Value) any {
 						if !strings.HasPrefix(tag, "property") {
 							ch <- prometheusMetric(m, name, tag, val)
 							count++

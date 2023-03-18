@@ -116,7 +116,7 @@ func Close() {
 // Rotate obtains lock and calls encoder's rotate method.
 func Rotate(t time.Time) {
 	if len(cache) > 0 {
-		var i interface{}
+		var i any
 		if len(cache) == 1 {
 			i = cache[0]
 		} else {

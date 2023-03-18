@@ -45,7 +45,7 @@ func lokiTest() bool {
 }
 
 // lokiFormatter complies with gocore.Formatter function prototype for encoding properties as Loki stream labels and values.
-func lokiFormatter(name, tag string, val reflect.Value) interface{} {
+func lokiFormatter(name, tag string, val reflect.Value) any {
 	if strings.HasPrefix(tag, "property") {
 		if val.Kind() == reflect.String {
 			return tuple{name, val.String()}

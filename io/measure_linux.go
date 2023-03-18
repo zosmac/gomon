@@ -24,7 +24,7 @@ func Measure() (ms []message.Content) {
 	for sc.Scan() {
 		strs := make([]string, 3)
 		nums := make([]int, 11)
-		flds := make([]interface{}, 14)
+		flds := make([]any, 14)
 		for i := range flds[:3] {
 			flds[i] = &strs[i]
 		}
