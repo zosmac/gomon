@@ -85,21 +85,22 @@ func NodeGraph(req *http.Request) []byte {
 		nodes        = map[Pid]struct{}{}
 	)
 
-	query, _ := parseQuery(req)
-
-	ft := process.Table{}
 	pt := process.BuildTable()
+	tr := process.BuildTree(pt)
 	process.Connections(pt)
 
+	query, _ := parseQuery(req)
 	if query.pid != 0 && pt[query.pid] == nil {
 		query.pid = 0 // reset to default
 	}
+
+	ft := process.Table{}
 	if query.pid > 0 { // build this process' "extended family"
-		ft = family(pt, query.pid)
+		ft = family(pt, tr, query.pid)
 	} else { // only consider non-daemon and remote host connected processes
 		for pid, p := range pt {
 			if p.Ppid > 1 {
-				for pid, p := range family(pt, pid) {
+				for pid, p := range family(pt, tr, pid) {
 					ft[pid] = p
 				}
 			}
@@ -395,18 +396,47 @@ func parseQuery(r *http.Request) (query, error) {
 	}, nil
 }
 
-// family identifies all of the processes related to a process.
-func family(pt process.Table, pid Pid) process.Table {
-	ft := process.Table{pid: pt[pid]}
-	for pid := pt[pid].Ppid; pid > 1; pid = pt[pid].Ppid { // ancestors
+// family identifies all of the ancestor and children processes of a process.
+func family(pt process.Table, tr process.Tree, pid Pid) process.Table {
+	ft := process.Table{}
+	for pid := pid; pid > 0; pid = pt[pid].Ppid { // ancestors
 		ft[pid] = pt[pid]
 	}
 
-	pids := process.FlatTree(process.FindTree(process.BuildTree(pt), pid)) // descendants
+	tr = tr.FindTree(pid)
+	o := func(node Pid, pt process.Table) int {
+		return order(node, tr, pt)
+	}
+
+	pids := tr.Flatten(pt, o)
 	for _, pid := range pids {
 		ft[pid] = pt[pid]
 	}
+
 	return ft
+}
+
+func order(node Pid, tr process.Tree, _ process.Table) int {
+	var depth int
+	for _, tr := range tr {
+		dt := depthTree(tr) + 1
+		if depth < dt {
+			depth = dt
+		}
+	}
+	return depth
+}
+
+// depthTree enables sort of deepest process trees first.
+func depthTree(tr process.Tree) int {
+	depth := 0
+	for _, tr := range tr {
+		dt := depthTree(tr) + 1
+		if depth < dt {
+			depth = dt
+		}
+	}
+	return depth
 }
 
 // longname formats the full Executable name and pid.

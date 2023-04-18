@@ -197,9 +197,9 @@ func rename(id, absn, abso string) {
 
 	// check if directory moved, not simply renamed
 	for relo, f := range obs.watched {
-		if n, err := filepath.Rel(abso, f.abs); err == nil && (len(n) < 2 || n[:2] != "..") {
+		if rel, err := gocore.Subdir(abso, f.abs); err == nil {
 			abso := f.abs
-			reln := filepath.Join(reln, n)
+			reln := filepath.Join(reln, rel)
 			f.abs = filepath.Join(obs.root, reln)
 			delete(obs.watched, relo)
 			obs.watched[reln] = f

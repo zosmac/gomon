@@ -4,20 +4,20 @@ package process
 
 import (
 	"fmt"
-	"sort"
 	"sync"
 	"time"
 
+	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/logs"
 	"github.com/zosmac/gomon/message"
 )
 
 type (
 	// Table defines a process table as a map of pids to processes.
-	Table map[Pid]*measurement
+	Table = gocore.Table[Pid, *measurement]
 
 	// Tree organizes the processes into a hierarchy
-	Tree map[Pid]Tree
+	Tree = gocore.Tree[Pid, int, *measurement]
 )
 
 var (
@@ -35,10 +35,10 @@ var (
 
 // Measure captures all processes' metrics.
 func Measure() (ProcStats, []message.Content) {
-	pt := BuildTable()
+	tb := BuildTable()
 
 	newTimes := map[Pid]time.Duration{}
-	for pid, p := range pt {
+	for pid, p := range tb {
 		newTimes[pid] = p.Total
 	}
 
@@ -50,20 +50,20 @@ func Measure() (ProcStats, []message.Content) {
 			if nt > ot {
 				active++
 				total += nt - ot
-				ms = append(ms, pt[pid])
+				ms = append(ms, tb[pid])
 			}
 			delete(oldTimes, pid)
 		} else {
 			execed++
 			if nt > 0 {
 				total += nt
-				ms = append(ms, pt[pid])
+				ms = append(ms, tb[pid])
 			}
 		}
 	}
 
 	ps := ProcStats{
-		Count:  len(pt),
+		Count:  len(tb),
 		Active: active,
 		Execed: execed,
 		Exited: len(oldTimes),
@@ -99,10 +99,10 @@ func BuildTable() Table {
 	}
 	epLock.RUnlock()
 
-	pt := make(map[Pid]*measurement, len(pids))
+	tb := make(map[Pid]*measurement, len(pids))
 	for _, pid := range pids {
 		id, props, metrics := pid.metrics()
-		pt[pid] = &measurement{
+		tb[pid] = &measurement{
 			Ancestors:   []Pid{},
 			Header:      message.Measurement(),
 			Id:          id,
@@ -112,95 +112,28 @@ func BuildTable() Table {
 		}
 	}
 
-	for pid, p := range pt {
+	for pid, p := range tb {
 		p.Ancestors = func() []Pid {
 			var pids []Pid
-			for pid = pt[pid].Ppid; pid > 1; pid = pt[pid].Ppid {
+			for pid = tb[pid].Ppid; pid > 1; pid = tb[pid].Ppid {
 				pids = append([]Pid{pid}, pids...)
 			}
 			return pids
 		}()
 	}
 
-	return pt
+	return tb
 }
 
-func BuildTree(pt Table) Tree {
+// BuildTree builds the process tree.
+func BuildTree(tb Table) Tree {
 	tr := Tree{}
-
-	for pid, p := range pt {
-		var ancestors []Pid
-		for pid := p.Ppid; pid > 1; pid = pt[pid].Ppid {
-			ancestors = append([]Pid{pid}, ancestors...)
+	for pid := range tb {
+		var pids []Pid
+		for ; pid > 0; pid = tb[pid].Ppid {
+			pids = append([]Pid{pid}, pids...)
 		}
-		addPid(tr, append(ancestors, pid))
+		tr.Add(pids...)
 	}
-
 	return tr
-}
-
-func addPid(tr Tree, ancestors []Pid) {
-	if len(ancestors) == 0 {
-		return
-	}
-	if _, ok := tr[ancestors[0]]; !ok {
-		tr[ancestors[0]] = Tree{}
-	}
-	addPid(tr[ancestors[0]], ancestors[1:])
-}
-
-func FlatTree(tr Tree) []Pid {
-	return flatTree(tr, 0)
-}
-
-func flatTree(tr Tree, indent int) []Pid {
-	if len(tr) == 0 {
-		return nil
-	}
-	var flat []Pid
-
-	var pids []Pid
-	for pid := range tr {
-		pids = append(pids, pid)
-	}
-
-	sort.Slice(pids, func(i, j int) bool {
-		dti := depthTree(tr[pids[i]])
-		dtj := depthTree(tr[pids[j]])
-		return dti > dtj ||
-			dti == dtj && pids[i] < pids[j]
-	})
-
-	for _, pid := range pids {
-		flat = append(flat, pid)
-		flat = append(flat, flatTree(tr[pid], indent+3)...)
-	}
-
-	return flat
-}
-
-// depthTree enables sort of deepest process trees first.
-func depthTree(tr Tree) int {
-	depth := 0
-	for _, tr := range tr {
-		dt := depthTree(tr) + 1
-		if depth < dt {
-			depth = dt
-		}
-	}
-	return depth
-}
-
-// FindTree finds the process tree parented by a specific process.
-func FindTree(tr Tree, parent Pid) Tree {
-	for pid, tr := range tr {
-		if pid == parent {
-			return Tree{parent: tr}
-		}
-		if tr = FindTree(tr, parent); tr != nil {
-			return tr
-		}
-	}
-
-	return nil
 }

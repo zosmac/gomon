@@ -4,7 +4,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,11 +15,32 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
+
+	"gopkg.in/yaml.v3"
 )
 
 type (
 	// prometheusCollector complies with the Prometheus Collector interface.
 	prometheusCollector struct{}
+
+	// prometheusJson defines the prometheus configuration query response envelope.
+	prometheusJson struct {
+		Status string `json:"status"`
+		Data   struct {
+			Yaml string `json:"yaml"` // []byte type unmarshals as base-64 :(
+		} `json:"data"`
+	}
+
+	// prometheusYaml defines the prometheus configuration query response content.
+	prometheusYaml struct {
+		Global struct {
+			ScrapeInterval string `yaml:"scrape_interval"`
+		} `yaml:"global"`
+		ScrapeConfigs []struct {
+			Jobname        string `yaml:"job_name"`
+			ScrapeInterval string `yaml:"scrape_interval"`
+		} `yaml:"scrape_configs"`
+	}
 )
 
 var (
@@ -29,6 +49,9 @@ var (
 
 	// lastPrometheusCollection functions as a dead man's switch.
 	lastPrometheusCollection atomic.Value
+
+	// prometheusConfig is the REST query to retrieve the configuration.
+	prometheusConfig = "http://localhost:9090/api/v1/status/config"
 
 	// prometheusSample is the configured duration between prometheus samples.
 	prometheusSample time.Duration
@@ -53,7 +76,11 @@ func (c *prometheusCollector) Collect(ch chan<- prometheus.Metric) {
 	<-prometheusDone
 
 	if prometheusSample == 0 {
-		prometheusSample, _ = scrapeInterval()
+		var err error
+		prometheusSample, err = scrapeInterval()
+		if err != nil {
+			gocore.LogError("prometheus config", err)
+		}
 	}
 }
 
@@ -140,7 +167,7 @@ func prometheusMetric(m message.Content, name, tag string, val reflect.Value) pr
 
 // scrapeInterval asks Prometheus for the scrape interval it will query gomon for metrics.
 func scrapeInterval() (time.Duration, error) {
-	resp, err := http.Get("http://localhost:9090/api/v1/status/config")
+	resp, err := http.Get(prometheusConfig)
 	if err != nil {
 		return 0, gocore.Error("prometheus query", err)
 	}
@@ -150,31 +177,21 @@ func scrapeInterval() (time.Duration, error) {
 		return 0, gocore.Error("prometheus query", err)
 	}
 
-	yml := struct {
-		Status string
-		Data   struct {
-			Yaml string
-		}
-	}{}
-	if err := json.Unmarshal(body, &yml); err != nil || yml.Status != "success" {
-		return 0, gocore.Error("prometheus query "+yml.Status, err)
+	jsn := prometheusJson{}
+	if err := json.Unmarshal(body, &jsn); err != nil || jsn.Status != "success" {
+		return 0, gocore.Error("prometheus query "+jsn.Status, err)
 	}
 
-	ms, err := gocore.YamlMap(yml.Data.Yaml)
-	if err != nil {
+	yml := prometheusYaml{}
+	if err := yaml.Unmarshal([]byte(jsn.Data.Yaml), &yml); err != nil {
 		return 0, gocore.Error("prometheus yaml", err)
 	}
 
-	val := gocore.YamlValue([]string{"scrape_configs", "job_name", "gomon"}, []byte(yml.Data.Yaml))
-	if val == "" {
-		return 0, gocore.Error("prometheus", errors.New("not configured for gomon collection"))
+	for _, config := range yml.ScrapeConfigs {
+		if config.Jobname == "gomon" {
+			return time.ParseDuration(config.ScrapeInterval)
+		}
 	}
 
-	val = gocore.YamlValue([]string{"global", "scrape_interval"}, ms)
-	if dur, err := time.ParseDuration(val); err == nil {
-		return dur, nil
-	}
-
-	val = gocore.YamlValue([]string{"scrape_configs", "job_name", "gomon", "scrape_interval"}, []byte(yml.Data.Yaml))
-	return time.ParseDuration(val)
+	return time.ParseDuration(yml.Global.ScrapeInterval)
 }

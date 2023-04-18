@@ -163,7 +163,7 @@ func remove(f file, id string) {
 		abs := f.abs
 		for rel, f := range obs.watched {
 			f := f
-			if n, err := filepath.Rel(abs, f.abs); err == nil && (len(n) < 2 || n[:2] != "..") {
+			if _, err := gocore.Subdir(abs, f.abs); err == nil {
 				delete(obs.watched, rel)
 				if !f.isDir {
 					notify(fileDelete, id, f.abs, "")
