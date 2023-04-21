@@ -19,9 +19,14 @@ type (
 )
 
 var (
-	jsonEncoder *json.Encoder
+	// measureChan sends measurements for encoding.
+	measureChan = make(chan []Content, 100)
 
-	messageChan = make(chan []Content, 100)
+	// observeChan sends observations for encoding.
+	observeChan = make(chan []Content, 100)
+
+	// jsonEncoder encodes Content as JSON.
+	jsonEncoder *json.Encoder
 
 	// cache a time series stream of messages.
 	cache []Content
@@ -61,15 +66,21 @@ func Encoder(ctx context.Context) error {
 	return nil
 }
 
-// Encode calls the configured encoder function.
-func Encode(ms []Content) error {
-	messageChan <- ms
+// Measure sends measurements to encode.
+func Measure(ms []Content) error {
+	measureChan <- ms
+	return nil
+}
+
+// Observe sends observations to encode.
+func Observe(os []Content) error {
+	observeChan <- os
 	return nil
 }
 
 // encode runs as a goroutine that receives messages and encodes or caches them.
 func encode(ctx context.Context) {
-	var timer <-chan time.Time
+	var timer, ticker <-chan time.Time
 	if flags.rotate.interval > 0 {
 		tm := time.Now().UTC().Truncate(flags.rotate.interval)
 		// synchronize rotation to occur at the 'top' of the interval (day, hour, minute)
@@ -77,34 +88,44 @@ func encode(ctx context.Context) {
 	}
 
 	loki := lokiTest()
+	lokiTick := time.NewTicker(5 * time.Second).C
 	for {
 		select {
-		case ms := <-messageChan:
+		case ms := <-measureChan:
+			fileEncode(ms)
+		case ms := <-observeChan:
 			if loki {
 				loki = lokiEncode(ms)
 			}
-			if loki {
-				continue
+			if !loki {
+				fileEncode(ms)
 			}
-
-			if flags.rotate.interval == 0 {
-				for _, m := range ms {
-					jsonEncoder.Encode(m)
-				}
-			} else {
-				// gather json objects written to file into a single array object
-				cache = append(cache, ms...)
+		case <-lokiTick:
+			if !loki {
+				loki = lokiTest()
 			}
-		case t := <-timer:
-			timer = time.NewTicker(flags.rotate.interval).C
+		case t := <-timer: // first rotate on 'top' of interval
+			ticker = time.NewTicker(flags.rotate.interval).C // start subsequent ticking
+			Rotate(t)
+		case t := <-ticker:
 			Rotate(t)
 		case <-ctx.Done():
 			Close()
 			gocore.LogInfo("Encoder", ctx.Err())
 			return
 		}
+	}
+}
 
-		loki = lokiTest()
+// fileEncode encodes the content for writing to file.
+func fileEncode(ms []Content) {
+	if flags.rotate.interval == 0 {
+		for _, m := range ms {
+			jsonEncoder.Encode(m)
+		}
+	} else {
+		// gather json objects written to file into a single array object
+		cache = append(cache, ms...)
 	}
 }
 

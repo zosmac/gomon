@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"sync/atomic"
@@ -50,8 +51,15 @@ var (
 	// lastPrometheusCollection functions as a dead man's switch.
 	lastPrometheusCollection atomic.Value
 
-	// prometheusConfig is the REST query to retrieve the configuration.
-	prometheusConfig = "http://localhost:9090/api/v1/status/config"
+	// prometheusConfigRequest is the REST query to retrieve the configuration.
+	prometheusConfigRequest = http.Request{
+		Method: http.MethodGet,
+		URL: &url.URL{
+			Scheme: "http",
+			Host:   "localhost:9090",
+			Path:   "/api/v1/status/config",
+		},
+	}
 
 	// prometheusSample is the configured duration between prometheus samples.
 	prometheusSample time.Duration
@@ -167,7 +175,7 @@ func prometheusMetric(m message.Content, name, tag string, val reflect.Value) pr
 
 // scrapeInterval asks Prometheus for the scrape interval it will query gomon for metrics.
 func scrapeInterval() (time.Duration, error) {
-	resp, err := http.Get(prometheusConfig)
+	resp, err := http.DefaultClient.Do(&prometheusConfigRequest)
 	if err != nil {
 		return 0, gocore.Error("prometheus query", err)
 	}

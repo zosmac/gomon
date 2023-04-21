@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -32,9 +33,30 @@ type (
 	}
 )
 
+var (
+	lokiStatusRequest = http.Request{
+		Method: http.MethodGet,
+		URL: &url.URL{
+			Scheme: "http",
+			Host:   "localhost:3100",
+			Path:   "/ready",
+		},
+	}
+
+	lokiPushRequest = http.Request{
+		Method: http.MethodPost,
+		URL: &url.URL{
+			Scheme: "http",
+			Host:   "localhost:3100",
+			Path:   "/loki/api/v1/push",
+		},
+		Header: http.Header{"Content-Type": []string{"application/json"}},
+	}
+)
+
 // lokiTest pings for the Loki server to determine if it is ready for accepting file, log, and process observer observations.
 func lokiTest() bool {
-	if resp, err := http.DefaultClient.Get("http://localhost:3100/ready"); err == nil {
+	if resp, err := http.DefaultClient.Do(&lokiStatusRequest); err == nil {
 		buf, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err == nil && len(buf) >= 5 && string(buf[:5]) == "ready" {
@@ -77,11 +99,11 @@ func lokiFormatter(name, tag string, val reflect.Value) any {
 }
 
 // lokiEncode encodes file, log, and process observer observations as Loki streams.
-func lokiEncode(os []Content) bool {
+func lokiEncode(ms []Content) bool {
 	var s streams
-	for _, o := range os {
+	for _, m := range ms {
 		ls := map[string]string{}
-		for _, l := range gocore.Format("", "", reflect.ValueOf(o), lokiFormatter) {
+		for _, l := range gocore.Format("", "", reflect.ValueOf(m), lokiFormatter) {
 			l := l.(tuple)
 			ls[l[0]] = l[1]
 		}
@@ -108,11 +130,8 @@ func lokiEncode(os []Content) bool {
 	}
 
 	buf, _ := json.Marshal(s)
-	if resp, err := http.DefaultClient.Post(
-		"http://localhost:3100/loki/api/v1/push",
-		"application/json",
-		bytes.NewReader(buf),
-	); err == nil {
+	lokiPushRequest.Body = io.NopCloser(bytes.NewReader(buf))
+	if resp, err := http.DefaultClient.Do(&lokiPushRequest); err == nil {
 		resp.Body.Close()
 		return true
 	}

@@ -17,7 +17,6 @@ import (
 
 // filesystems returns a list of filesystems.
 // See man pages for getfsstat and statfs for Darwin.
-// func filesystems() ([]filesystem, error) {
 func filesystems() ([]message.Request, error) {
 	n, err := syscall.Getfsstat(nil, C.MNT_NOWAIT)
 	if err != nil {

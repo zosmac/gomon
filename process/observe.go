@@ -31,7 +31,7 @@ func Observer(ctx context.Context) error {
 
 	go func() {
 		for obs := range messageChan {
-			message.Encode([]message.Content{obs})
+			message.Observe([]message.Content{obs})
 		}
 	}()
 

@@ -86,16 +86,16 @@ func Observer(ctx context.Context) error {
 	}
 
 	go func() {
+		defer close()
 		for {
 			select {
 			case <-ctx.Done():
-				close()
 				return
 			case obs, ok := <-messageChan:
 				if !ok {
 					return
 				}
-				message.Encode([]message.Content{obs})
+				message.Observe([]message.Content{obs})
 			}
 		}
 	}()

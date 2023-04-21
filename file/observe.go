@@ -76,7 +76,7 @@ func Observer(ctx context.Context) error {
 				if !ok {
 					return
 				}
-				message.Encode([]message.Content{msg})
+				message.Observe([]message.Content{msg})
 			}
 		}
 	}()

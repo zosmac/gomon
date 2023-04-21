@@ -67,7 +67,7 @@ func Main(ctx context.Context) error {
 			last, ok := lastPrometheusCollection.Load().(time.Time)
 			if !ok || prometheusSample == 0 || t.Sub(last) > 2*prometheusSample {
 				ms := measure()
-				message.Encode(ms)
+				message.Measure(ms)
 				fmt.Fprintf(os.Stderr, "ENCODE %d measurements at %s\n\trequired %v\n",
 					len(ms), start.Format(gocore.TimeFormat), time.Since(start))
 			}
