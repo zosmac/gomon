@@ -85,7 +85,7 @@ func Measure() (ProcStats, []message.Content) {
 	return ps, ms
 }
 
-// BuildTable builds a process table and captures current process state
+// BuildTable builds a process table and captures current process state.
 func BuildTable() Table {
 	pids, err := getPids()
 	if err != nil {

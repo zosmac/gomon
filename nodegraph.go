@@ -85,28 +85,28 @@ func NodeGraph(req *http.Request) []byte {
 		nodes        = map[Pid]struct{}{}
 	)
 
-	pt := process.BuildTable()
-	tr := process.BuildTree(pt)
-	process.Connections(pt)
+	tb := process.BuildTable()
+	tr := process.BuildTree(tb)
+	process.Connections(tb)
 
 	query, _ := parseQuery(req)
-	if query.pid != 0 && pt[query.pid] == nil {
+	if query.pid != 0 && tb[query.pid] == nil {
 		query.pid = 0 // reset to default
 	}
 
-	ft := process.Table{}
+	pt := process.Table{}
 	if query.pid > 0 { // build this process' "extended family"
-		ft = family(pt, tr, query.pid)
+		pt = family(tb, tr, query.pid)
 	} else { // only consider non-daemon and remote host connected processes
-		for pid, p := range pt {
+		for pid, p := range tb {
 			if p.Ppid > 1 {
-				for pid, p := range family(pt, tr, pid) {
-					ft[pid] = p
+				for pid, p := range family(tb, tr, pid) {
+					pt[pid] = p
 				}
 			}
 			for _, conn := range p.Connections {
 				if conn.Peer.Pid < 0 {
-					ft[conn.Self.Pid] = pt[conn.Self.Pid]
+					pt[conn.Self.Pid] = tb[conn.Self.Pid]
 				}
 			}
 		}
@@ -114,7 +114,7 @@ func NodeGraph(req *http.Request) []byte {
 
 	em := map[string]string{}
 
-	for _, p := range ft {
+	for _, p := range pt {
 		for _, conn := range p.Connections {
 			if conn.Self.Pid == 0 || conn.Peer.Pid == 0 || // ignore kernel process
 				conn.Self.Pid == 1 || conn.Peer.Pid == 1 || // ignore launchd processes
@@ -159,7 +159,7 @@ func NodeGraph(req *http.Request) []byte {
 					color(conn.Self.Pid)+";0.5:"+color(conn.Peer.Pid),
 					conn.Type+":"+conn.Peer.Name,
 					conn.Self.Name,
-					shortname(pt, conn.Self.Pid),
+					shortname(tb, conn.Self.Pid),
 				)
 			} else if conn.Peer.Pid >= math.MaxInt32 { // peer is data
 				peer := conn.Type + ":" + conn.Peer.Name
@@ -184,14 +184,14 @@ func NodeGraph(req *http.Request) []byte {
 						conn.Self.Pid,
 						conn.Peer.Pid,
 						color(conn.Peer.Pid)+";0.5:"+color(conn.Self.Pid),
-						shortname(pt, conn.Self.Pid),
+						shortname(tb, conn.Self.Pid),
 						peer,
 					)
 				}
 			} else { // peer is process
 				include[conn.Peer.Pid] = struct{}{}
 
-				depth := len(pt[conn.Self.Pid].Ancestors)
+				depth := len(tb[conn.Self.Pid].Ancestors)
 				for i := len(processNodes); i <= depth; i++ {
 					processNodes = append(processNodes, 0)
 					processEdges = append(processEdges, "")
@@ -205,8 +205,8 @@ func NodeGraph(req *http.Request) []byte {
   %d -> %d [class=parent dir=forward tooltip="%s&#10142;%s\n"]`, // non-breaking space/hyphen
 						conn.Self.Pid,
 						conn.Peer.Pid,
-						shortname(pt, conn.Self.Pid),
-						shortname(pt, conn.Peer.Pid),
+						shortname(tb, conn.Self.Pid),
+						shortname(tb, conn.Peer.Pid),
 					)
 					continue
 				}
@@ -230,8 +230,8 @@ func NodeGraph(req *http.Request) []byte {
 					)
 				} else {
 					em[id] = fmt.Sprintf("%s&#10142;%s\n%s:%s&#10142;%s\n", // non-breaking space/hyphen
-						shortname(pt, conn.Self.Pid),
-						shortname(pt, conn.Peer.Pid),
+						shortname(tb, conn.Self.Pid),
+						shortname(tb, conn.Peer.Pid),
 						conn.Type,
 						conn.Self.Name,
 						conn.Peer.Name,
@@ -241,7 +241,7 @@ func NodeGraph(req *http.Request) []byte {
 		}
 	}
 
-	for pid, p := range pt {
+	for pid, p := range tb {
 		if _, ok := include[pid]; !ok {
 			continue
 		}
@@ -260,12 +260,12 @@ func NodeGraph(req *http.Request) []byte {
 			color(pid),
 			scheme,
 			flags.port,
-			pt[pid].Id.Name,
-			longname(pt, pid),
+			tb[pid].Id.Name,
+			longname(tb, pid),
 		)
 		processes[len(p.Ancestors)] += node
 
-		depth := len(pt[pid].Ancestors)
+		depth := len(tb[pid].Ancestors)
 
 		for edge, tooltip := range em {
 			fields := strings.Fields(edge)
@@ -319,7 +319,7 @@ func NodeGraph(req *http.Request) []byte {
 
 	var pslabel string
 	if query.pid > 0 {
-		pslabel = " Process: " + shortname(pt, query.pid)
+		pslabel = " Process: " + shortname(tb, query.pid)
 	}
 
 	glabel := fmt.Sprintf(
@@ -397,10 +397,10 @@ func parseQuery(r *http.Request) (query, error) {
 }
 
 // family identifies all of the ancestor and children processes of a process.
-func family(pt process.Table, tr process.Tree, pid Pid) process.Table {
-	ft := process.Table{}
-	for pid := pid; pid > 0; pid = pt[pid].Ppid { // ancestors
-		ft[pid] = pt[pid]
+func family(tb process.Table, tr process.Tree, pid Pid) process.Table {
+	pt := process.Table{}
+	for pid := pid; pid > 0; pid = tb[pid].Ppid { // ancestors
+		pt[pid] = tb[pid]
 	}
 
 	tr = tr.FindTree(pid)
@@ -408,14 +408,15 @@ func family(pt process.Table, tr process.Tree, pid Pid) process.Table {
 		return order(node, tr, pt)
 	}
 
-	pids := tr.Flatten(pt, o)
+	pids := tr.Flatten(tb, o)
 	for _, pid := range pids {
-		ft[pid] = pt[pid]
+		pt[pid] = tb[pid]
 	}
 
-	return ft
+	return pt
 }
 
+// order returns the process' depth in the tree for sorting.
 func order(node Pid, tr process.Tree, _ process.Table) int {
 	var depth int
 	for _, tr := range tr {
@@ -440,8 +441,8 @@ func depthTree(tr process.Tree) int {
 }
 
 // longname formats the full Executable name and pid.
-func longname(pt process.Table, pid Pid) string {
-	if p, ok := pt[pid]; ok {
+func longname(tb process.Table, pid Pid) string {
+	if p, ok := tb[pid]; ok {
 		name := p.Executable
 		if name == "" {
 			name = p.Id.Name
@@ -452,8 +453,8 @@ func longname(pt process.Table, pid Pid) string {
 }
 
 // shortname formats process name and pid.
-func shortname(pt process.Table, pid Pid) string {
-	if p, ok := pt[pid]; ok {
+func shortname(tb process.Table, pid Pid) string {
+	if p, ok := tb[pid]; ok {
 		return fmt.Sprintf("%s[%d]", p.Id.Name, pid)
 	}
 	return ""
