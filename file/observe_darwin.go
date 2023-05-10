@@ -25,7 +25,6 @@ import "C"
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strconv"
 	"unsafe"
@@ -69,7 +68,9 @@ func (h *handle) close() {
 // observe events and notify observer's callbacks.
 func observe() error {
 	if ok := bool(C.QueueStream(obs.stream)); !ok {
-		return gocore.Error("FSEventStreamStart failed", fmt.Errorf(obs.root))
+		return gocore.Error("FSEventStreamStart", errors.New("failed"), map[string]string{
+			"directory": obs.root,
+		})
 	}
 
 	paths := C.FSEventStreamCopyPathsBeingWatched(obs.stream)
@@ -81,7 +82,9 @@ func observe() error {
 		C.CFIndex(len(buf)),
 		C.kCFStringEncodingUTF8,
 	)
-	gocore.LogInfo("FSEventStream monitoring", errors.New(C.GoString(&buf[0])))
+	gocore.Error("FSEventStream monitoring", nil, map[string]string{
+		"directory": C.GoString(&buf[0]),
+	}).Info()
 
 	return nil
 }
@@ -170,7 +173,7 @@ func callback(stream C.ConstFSEventStreamRef, _ unsafe.Pointer, count C.size_t, 
 		}
 
 		if flag&C.kFSEventStreamEventFlagMustScanSubDirs != 0 {
-			gocore.LogInfo("FSEvents coalesced", errors.New("subdirectories rescanned"))
+			gocore.Error("FSEvents coalesced", errors.New("subdirectories rescanned")).Info()
 			obs.watched = map[string]file{}
 			watchDir(".", id)
 		}

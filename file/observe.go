@@ -60,10 +60,12 @@ func Observer(ctx context.Context) error {
 		return gocore.Error("watch", err)
 	}
 
-	gocore.LogInfo("observing files", errors.New(flags.fileDirectory))
+	gocore.Error("file observer", nil, map[string]string{
+		"directory": flags.fileDirectory,
+	}).Info()
 
 	if err := observe(); err != nil {
-		return gocore.Error("observe", err)
+		return gocore.Error("file observer", err)
 	}
 
 	go func() {
@@ -76,7 +78,7 @@ func Observer(ctx context.Context) error {
 				if !ok {
 					return
 				}
-				message.Observe([]message.Content{msg})
+				message.Observations([]message.Content{msg})
 			}
 		}
 	}()
@@ -111,7 +113,7 @@ func watchDir(rel, id string) error {
 	if err := filepath.WalkDir(filepath.Join(obs.root, rel), func(abs string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, fs.ErrPermission) {
-				gocore.LogError("WalkDir", err)
+				gocore.Error("WalkDir", err).Err()
 			}
 			return filepath.SkipDir
 		}

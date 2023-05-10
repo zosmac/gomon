@@ -3,7 +3,7 @@
 package logs
 
 import (
-	"errors"
+	"fmt"
 	"regexp"
 	"runtime"
 	"strings"
@@ -13,14 +13,14 @@ import (
 
 var (
 	// flags defines the command line flags.
-	flags = struct {
-		logLevel
+	Flags = struct {
+		LogEvent
 		// following flags are for linux only
 		logDirectory    string
 		logRegex        gocore.Regexp
 		logRegexExclude gocore.Regexp
 	}{
-		logLevel:     levelError,
+		LogEvent:     LevelError,
 		logDirectory: "/var/log",
 		logRegex: gocore.Regexp{
 			Regexp: regexp.MustCompile(`^.*\.log$`),
@@ -33,9 +33,9 @@ var (
 
 // init initializes the command line flags.
 func init() {
-	s := strings.Join(logLevels.ValidValues(), "|")
+	s := strings.Join(logEvents.ValidValues(), "|")
 	gocore.Flags.Var(
-		&flags.logLevel,
+		&Flags.LogEvent,
 		"loglevel",
 		"[-loglevel "+s+"]",
 		"Filter out log entries below this logging level threshold `"+s+"`",
@@ -43,19 +43,19 @@ func init() {
 
 	if runtime.GOOS == "linux" {
 		gocore.Flags.Var(
-			&flags.logDirectory,
+			&Flags.logDirectory,
 			"logdirectory",
 			"[-logdirectory <path>]",
 			"The `path` to the top of a directory hierarchy of log files to tail with names matching -logregex",
 		)
 		gocore.Flags.Var(
-			&flags.logRegex,
+			&Flags.logRegex,
 			"logregex",
 			"[-logregex <expression>]",
 			"A regular `expression` for selecting log files from the directory hierarchy to watch",
 		)
 		gocore.Flags.Var(
-			&flags.logRegexExclude,
+			&Flags.logRegexExclude,
 			"logregexexclude",
 			"[-logregexexclude <expression>]",
 			"A regular `expression` for excluding log files from the directory hierarchy to watch",
@@ -64,16 +64,16 @@ func init() {
 }
 
 // Set is a flag.Value interface method to enable logLevel as a command line flag.
-func (l *logLevel) Set(level string) error {
+func (l *LogEvent) Set(level string) error {
 	level = strings.ToLower(level)
-	if logLevels.IsValid(logLevel(level)) {
-		*l = logLevel(level)
+	if logEvents.IsValid(LogEvent(level)) {
+		*l = LogEvent(level)
 		return nil
 	}
-	return errors.New("valid values are " + strings.Join(logLevels.ValidValues(), ", "))
+	return fmt.Errorf("valid values are %s", strings.Join(logEvents.ValidValues(), ", "))
 }
 
 // String is a flag.Value interface method to enable logLevel as a command line flag.
-func (l *logLevel) String() string {
+func (l *LogEvent) String() string {
 	return string(*l)
 }

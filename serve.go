@@ -5,7 +5,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -41,6 +40,8 @@ func prometheusHandler() error {
 		promhttp.HandlerFor(registry, promhttp.HandlerOpts{}),
 	)
 
+	measures.Endpoints = append(measures.Endpoints, "metrics")
+
 	return nil
 }
 
@@ -49,12 +50,14 @@ func gomonHandler() error {
 	http.HandleFunc(
 		"/gomon/",
 		func(w http.ResponseWriter, r *http.Request) {
+			measures.HTTPRequests++
 			w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
 			w.Header().Add("Content-Type", "image/svg+xml")
 			w.Header().Add("Content-Encoding", "gzip")
 			w.Write(NodeGraph(r))
 		},
 	)
+	measures.Endpoints = append(measures.Endpoints, "gomon")
 	return nil
 }
 
@@ -92,7 +95,7 @@ func wsHandler() error {
 				buf := make([]byte, websocket.DefaultMaxPayloadBytes)
 				for {
 					if err := websocket.Message.Receive(ws, &buf); err != nil {
-						gocore.LogWarn("websocket Receive", err)
+						gocore.Error("websocket Receive", err).Warn()
 						ws.Close()
 						return
 					} else if bytes.HasPrefix(buf, []byte("suspend")) {
@@ -100,7 +103,7 @@ func wsHandler() error {
 					}
 
 					if err := websocket.Message.Send(ws, NodeGraph(ws.Request())); err != nil {
-						gocore.LogWarn("websocket Send", err)
+						gocore.Error("websocket Send", err).Warn()
 						ws.Close()
 						return
 					}
@@ -111,6 +114,7 @@ func wsHandler() error {
 			},
 		},
 	)
+	measures.Endpoints = append(measures.Endpoints, "ws")
 	return nil
 }
 
@@ -125,7 +129,7 @@ func assetHandler() error {
 	http.Handle("/assets/",
 		http.FileServer(http.Dir(mod.Dir)),
 	)
-
+	measures.Endpoints = append(measures.Endpoints, "assets")
 	return nil
 }
 
@@ -133,16 +137,16 @@ func assetHandler() error {
 func serve(ctx context.Context) {
 	// define http request handlers
 	if err := prometheusHandler(); err != nil {
-		gocore.LogWarn("prometheusHandler", err)
+		gocore.Error("prometheusHandler", err).Warn()
 	}
 	if err := gomonHandler(); err != nil {
-		gocore.LogWarn("gomonHandler", err)
+		gocore.Error("gomonHandler", err).Warn()
 	}
 	if err := wsHandler(); err != nil {
-		gocore.LogWarn("wsHandler", err)
+		gocore.Error("wsHandler", err).Warn()
 	}
 	if err := assetHandler(); err != nil {
-		gocore.LogWarn("assetHandler", err)
+		gocore.Error("assetHandler", err).Warn()
 	}
 
 	server := &http.Server{
@@ -176,7 +180,10 @@ func serve(ctx context.Context) {
 				}
 			}
 		}
-		gocore.LogInfo("gomon server listening", fmt.Errorf("%s://%s", scheme, server.Addr))
-		gocore.LogError("gomon server failed", serve())
+		gocore.Error("gomon server", nil, map[string]string{
+			"listen": scheme + "://" + server.Addr,
+		}).Info()
+		gocore.Error("gomon server", serve()).Err()
 	}()
+	measures.Address = scheme + "://" + server.Addr
 }

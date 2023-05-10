@@ -4,10 +4,10 @@ go 1.20
 
 require (
 	github.com/StackExchange/wmi v1.2.1
-	github.com/prometheus/client_golang v1.15.0
-	github.com/zosmac/gocore v0.0.0-20230418011617-318a785bcbb2
-	golang.org/x/net v0.9.0
-	golang.org/x/sys v0.7.0
+	github.com/prometheus/client_golang v1.15.1
+	github.com/zosmac/gocore v0.0.0-20230509235905-005df2e2892e
+	golang.org/x/net v0.10.0
+	golang.org/x/sys v0.8.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

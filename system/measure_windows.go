@@ -137,7 +137,7 @@ func cpu() CPU {
 		uintptr(unsafe.Pointer(&lpUserTime)),
 	)
 	if err != nil {
-		gocore.LogError("GetSystemTimes", err)
+		gocore.Error("GetSystemTimes", err).Err()
 		return CPU{}
 	}
 
@@ -162,7 +162,7 @@ func memory() (Memory, Swap) {
 		uintptr(unsafe.Pointer(&memoryStatusEx)),
 	)
 	if err != nil {
-		gocore.LogError("GlobalMemoryStatusEx", err)
+		gocore.Error("GlobalMemoryStatusEx", err).Err()
 	}
 
 	total := memoryStatusEx.ullTotalPhys

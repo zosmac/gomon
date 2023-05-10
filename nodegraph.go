@@ -66,7 +66,9 @@ func NodeGraph(req *http.Request) []byte {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
-			gocore.LogError("nodegraph", fmt.Errorf("%v\n%s", r, buf))
+			gocore.Error("nodegraph", fmt.Errorf("%v", r), map[string]string{
+				"stacktrace": string(buf),
+			}).Err()
 		}
 	}()
 
@@ -271,7 +273,6 @@ func NodeGraph(req *http.Request) []byte {
 			fields := strings.Fields(edge)
 			self, _ := strconv.Atoi(fields[0])
 			peer, _ := strconv.Atoi(fields[2])
-			// if strings.Fields(edge)[0] == strconv.Itoa(int(pid)) {
 			if Pid(self) == pid {
 				if tooltip != "" {
 					processEdges[depth] += fmt.Sprintf(`
@@ -370,7 +371,9 @@ func dot(graphviz string) []byte {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	if err := cmd.Run(); err != nil {
-		gocore.LogError("dot", fmt.Errorf("%w\n%s", err, stderr.Bytes()))
+		gocore.Error("dot", err, map[string]string{
+			"stderr": stderr.String(),
+		}).Err()
 		sc := bufio.NewScanner(strings.NewReader(graphviz))
 		for i := 1; sc.Scan(); i++ {
 			fmt.Fprintf(os.Stderr, "%4.d %s\n", i, sc.Text())

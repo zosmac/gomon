@@ -37,7 +37,7 @@ var (
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			gocore.LogError("sysctl kern.version", err)
+			gocore.Error("sysctl kern.version", err).Err()
 			return ""
 		}
 
@@ -50,7 +50,7 @@ var (
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			gocore.LogError("sysctl kern.version", err)
+			gocore.Error("sysctl kern.version", err).Err()
 			return ""
 		}
 
@@ -82,7 +82,7 @@ var (
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			gocore.LogError("sysctl kern.clockrate", err)
+			gocore.Error("sysctl kern.clockrate", err).Err()
 			return 10000 * time.Microsecond // just guess
 		}
 
@@ -135,7 +135,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		gocore.LogError("sysctl kern.maxproc", err)
+		gocore.Error("sysctl kern.maxproc", err).Err()
 		return l
 	}
 
@@ -148,7 +148,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		gocore.LogError("sysctl kern.maxfiles", err)
+		gocore.Error("sysctl kern.maxfiles", err).Err()
 		return l
 	}
 
@@ -161,7 +161,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		gocore.LogError("sysctl kern.maxfilesperproc", err)
+		gocore.Error("sysctl kern.maxfilesperproc", err).Err()
 		return l
 	}
 
@@ -174,7 +174,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		gocore.LogError("sysctl kern.maxprocperuid", err)
+		gocore.Error("sysctl kern.maxprocperuid", err).Err()
 		return l
 	}
 
@@ -187,7 +187,7 @@ func rlimits() Rlimits {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		gocore.LogError("sysctl kern.num_files", err)
+		gocore.Error("sysctl kern.num_files", err).Err()
 		return l
 	}
 
@@ -213,7 +213,7 @@ func cpu() CPU {
 	)
 
 	if status != C.KERN_SUCCESS {
-		gocore.LogError("host_statistics", kernReturn(status))
+		gocore.Error("host_statistics", kernReturn(status)).Err()
 		return CPU{}
 	}
 
@@ -235,7 +235,7 @@ func cpus() []CPU {
 	)
 
 	if status != C.KERN_SUCCESS {
-		gocore.LogError("host_processor_info", kernReturn(status))
+		gocore.Error("host_processor_info", kernReturn(status)).Err()
 		return nil
 	}
 
@@ -277,7 +277,7 @@ func memory() (Memory, Swap) {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		gocore.LogError("sysctl hw.memsize", err)
+		gocore.Error("sysctl hw.memsize", err).Err()
 	}
 
 	var vmi C.struct_vm_statistics64
@@ -290,7 +290,7 @@ func memory() (Memory, Swap) {
 		&number,
 	)
 	if status != C.KERN_SUCCESS {
-		gocore.LogError("host_statistics", kernReturn(status))
+		gocore.Error("host_statistics", kernReturn(status)).Err()
 	}
 
 	total := int(memsize)
@@ -310,7 +310,7 @@ func memory() (Memory, Swap) {
 		unsafe.Pointer(nil),
 		0,
 	); rv != 0 {
-		gocore.LogError("sysctl vm.swapusage", err)
+		gocore.Error("sysctl vm.swapusage", err).Err()
 	}
 
 	return Memory{

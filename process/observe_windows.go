@@ -3,8 +3,6 @@
 package process
 
 import (
-	"context"
-
 	"github.com/zosmac/gocore"
 )
 
@@ -22,11 +20,6 @@ func open() error {
 
 // close stops observing process events.
 func (h *handle) close() {
-}
-
-// observe for events and notify observer's callbacks.
-func endpoints(ctx context.Context) error {
-	return gocore.Unsupported()
 }
 
 // observe for events and notify observer's callbacks.

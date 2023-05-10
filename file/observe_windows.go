@@ -96,7 +96,7 @@ func observe() error {
 			); err != nil {
 				windows.Close(obs.Handle)
 				obs.Handle = windows.InvalidHandle
-				gocore.LogError("ReadDirectoryChanges", err)
+				gocore.Error("ReadDirectoryChanges", err).Err()
 				return
 			}
 

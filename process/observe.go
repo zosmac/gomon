@@ -21,7 +21,7 @@ func Observer(ctx context.Context) error {
 		return err
 	}
 
-	if err := endpoints(ctx); err != nil {
+	if err := Endpoints(ctx); err != nil {
 		return err
 	}
 
@@ -31,7 +31,7 @@ func Observer(ctx context.Context) error {
 
 	go func() {
 		for obs := range messageChan {
-			message.Observe([]message.Content{obs})
+			message.Observations([]message.Content{obs})
 		}
 	}()
 

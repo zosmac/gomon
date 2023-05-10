@@ -15,7 +15,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/zosmac/gocore"
-	"github.com/zosmac/gomon/message"
 
 	"gopkg.in/yaml.v3"
 )
@@ -87,13 +86,13 @@ func (c *prometheusCollector) Collect(ch chan<- prometheus.Metric) {
 		var err error
 		prometheusSample, err = scrapeInterval()
 		if err != nil {
-			gocore.LogError("prometheus config", err)
+			gocore.Error("prometheus config", err).Err()
 		}
 	}
 }
 
 // prometheusMetric complies with Formatter function prototype for encoding metrics as Prometheus metrics.
-func prometheusMetric(m message.Content, name, tag string, val reflect.Value) prometheus.Metric {
+func prometheusMetric(id string, name, tag string, val reflect.Value) prometheus.Metric {
 	var metric float64
 	var property string
 
@@ -103,7 +102,7 @@ func prometheusMetric(m message.Content, name, tag string, val reflect.Value) pr
 			metric = 0.0
 		} else {
 			metric = float64(v.UnixNano()) / 1e9 // convert to seconds
-			property = v.Format(gocore.TimeFormat)
+			property = v.Format(gocore.RFC3339Milli)
 		}
 	case int, int8, int16, int32, int64:
 		metric = float64(val.Int())
@@ -157,7 +156,7 @@ func prometheusMetric(m message.Content, name, tag string, val reflect.Value) pr
 			descs[name] = desc
 		}
 
-		return prometheus.MustNewConstMetric(desc, valueType, 0.0, m.ID(), property)
+		return prometheus.MustNewConstMetric(desc, valueType, 0.0, id, property)
 	}
 
 	desc, ok := descs[name]
@@ -170,7 +169,7 @@ func prometheusMetric(m message.Content, name, tag string, val reflect.Value) pr
 		descs[name] = desc
 	}
 
-	return prometheus.MustNewConstMetric(desc, valueType, metric, m.ID())
+	return prometheus.MustNewConstMetric(desc, valueType, metric, id)
 }
 
 // scrapeInterval asks Prometheus for the scrape interval it will query gomon for metrics.

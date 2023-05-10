@@ -2,5 +2,5 @@
 
 package main
 
-// go generate creates version.go to set vmmp and package dependencies for version.
+// go generate creates LICENSE file containing licenses of all package dependencies.
 //go:generate ./license.sh

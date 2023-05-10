@@ -10,7 +10,6 @@ import "C"
 
 import (
 	"errors"
-	"fmt"
 	"syscall"
 	"unsafe"
 
@@ -72,11 +71,17 @@ func observe() error {
 			for pid := range pids {
 				id, err := pid.id()
 				if err != nil {
-					gocore.LogError("fork", fmt.Errorf("ppid %d pid %d err %w", ppid, pid, err))
+					gocore.Error("fork", err, map[string]string{
+						"ppid": ppid.String(),
+						"pid":  pid.String(),
+					}).Err()
 					continue
 				}
 				if err := watch(kd, pid); err != nil {
-					gocore.LogError("fork", fmt.Errorf("ppid %d pid %d err %w", ppid, pid, err))
+					gocore.Error("fork", err, map[string]string{
+						"ppid": ppid.String(),
+						"pid":  pid.String(),
+					}).Err()
 					continue
 				}
 				id.ppid = ppid // preserve in case child reassigned to init process
@@ -90,14 +95,17 @@ func observe() error {
 				if errors.Is(err, syscall.EINTR) {
 					continue
 				}
-				gocore.LogError("Kevent", err)
+				gocore.Error("Kevent", err).Err()
 				return
 			}
 
 			for _, event := range events[:n] {
 				pid := Pid(event.Ident)
 				if event.Flags&syscall.EV_ERROR != 0 {
-					gocore.LogError("Kevent", fmt.Errorf("pid %d event %#v", pid, event))
+					err := syscall.Errno(event.Data)
+					gocore.Error("Kevent", err, map[string]string{
+						"pid": pid.String(),
+					}).Err()
 					continue
 				}
 
@@ -118,7 +126,9 @@ func observe() error {
 
 				if event.Fflags&syscall.NOTE_EXEC != 0 {
 					if id, err = pid.id(); err != nil {
-						gocore.LogError("exec", fmt.Errorf("pid %d, err %w", pid, err))
+						gocore.Error("exec", err, map[string]string{
+							"pid": pid.String(),
+						}).Err()
 						if ok {
 							delete(youth, pid)
 						}
@@ -158,7 +168,10 @@ func newKids(kd int, ppid Pid) {
 		}
 		if err != nil {
 			if !errors.Is(err, syscall.ESRCH) {
-				gocore.LogError("fork", fmt.Errorf("ppid %d pid %d err %w", ppid, pid, err))
+				gocore.Error("fork", err, map[string]string{
+					"ppid": ppid.String(),
+					"pid":  pid.String(),
+				}).Err()
 			}
 			continue
 		}

@@ -4,6 +4,7 @@ package logs
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -46,20 +47,18 @@ var (
 // open obtains a watch handle for observer.
 func open() error {
 	var err error
-	if flags.logDirectory, err = filepath.Abs(flags.logDirectory); err != nil {
+	if Flags.logDirectory, err = filepath.Abs(Flags.logDirectory); err != nil {
 		return gocore.Error("Abs", err)
 	}
-	if flags.logDirectory, err = filepath.EvalSymlinks(flags.logDirectory); err != nil {
+	if Flags.logDirectory, err = filepath.EvalSymlinks(Flags.logDirectory); err != nil {
 		return gocore.Error("EvalSymlinks", err)
 	}
 
-	gocore.LogInfo("observing logs",
-		fmt.Errorf("%q, include pattern: %s, exclude pattern: %s",
-			flags.logDirectory,
-			flags.logRegex,
-			flags.logRegexExclude,
-		),
-	)
+	gocore.Error("log observer", nil, map[string]string{
+		"directory":       Flags.logDirectory,
+		"include_pattern": Flags.logRegex.String(),
+		"exclude_pattern": Flags.logRegexExclude.String(),
+	}).Info()
 
 	nd, err = syscall.InotifyInit()
 	if err != nil {
@@ -83,14 +82,14 @@ func close() {
 }
 
 // observe inotify events and notify observer's callbacks.
-func observe() error {
+func observe(_ context.Context) error {
 	go func() {
 		for {
 			events := make([]byte, 16384)
 			n, err := syscall.Read(nd, events)
 			if err != nil {
 				if !errors.Is(err, syscall.EBADF) {
-					gocore.LogError("Read", err)
+					gocore.Error("Read", err).Err()
 				}
 				return
 			}
@@ -196,16 +195,16 @@ func Remove(pids []int) {
 
 // filter determines whether a log file should be watched.
 func filter(abs string) error {
-	if _, err := gocore.Subdir(flags.logDirectory, abs); err != nil {
-		return fmt.Errorf("%s not in %s path", abs, flags.logDirectory)
+	if _, err := gocore.Subdir(Flags.logDirectory, abs); err != nil {
+		return fmt.Errorf("%s not in %s path", abs, Flags.logDirectory)
 	}
 
-	if !flags.logRegex.MatchString(abs) {
-		return fmt.Errorf("%s no match %s", abs, flags.logRegex.String())
+	if !Flags.logRegex.MatchString(abs) {
+		return fmt.Errorf("%s no match %s", abs, Flags.logRegex.String())
 	}
 
-	if flags.logRegexExclude.MatchString(abs) {
-		return fmt.Errorf("%s excluded %s", abs, flags.logRegexExclude.String())
+	if Flags.logRegexExclude.MatchString(abs) {
+		return fmt.Errorf("%s excluded %s", abs, Flags.logRegexExclude.String())
 	}
 
 	return nil

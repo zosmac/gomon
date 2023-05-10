@@ -32,7 +32,7 @@ var (
 func (pid Pid) id() Id {
 	buf, err := os.ReadFile(filepath.Join("/proc", pid.String(), "stat"))
 	if err != nil {
-		gocore.LogError("ReadFile", err)
+		gocore.Error("ReadFile", err).Err()
 		return Id{}
 	}
 
@@ -52,7 +52,7 @@ func (pid Pid) id() Id {
 func (pid Pid) metrics() (Id, Properties, Metrics) {
 	buf, err := os.ReadFile(filepath.Join("/proc", pid.String(), "stat"))
 	if err != nil {
-		gocore.LogError("ReadFile", err)
+		gocore.Error("ReadFile", err).Err()
 		return Id{Pid: pid}, Properties{}, Metrics{}
 	}
 	fields := strings.Fields(string(buf))
@@ -131,7 +131,7 @@ func (pid Pid) io() Io {
 	i := Io{}
 	m, err := gocore.Measures(filepath.Join("/proc", pid.String(), "io"))
 	if err != nil {
-		gocore.LogError("Measures", err)
+		gocore.Error("Measures", err).Err()
 		return i
 	}
 

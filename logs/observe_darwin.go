@@ -17,26 +17,24 @@ import (
 )
 
 var (
-	ctx, cncl = context.WithCancel(context.Background())
-
 	// osLogLevels maps gomon log levels to OSLog message types
-	osLogLevels = map[logLevel]int{
-		levelTrace: 0,  // Default
-		levelDebug: 0,  // Default
-		levelInfo:  1,  // Info
-		levelWarn:  2,  // Debug
-		levelError: 16, // Error
-		levelFatal: 17, // Fault
+	osLogLevels = map[LogEvent]int{
+		LevelTrace: 0,  // Default
+		LevelDebug: 0,  // Default
+		LevelInfo:  1,  // Info
+		LevelWarn:  2,  // Debug
+		LevelError: 16, // Error
+		LevelFatal: 17, // Fault
 	}
 
 	// syslogLevels maps gomon log levels to syslog log levels
-	syslogLevels = map[logLevel]string{
-		levelTrace: "7", // Debug
-		levelDebug: "7", // Debug
-		levelInfo:  "6", // Info, Notice
-		levelWarn:  "4", // Warning
-		levelError: "3", // Error, Critical
-		levelFatal: "1", // Alert, Emergency
+	syslogLevels = map[LogEvent]string{
+		LevelTrace: "7", // Debug
+		LevelDebug: "7", // Debug
+		LevelInfo:  "6", // Info, Notice
+		LevelWarn:  "4", // Warning
+		LevelError: "3", // Error, Critical
+		LevelFatal: "1", // Alert, Emergency
 	}
 
 	// logRegex for parsing output from the log stream --predicate command.
@@ -72,11 +70,10 @@ func open() error {
 
 // close OS resources.
 func close() {
-	cncl()
 }
 
 // observe starts the macOS log and syslog commands as sub-processes to stream log entries.
-func observe() error {
+func observe(ctx context.Context) error {
 	err := logCommand(ctx)
 	if err == nil {
 		err = syslogCommand(ctx)
@@ -88,7 +85,7 @@ func observe() error {
 func logCommand(ctx context.Context) error {
 	predicate := fmt.Sprintf(
 		"(eventType == 'logEvent') AND (messageType >= %d) AND (NOT eventMessage BEGINSWITH[cd] '%s')",
-		osLogLevels[flags.logLevel],
+		osLogLevels[Flags.LogEvent],
 		"System Policy: gomon",
 	)
 
@@ -110,7 +107,7 @@ func logCommand(ctx context.Context) error {
 // syslogCommand starts the syslog command to capture syslog entries
 func syslogCommand(ctx context.Context) error {
 	sc, err := gocore.Spawn(ctx, append(strings.Fields("syslog -w 0 -T utc.3 -k Level Nle"),
-		syslogLevels[flags.logLevel]),
+		syslogLevels[Flags.LogEvent]),
 	)
 	if err != nil {
 		return gocore.Error("Spawn(syslog)", err)

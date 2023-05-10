@@ -3,6 +3,8 @@
 package logs
 
 import (
+	"context"
+
 	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 )
@@ -16,7 +18,7 @@ func open() error {
 func close() {
 }
 
-func observe() error {
+func observe(_ context.Context) error {
 	return gocore.Unsupported()
 }
 

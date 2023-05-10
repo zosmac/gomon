@@ -4,10 +4,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,10 +34,8 @@ func Main(ctx context.Context) error {
 		return nil
 	}
 
-	gocore.LogInfo("start", fmt.Errorf("pid=%d", os.Getpid()))
-
 	if err := message.Encoder(ctx); err != nil {
-		return gocore.Error("Encoder", err)
+		return gocore.Error("encoder", err)
 	}
 
 	if err := logs.Observer(ctx); err != nil {
@@ -55,26 +53,38 @@ func Main(ctx context.Context) error {
 	// fire up the http server
 	serve(ctx)
 
+	gocore.Error("start", nil, map[string]string{
+		"pid":        strconv.Itoa(os.Getpid()),
+		"command":    strings.Join(os.Args, " "),
+		"executable": gocore.Executable,
+		"version":    gocore.Version,
+		"user":       gocore.Username(os.Getuid()),
+	}).Info()
+
 	// capture and write with encoder
 	ticker := flags.sample.alignTicker()
 	for {
 		select {
 		case <-ctx.Done():
-			return gocore.Error("exit "+os.Args[0], ctx.Err())
+			return gocore.Error("stop", ctx.Err(), map[string]string{
+				"command": os.Args[0],
+			})
 
 		case t := <-ticker.C:
 			start := time.Now()
 			last, ok := lastPrometheusCollection.Load().(time.Time)
 			if !ok || prometheusSample == 0 || t.Sub(last) > 2*prometheusSample {
 				ms := measure()
-				message.Measure(ms)
-				fmt.Fprintf(os.Stderr, "ENCODE %d measurements at %s\n\trequired %v\n",
-					len(ms), start.Format(gocore.TimeFormat), time.Since(start))
+				message.Measurements(ms)
+				gocore.Error("encode", nil, map[string]string{
+					"count": strconv.Itoa(len(ms)),
+					"time":  time.Since(start).String(),
+				}).Info()
 			}
 
 		case ch := <-prometheusChan:
-			start := time.Now()
-			var count int
+			count := measures.Collections
+			start := measures.CollectionTime
 			for _, m := range measure() {
 				gocore.Format(
 					"gomon_"+path.Base(reflect.Indirect(reflect.ValueOf(m)).Type().PkgPath()),
@@ -82,22 +92,26 @@ func Main(ctx context.Context) error {
 					reflect.ValueOf(m),
 					func(name, tag string, val reflect.Value) any {
 						if !strings.HasPrefix(tag, "property") {
-							ch <- prometheusMetric(m, name, tag, val)
-							count++
+							ch <- prometheusMetric(m.ID(), name, tag, val)
+							measures.Collections++
 						}
 						return nil
 					},
 				)
 			}
+			gocore.Error("collect", nil, map[string]string{
+				"count": strconv.Itoa(measures.Collections - count),
+				"time":  (measures.CollectionTime - start).String(),
+			}).Info()
 			prometheusDone <- struct{}{}
-			fmt.Fprintf(os.Stderr, "COLLECT %d metrics at %s\n\trequired %v\n",
-				count, start.Format(gocore.TimeFormat), time.Since(start))
 		}
 	}
 }
 
 // measure gathers measurements of each subsystem.
 func measure() (ms []message.Content) {
+	start := time.Now()
+
 	ps, pm := process.Measure()
 	sm := system.Measure(ps)
 	ms = append(ms, sm)
@@ -105,5 +119,10 @@ func measure() (ms []message.Content) {
 	ms = append(ms, io.Measure()...)
 	ms = append(ms, filesystem.Measure()...)
 	ms = append(ms, network.Measure()...)
+
+	measures.CollectionTime += time.Since(start)
+	measures.LokiStreams += message.LokiStreams
+	ms = append(ms, &measures)
+
 	return
 }

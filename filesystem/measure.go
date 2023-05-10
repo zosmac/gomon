@@ -13,7 +13,7 @@ import (
 func Measure() []message.Content {
 	qs, err := filesystems()
 	if err != nil {
-		gocore.LogError("filesystems", err)
+		gocore.Error("filesystems", err).Err()
 		return nil
 	}
 

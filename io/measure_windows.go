@@ -132,7 +132,7 @@ func Measure() (ms []message.Content) {
 
 	wos := []win32LogicalDisk{}
 	if err := wmi.Query(wmi.CreateQuery(&wos, ""), &wos); err != nil {
-		gocore.LogError("CreateQuery", err)
+		gocore.Error("CreateQuery", err).Err()
 		return
 	}
 
@@ -175,7 +175,7 @@ func Measure() (ms []message.Content) {
 			0,
 		)
 		if err != nil {
-			gocore.LogError("CreateFile", err)
+			gocore.Error("CreateFile", err).Err()
 			continue
 		}
 
@@ -195,7 +195,7 @@ func Measure() (ms []message.Content) {
 			nil,
 		)
 		if err != nil {
-			gocore.LogError("DeviceIoControl", err)
+			gocore.Error("DeviceIoControl", err).Err()
 			return
 		}
 

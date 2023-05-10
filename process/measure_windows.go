@@ -95,24 +95,24 @@ const (
 func (pid Pid) metrics() (Id, Properties, Metrics) {
 	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION|windows.PROCESS_VM_READ, false, uint32(pid))
 	if err != nil {
-		gocore.LogError("OpenProcess", err)
+		gocore.Error("OpenProcess", err).Err()
 		return Id{Pid: pid}, Properties{}, Metrics{}
 	}
 	defer windows.CloseHandle(handle)
 
 	var token windows.Token
 	if err = windows.OpenProcessToken(handle, windows.TOKEN_QUERY, &token); err != nil {
-		gocore.LogInfo("OpenProcessToken", err)
+		gocore.Error("OpenProcessToken", err).Info()
 	}
 
 	u, err := token.GetTokenUser()
 	if err != nil {
-		gocore.LogInfo("GetTokenUser", err)
+		gocore.Error("GetTokenUser", err).Info()
 	}
 
 	account, domain, _, err := u.User.Sid.LookupAccount("")
 	if err != nil {
-		gocore.LogInfo("LookupAccount", err)
+		gocore.Error("LookupAccount", err).Info()
 	}
 
 	var name [windows.MAX_PATH + 1]uint16
@@ -122,7 +122,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 		windows.MAX_PATH+1,
 	)
 	if n == 0 {
-		gocore.LogInfo("GetProcessImageFileName", err)
+		gocore.Error("GetProcessImageFileName", err).Info()
 	}
 
 	var lpCreationTime, lpExitTime, lpKernelTime, lpUserTime windows.Filetime
@@ -134,7 +134,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 		&lpUserTime,
 	)
 	if err != nil {
-		gocore.LogInfo("GetProcessTimes", err)
+		gocore.Error("GetProcessTimes", err).Info()
 	}
 
 	processMemoryCounters := processMemoryCountersEx{
@@ -146,7 +146,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 		uintptr(unsafe.Sizeof(processMemoryCounters)),
 	)
 	if err != nil {
-		gocore.LogInfo("GetProcessMemoryInfo", err)
+		gocore.Error("GetProcessMemoryInfo", err).Info()
 	}
 
 	wp := []win32Process{}
@@ -157,7 +157,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 		),
 		&wp,
 	); err != nil {
-		gocore.LogInfo("Win32_Process", err)
+		gocore.Error("Win32_Process", err).Info()
 		wp = []win32Process{win32Process{}}
 	}
 
@@ -194,7 +194,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 func (pid Pid) io() Io {
 	handle, err := windows.OpenProcess(processAllAccess, false, uint32(pid))
 	if err != nil {
-		gocore.LogError("OpenProcess", err)
+		gocore.Error("OpenProcess", err).Err()
 		return Io{}
 	}
 	defer windows.CloseHandle(handle)
@@ -205,7 +205,7 @@ func (pid Pid) io() Io {
 		uintptr(unsafe.Pointer(&ioCounters)),
 	)
 	if ret == 0 {
-		gocore.LogError("GetProcessIoCounters", err)
+		gocore.Error("GetProcessIoCounters", err).Err()
 		return Io{}
 	}
 

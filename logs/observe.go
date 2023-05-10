@@ -36,42 +36,42 @@ var (
 	messageChan = make(chan *observation, 100)
 
 	// levelMap maps various applications' log levels to a common set fatal/error/warn/info/debug/trace.
-	levelMap = map[string]logLevel{
-		"emerg":      levelFatal, // Apache
-		"emergency":  levelFatal, // syslog
-		"fatal":      levelFatal,
-		"fault":      levelFatal, // macOS
-		"panic":      levelFatal, // syslog, Postgres
-		"alert":      levelError, // syslog, Apache
-		"crash":      levelError, // RabbitMQ
-		"crit":       levelError, // syslog, Apache
-		"critical":   levelError, // syslog, RabbitMQ
-		"err":        levelError, // syslog, Consul, Vault
-		"error":      levelError,
-		"supervisor": levelWarn, // RabbitMQ
-		"warn":       levelWarn,
-		"warning":    levelWarn, // syslog, Postgres
-		"info":       levelInfo,
-		"":           levelInfo, // treat unknown as info
-		"log":        levelInfo, // Postgres
-		"notice":     levelInfo, // syslog, Postgres, Apache, macOS
-		"statement":  levelInfo, // Postgres
-		"debug":      levelDebug,
-		"debug1":     levelDebug, // Postgres
-		"debug2":     levelDebug, // Postgres
-		"debug3":     levelDebug, // Postgres
-		"debug4":     levelDebug, // Postgres
-		"debug5":     levelDebug, // Postgres
-		"default":    levelDebug, // macOS
-		"trace":      levelTrace,
-		"trace1":     levelTrace, // Apache
-		"trace2":     levelTrace, // Apache
-		"trace3":     levelTrace, // Apache
-		"trace4":     levelTrace, // Apache
-		"trace5":     levelTrace, // Apache
-		"trace6":     levelTrace, // Apache
-		"trace7":     levelTrace, // Apache
-		"trace8":     levelTrace, // Apache
+	levelMap = map[string]LogEvent{
+		"emerg":      LevelFatal, // Apache
+		"emergency":  LevelFatal, // syslog
+		"fatal":      LevelFatal,
+		"fault":      LevelFatal, // macOS
+		"panic":      LevelFatal, // syslog, Postgres
+		"alert":      LevelError, // syslog, Apache
+		"crash":      LevelError, // RabbitMQ
+		"crit":       LevelError, // syslog, Apache
+		"critical":   LevelError, // syslog, RabbitMQ
+		"err":        LevelError, // syslog, Consul, Vault
+		"error":      LevelError,
+		"supervisor": LevelWarn, // RabbitMQ
+		"warn":       LevelWarn,
+		"warning":    LevelWarn, // syslog, Postgres
+		"info":       LevelInfo,
+		"":           LevelInfo, // treat unknown as info
+		"log":        LevelInfo, // Postgres
+		"notice":     LevelInfo, // syslog, Postgres, Apache, macOS
+		"statement":  LevelInfo, // Postgres
+		"debug":      LevelDebug,
+		"debug1":     LevelDebug, // Postgres
+		"debug2":     LevelDebug, // Postgres
+		"debug3":     LevelDebug, // Postgres
+		"debug4":     LevelDebug, // Postgres
+		"debug5":     LevelDebug, // Postgres
+		"default":    LevelDebug, // macOS
+		"trace":      LevelTrace,
+		"trace1":     LevelTrace, // Apache
+		"trace2":     LevelTrace, // Apache
+		"trace3":     LevelTrace, // Apache
+		"trace4":     LevelTrace, // Apache
+		"trace5":     LevelTrace, // Apache
+		"trace6":     LevelTrace, // Apache
+		"trace7":     LevelTrace, // Apache
+		"trace8":     LevelTrace, // Apache
 	}
 )
 
@@ -81,7 +81,7 @@ func Observer(ctx context.Context) error {
 		return gocore.Error("open", err)
 	}
 
-	if err := observe(); err != nil {
+	if err := observe(ctx); err != nil {
 		return gocore.Error("observe", err)
 	}
 
@@ -95,7 +95,7 @@ func Observer(ctx context.Context) error {
 				if !ok {
 					return
 				}
-				message.Observe([]message.Content{obs})
+				message.Observations([]message.Content{obs})
 			}
 		}
 	}()
@@ -120,7 +120,7 @@ func parseLog(sc *bufio.Scanner, regex *regexp.Regexp, format string) {
 
 		if runtime.GOOS == "linux" {
 			level := levelMap[strings.ToLower(match[groups[groupLevel]])]
-			if !logLevels.IsValid(level) || logLevels.Index(level) < logLevels.Index(flags.logLevel) {
+			if !logEvents.IsValid(level) || logEvents.Index(level) < logEvents.Index(Flags.LogEvent) {
 				continue
 			}
 

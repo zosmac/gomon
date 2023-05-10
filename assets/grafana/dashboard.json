@@ -71,8 +71,8 @@
                ]
             },
             "gridPos" : {
-               "h" : 3,
-               "w" : 5,
+               "h" : 4,
+               "w" : 4,
                "x" : 0,
                "y" : 0
             },
@@ -138,6 +138,519 @@
             "fieldConfig" : {
                "defaults" : {
                   "color" : {
+                     "mode" : "thresholds"
+                  },
+                  "mappings" : [],
+                  "thresholds" : {
+                     "mode" : "percentage",
+                     "steps" : [
+                        {
+                           "color" : "blue",
+                           "value" : null
+                        }
+                     ]
+                  },
+                  "unit" : "decbytes"
+               },
+               "overrides" : [
+                  {
+                     "matcher" : {
+                        "id" : "byName",
+                        "options" : "Percent"
+                     },
+                     "properties" : [
+                        {
+                           "id" : "unit",
+                           "value" : "percentunit"
+                        },
+                        {
+                           "id" : "thresholds",
+                           "value" : {
+                              "mode" : "percentage",
+                              "steps" : [
+                                 {
+                                    "color" : "green",
+                                    "value" : null
+                                 },
+                                 {
+                                    "color" : "yellow",
+                                    "value" : 75
+                                 },
+                                 {
+                                    "color" : "red",
+                                    "value" : 90
+                                 }
+                              ]
+                           }
+                        },
+                        {
+                           "id" : "max",
+                           "value" : 1
+                        },
+                        {
+                           "id" : "min",
+                           "value" : 0
+                        }
+                     ]
+                  }
+               ]
+            },
+            "gridPos" : {
+               "h" : 4,
+               "w" : 3,
+               "x" : 4,
+               "y" : 0
+            },
+            "id" : 25,
+            "options" : {
+               "colorMode" : "background",
+               "graphMode" : "none",
+               "justifyMode" : "auto",
+               "orientation" : "horizontal",
+               "reduceOptions" : {
+                  "calcs" : [
+                     "lastNotNull"
+                  ],
+                  "fields" : "",
+                  "values" : false
+               },
+               "text" : {
+                  "titleSize" : 14,
+                  "valueSize" : 14
+               },
+               "textMode" : "value_and_name"
+            },
+            "pluginVersion" : "9.4.0-beta1",
+            "targets" : [
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "editorMode" : "code",
+                  "exemplar" : false,
+                  "expr" : "gomon_system_memory_total_bytes",
+                  "format" : "time_series",
+                  "hide" : false,
+                  "instant" : true,
+                  "interval" : "",
+                  "legendFormat" : "Total",
+                  "range" : false,
+                  "refId" : "A"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "editorMode" : "code",
+                  "exemplar" : false,
+                  "expr" : "gomon_system_memory_used_actual_bytes",
+                  "instant" : true,
+                  "interval" : "",
+                  "legendFormat" : "Used",
+                  "range" : false,
+                  "refId" : "B"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "editorMode" : "code",
+                  "exemplar" : false,
+                  "expr" : "gomon_system_memory_used_actual_bytes/gomon_system_memory_total_bytes",
+                  "format" : "time_series",
+                  "hide" : false,
+                  "instant" : true,
+                  "legendFormat" : "Percent",
+                  "range" : false,
+                  "refId" : "C"
+               }
+            ],
+            "title" : "Memory",
+            "transparent" : true,
+            "type" : "stat"
+         },
+         {
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "JBvRr714k"
+            },
+            "description" : "",
+            "fieldConfig" : {
+               "defaults" : {
+                  "color" : {
+                     "mode" : "thresholds"
+                  },
+                  "mappings" : [],
+                  "thresholds" : {
+                     "mode" : "absolute",
+                     "steps" : [
+                        {
+                           "color" : "blue",
+                           "value" : null
+                        }
+                     ]
+                  },
+                  "unit" : "none"
+               },
+               "overrides" : [
+                  {
+                     "matcher" : {
+                        "id" : "byName",
+                        "options" : "Usage"
+                     },
+                     "properties" : [
+                        {
+                           "id" : "unit",
+                           "value" : "percentunit"
+                        },
+                        {
+                           "id" : "thresholds",
+                           "value" : {
+                              "mode" : "percentage",
+                              "steps" : [
+                                 {
+                                    "color" : "green",
+                                    "value" : null
+                                 },
+                                 {
+                                    "color" : "yellow",
+                                    "value" : 75
+                                 },
+                                 {
+                                    "color" : "red",
+                                    "value" : 90
+                                 }
+                              ]
+                           }
+                        },
+                        {
+                           "id" : "max",
+                           "value" : 1
+                        },
+                        {
+                           "id" : "min",
+                           "value" : 0
+                        }
+                     ]
+                  }
+               ]
+            },
+            "gridPos" : {
+               "h" : 3,
+               "w" : 3,
+               "x" : 7,
+               "y" : 0
+            },
+            "id" : 18,
+            "options" : {
+               "colorMode" : "background",
+               "graphMode" : "none",
+               "justifyMode" : "auto",
+               "orientation" : "horizontal",
+               "reduceOptions" : {
+                  "calcs" : [
+                     "lastNotNull"
+                  ],
+                  "fields" : "",
+                  "values" : false
+               },
+               "text" : {
+                  "titleSize" : 14,
+                  "valueSize" : 14
+               },
+               "textMode" : "value_and_name"
+            },
+            "pluginVersion" : "9.4.0-beta1",
+            "targets" : [
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "editorMode" : "code",
+                  "exemplar" : false,
+                  "expr" : "gomon_system_cpu_count",
+                  "instant" : true,
+                  "interval" : "",
+                  "legendFormat" : "Count",
+                  "range" : false,
+                  "refId" : "A"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "editorMode" : "code",
+                  "exemplar" : false,
+                  "expr" : "(rate(gomon_system_cpu_system_seconds[$__rate_interval])+rate(gomon_system_cpu_user_seconds[$__rate_interval]))/rate(gomon_system_cpu_total_seconds[$__rate_interval])",
+                  "hide" : false,
+                  "instant" : true,
+                  "interval" : "",
+                  "legendFormat" : "Usage",
+                  "range" : false,
+                  "refId" : "B"
+               }
+            ],
+            "title" : "CPU",
+            "transparent" : true,
+            "type" : "stat"
+         },
+         {
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "JBvRr714k"
+            },
+            "fieldConfig" : {
+               "defaults" : {
+                  "color" : {
+                     "mode" : "palette-classic"
+                  },
+                  "custom" : {
+                     "axisCenteredZero" : false,
+                     "axisColorMode" : "series",
+                     "axisLabel" : "",
+                     "axisPlacement" : "right",
+                     "barAlignment" : 0,
+                     "drawStyle" : "line",
+                     "fillOpacity" : 0,
+                     "gradientMode" : "none",
+                     "hideFrom" : {
+                        "graph" : false,
+                        "legend" : false,
+                        "tooltip" : false,
+                        "viz" : false
+                     },
+                     "lineInterpolation" : "linear",
+                     "lineWidth" : 1,
+                     "pointSize" : 3,
+                     "scaleDistribution" : {
+                        "type" : "linear"
+                     },
+                     "showPoints" : "auto",
+                     "spanNulls" : true,
+                     "stacking" : {
+                        "group" : "A",
+                        "mode" : "none"
+                     },
+                     "thresholdsStyle" : {
+                        "mode" : "off"
+                     }
+                  },
+                  "decimals" : 1,
+                  "mappings" : [],
+                  "thresholds" : {
+                     "mode" : "absolute",
+                     "steps" : [
+                        {
+                           "color" : "green",
+                           "value" : null
+                        }
+                     ]
+                  },
+                  "unit" : "short"
+               },
+               "overrides" : []
+            },
+            "gridPos" : {
+               "h" : 5,
+               "w" : 5,
+               "x" : 10,
+               "y" : 0
+            },
+            "id" : 16,
+            "options" : {
+               "graph" : {},
+               "legend" : {
+                  "calcs" : [],
+                  "displayMode" : "list",
+                  "placement" : "bottom",
+                  "showLegend" : false
+               },
+               "tooltip" : {
+                  "mode" : "multi",
+                  "sort" : "none"
+               }
+            },
+            "pluginVersion" : "8.2.4",
+            "targets" : [
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "exemplar" : true,
+                  "expr" : "gomon_system_load_average_one_minute",
+                  "interval" : "",
+                  "legendFormat" : "load average 1",
+                  "refId" : "A"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "exemplar" : true,
+                  "expr" : "gomon_system_load_average_five_minute",
+                  "interval" : "",
+                  "legendFormat" : "load average 5",
+                  "refId" : "B"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "exemplar" : true,
+                  "expr" : "gomon_system_load_average_fifteen_minute",
+                  "interval" : "",
+                  "legendFormat" : "load average 15",
+                  "refId" : "C"
+               }
+            ],
+            "title" : "Load Averages",
+            "transparent" : true,
+            "type" : "timeseries"
+         },
+         {
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "JBvRr714k"
+            },
+            "fieldConfig" : {
+               "defaults" : {
+                  "color" : {
+                     "mode" : "palette-classic"
+                  },
+                  "custom" : {
+                     "axisCenteredZero" : false,
+                     "axisColorMode" : "series",
+                     "axisLabel" : "",
+                     "axisPlacement" : "right",
+                     "barAlignment" : 0,
+                     "drawStyle" : "line",
+                     "fillOpacity" : 0,
+                     "gradientMode" : "none",
+                     "hideFrom" : {
+                        "legend" : false,
+                        "tooltip" : false,
+                        "viz" : false
+                     },
+                     "lineInterpolation" : "linear",
+                     "lineWidth" : 1,
+                     "pointSize" : 3,
+                     "scaleDistribution" : {
+                        "type" : "linear"
+                     },
+                     "showPoints" : "auto",
+                     "spanNulls" : false,
+                     "stacking" : {
+                        "group" : "A",
+                        "mode" : "none"
+                     },
+                     "thresholdsStyle" : {
+                        "mode" : "off"
+                     }
+                  },
+                  "mappings" : [],
+                  "thresholds" : {
+                     "mode" : "absolute",
+                     "steps" : [
+                        {
+                           "color" : "green",
+                           "value" : null
+                        },
+                        {
+                           "color" : "red",
+                           "value" : 80
+                        }
+                     ]
+                  }
+               },
+               "overrides" : [
+                  {
+                     "matcher" : {
+                        "id" : "byName",
+                        "options" : "gomon collection time"
+                     },
+                     "properties" : [
+                        {
+                           "id" : "custom.axisPlacement",
+                           "value" : "auto"
+                        },
+                        {
+                           "id" : "unit",
+                           "value" : "s"
+                        }
+                     ]
+                  }
+               ]
+            },
+            "gridPos" : {
+               "h" : 5,
+               "w" : 8,
+               "x" : 15,
+               "y" : 0
+            },
+            "id" : 26,
+            "options" : {
+               "legend" : {
+                  "calcs" : [],
+                  "displayMode" : "list",
+                  "placement" : "bottom",
+                  "showLegend" : false
+               },
+               "tooltip" : {
+                  "mode" : "multi",
+                  "sort" : "none"
+               }
+            },
+            "targets" : [
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "editorMode" : "code",
+                  "exemplar" : true,
+                  "expr" : "rate(gomon_main_collections[$__rate_interval])",
+                  "instant" : false,
+                  "key" : "Q-b42f8d77-3dd8-49c0-90c1-d1da26dfe2bb-0",
+                  "legendFormat" : "{{id}} collections",
+                  "range" : true,
+                  "refId" : "A"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "editorMode" : "code",
+                  "exemplar" : true,
+                  "expr" : "rate(gomon_main_collection_time_seconds[$__rate_interval])",
+                  "instant" : false,
+                  "key" : "Q-7f6a36dd-dfaf-4e7f-909d-6156e36ae533-1",
+                  "legendFormat" : "{{id}} collection time",
+                  "range" : true,
+                  "refId" : "B"
+               }
+            ],
+            "title" : "Prometheus Collections",
+            "transparent" : true,
+            "type" : "timeseries"
+         },
+         {
+            "datasource" : {
+               "type" : "prometheus",
+               "uid" : "JBvRr714k"
+            },
+            "description" : "",
+            "fieldConfig" : {
+               "defaults" : {
+                  "color" : {
                      "mode" : "palette-classic"
                   },
                   "custom" : {
@@ -187,9 +700,9 @@
             },
             "gridPos" : {
                "h" : 8,
-               "w" : 9,
-               "x" : 5,
-               "y" : 0
+               "w" : 12,
+               "x" : 0,
+               "y" : 5
             },
             "id" : 4,
             "options" : {
@@ -347,9 +860,9 @@
             },
             "gridPos" : {
                "h" : 8,
-               "w" : 9,
-               "x" : 14,
-               "y" : 0
+               "w" : 11,
+               "x" : 12,
+               "y" : 5
             },
             "id" : 2,
             "options" : {
@@ -385,276 +898,6 @@
             "title" : "Process CPU Usage",
             "transparent" : true,
             "type" : "timeseries"
-         },
-         {
-            "datasource" : {
-               "type" : "prometheus",
-               "uid" : "JBvRr714k"
-            },
-            "description" : "",
-            "fieldConfig" : {
-               "defaults" : {
-                  "color" : {
-                     "mode" : "thresholds"
-                  },
-                  "mappings" : [],
-                  "thresholds" : {
-                     "mode" : "percentage",
-                     "steps" : [
-                        {
-                           "color" : "blue",
-                           "value" : null
-                        }
-                     ]
-                  },
-                  "unit" : "decbytes"
-               },
-               "overrides" : [
-                  {
-                     "matcher" : {
-                        "id" : "byName",
-                        "options" : "Percent"
-                     },
-                     "properties" : [
-                        {
-                           "id" : "unit",
-                           "value" : "percentunit"
-                        },
-                        {
-                           "id" : "thresholds",
-                           "value" : {
-                              "mode" : "percentage",
-                              "steps" : [
-                                 {
-                                    "color" : "green",
-                                    "value" : null
-                                 },
-                                 {
-                                    "color" : "yellow",
-                                    "value" : 75
-                                 },
-                                 {
-                                    "color" : "red",
-                                    "value" : 90
-                                 }
-                              ]
-                           }
-                        },
-                        {
-                           "id" : "max",
-                           "value" : 1
-                        },
-                        {
-                           "id" : "min",
-                           "value" : 0
-                        }
-                     ]
-                  }
-               ]
-            },
-            "gridPos" : {
-               "h" : 4,
-               "w" : 5,
-               "x" : 0,
-               "y" : 3
-            },
-            "id" : 25,
-            "options" : {
-               "colorMode" : "background",
-               "graphMode" : "none",
-               "justifyMode" : "auto",
-               "orientation" : "horizontal",
-               "reduceOptions" : {
-                  "calcs" : [
-                     "lastNotNull"
-                  ],
-                  "fields" : "",
-                  "values" : false
-               },
-               "text" : {
-                  "titleSize" : 14,
-                  "valueSize" : 14
-               },
-               "textMode" : "value_and_name"
-            },
-            "pluginVersion" : "9.4.0-beta1",
-            "targets" : [
-               {
-                  "datasource" : {
-                     "type" : "prometheus",
-                     "uid" : "JBvRr714k"
-                  },
-                  "editorMode" : "code",
-                  "exemplar" : false,
-                  "expr" : "gomon_system_memory_total_bytes",
-                  "format" : "time_series",
-                  "hide" : false,
-                  "instant" : true,
-                  "interval" : "",
-                  "legendFormat" : "Total",
-                  "range" : false,
-                  "refId" : "A"
-               },
-               {
-                  "datasource" : {
-                     "type" : "prometheus",
-                     "uid" : "JBvRr714k"
-                  },
-                  "editorMode" : "code",
-                  "exemplar" : false,
-                  "expr" : "gomon_system_memory_used_actual_bytes",
-                  "instant" : true,
-                  "interval" : "",
-                  "legendFormat" : "Used",
-                  "range" : false,
-                  "refId" : "B"
-               },
-               {
-                  "datasource" : {
-                     "type" : "prometheus",
-                     "uid" : "JBvRr714k"
-                  },
-                  "editorMode" : "code",
-                  "exemplar" : false,
-                  "expr" : "gomon_system_memory_used_actual_bytes/gomon_system_memory_total_bytes",
-                  "format" : "time_series",
-                  "hide" : false,
-                  "instant" : true,
-                  "legendFormat" : "Percent",
-                  "range" : false,
-                  "refId" : "C"
-               }
-            ],
-            "title" : "Memory",
-            "transparent" : true,
-            "type" : "stat"
-         },
-         {
-            "datasource" : {
-               "type" : "prometheus",
-               "uid" : "JBvRr714k"
-            },
-            "description" : "",
-            "fieldConfig" : {
-               "defaults" : {
-                  "color" : {
-                     "mode" : "thresholds"
-                  },
-                  "mappings" : [],
-                  "thresholds" : {
-                     "mode" : "absolute",
-                     "steps" : [
-                        {
-                           "color" : "blue",
-                           "value" : null
-                        }
-                     ]
-                  },
-                  "unit" : "none"
-               },
-               "overrides" : [
-                  {
-                     "matcher" : {
-                        "id" : "byName",
-                        "options" : "Usage"
-                     },
-                     "properties" : [
-                        {
-                           "id" : "unit",
-                           "value" : "percentunit"
-                        },
-                        {
-                           "id" : "thresholds",
-                           "value" : {
-                              "mode" : "percentage",
-                              "steps" : [
-                                 {
-                                    "color" : "green",
-                                    "value" : null
-                                 },
-                                 {
-                                    "color" : "yellow",
-                                    "value" : 75
-                                 },
-                                 {
-                                    "color" : "red",
-                                    "value" : 90
-                                 }
-                              ]
-                           }
-                        },
-                        {
-                           "id" : "max",
-                           "value" : 1
-                        },
-                        {
-                           "id" : "min",
-                           "value" : 0
-                        }
-                     ]
-                  }
-               ]
-            },
-            "gridPos" : {
-               "h" : 3,
-               "w" : 5,
-               "x" : 0,
-               "y" : 7
-            },
-            "id" : 18,
-            "options" : {
-               "colorMode" : "background",
-               "graphMode" : "none",
-               "justifyMode" : "auto",
-               "orientation" : "horizontal",
-               "reduceOptions" : {
-                  "calcs" : [
-                     "lastNotNull"
-                  ],
-                  "fields" : "",
-                  "values" : false
-               },
-               "text" : {
-                  "titleSize" : 14,
-                  "valueSize" : 14
-               },
-               "textMode" : "value_and_name"
-            },
-            "pluginVersion" : "9.4.0-beta1",
-            "targets" : [
-               {
-                  "datasource" : {
-                     "type" : "prometheus",
-                     "uid" : "JBvRr714k"
-                  },
-                  "editorMode" : "code",
-                  "exemplar" : false,
-                  "expr" : "gomon_system_cpu_count",
-                  "instant" : true,
-                  "interval" : "",
-                  "legendFormat" : "Count",
-                  "range" : false,
-                  "refId" : "A"
-               },
-               {
-                  "datasource" : {
-                     "type" : "prometheus",
-                     "uid" : "JBvRr714k"
-                  },
-                  "editorMode" : "code",
-                  "exemplar" : false,
-                  "expr" : "(rate(gomon_system_cpu_system_seconds[$__rate_interval])+rate(gomon_system_cpu_user_seconds[$__rate_interval]))/rate(gomon_system_cpu_total_seconds[$__rate_interval])",
-                  "hide" : false,
-                  "instant" : true,
-                  "interval" : "",
-                  "legendFormat" : "Usage",
-                  "range" : false,
-                  "refId" : "B"
-               }
-            ],
-            "title" : "CPU",
-            "transparent" : true,
-            "type" : "stat"
          },
          {
             "datasource" : {
@@ -712,10 +955,10 @@
                "overrides" : []
             },
             "gridPos" : {
-               "h" : 8,
-               "w" : 9,
-               "x" : 5,
-               "y" : 8
+               "h" : 9,
+               "w" : 12,
+               "x" : 0,
+               "y" : 13
             },
             "id" : 10,
             "options" : {
@@ -738,7 +981,7 @@
                      "type" : "prometheus",
                      "uid" : "JBvRr714k"
                   },
-                  "editorMode" : "builder",
+                  "editorMode" : "code",
                   "exemplar" : true,
                   "expr" : "rate(gomon_io_read_bytes[$__rate_interval])",
                   "interval" : "",
@@ -765,7 +1008,7 @@
                      "type" : "prometheus",
                      "uid" : "JBvRr714k"
                   },
-                  "editorMode" : "builder",
+                  "editorMode" : "code",
                   "exemplar" : true,
                   "expr" : "topk(2, rate(gomon_process_read_actual_bytes[$__rate_interval]))",
                   "interval" : "",
@@ -834,6 +1077,7 @@
                         "mode" : "line"
                      }
                   },
+                  "decimals" : 1,
                   "mappings" : [],
                   "thresholds" : {
                      "mode" : "absolute",
@@ -849,10 +1093,10 @@
                "overrides" : []
             },
             "gridPos" : {
-               "h" : 8,
-               "w" : 9,
-               "x" : 14,
-               "y" : 8
+               "h" : 9,
+               "w" : 11,
+               "x" : 12,
+               "y" : 13
             },
             "id" : 8,
             "options" : {
@@ -890,122 +1134,6 @@
          },
          {
             "datasource" : {
-               "type" : "prometheus",
-               "uid" : "JBvRr714k"
-            },
-            "fieldConfig" : {
-               "defaults" : {
-                  "color" : {
-                     "mode" : "palette-classic"
-                  },
-                  "custom" : {
-                     "axisCenteredZero" : false,
-                     "axisColorMode" : "series",
-                     "axisLabel" : "",
-                     "axisPlacement" : "right",
-                     "barAlignment" : 0,
-                     "drawStyle" : "line",
-                     "fillOpacity" : 0,
-                     "gradientMode" : "none",
-                     "hideFrom" : {
-                        "graph" : false,
-                        "legend" : false,
-                        "tooltip" : false,
-                        "viz" : false
-                     },
-                     "lineInterpolation" : "linear",
-                     "lineWidth" : 1,
-                     "pointSize" : 3,
-                     "scaleDistribution" : {
-                        "type" : "linear"
-                     },
-                     "showPoints" : "auto",
-                     "spanNulls" : true,
-                     "stacking" : {
-                        "group" : "A",
-                        "mode" : "none"
-                     },
-                     "thresholdsStyle" : {
-                        "mode" : "off"
-                     }
-                  },
-                  "decimals" : "auto",
-                  "mappings" : [],
-                  "thresholds" : {
-                     "mode" : "absolute",
-                     "steps" : [
-                        {
-                           "color" : "green",
-                           "value" : null
-                        }
-                     ]
-                  },
-                  "unit" : "short"
-               },
-               "overrides" : []
-            },
-            "gridPos" : {
-               "h" : 6,
-               "w" : 5,
-               "x" : 0,
-               "y" : 10
-            },
-            "id" : 16,
-            "options" : {
-               "graph" : {},
-               "legend" : {
-                  "calcs" : [],
-                  "displayMode" : "list",
-                  "placement" : "bottom",
-                  "showLegend" : false
-               },
-               "tooltip" : {
-                  "mode" : "multi",
-                  "sort" : "none"
-               }
-            },
-            "pluginVersion" : "8.2.4",
-            "targets" : [
-               {
-                  "datasource" : {
-                     "type" : "prometheus",
-                     "uid" : "JBvRr714k"
-                  },
-                  "exemplar" : true,
-                  "expr" : "gomon_system_load_average_one_minute",
-                  "interval" : "",
-                  "legendFormat" : "load average 1",
-                  "refId" : "A"
-               },
-               {
-                  "datasource" : {
-                     "type" : "prometheus",
-                     "uid" : "JBvRr714k"
-                  },
-                  "exemplar" : true,
-                  "expr" : "gomon_system_load_average_five_minute",
-                  "interval" : "",
-                  "legendFormat" : "load average 5",
-                  "refId" : "B"
-               },
-               {
-                  "datasource" : {
-                     "type" : "prometheus",
-                     "uid" : "JBvRr714k"
-                  },
-                  "exemplar" : true,
-                  "expr" : "gomon_system_load_average_fifteen_minute",
-                  "interval" : "",
-                  "legendFormat" : "load average 15",
-                  "refId" : "C"
-               }
-            ],
-            "title" : "Load Averages",
-            "transparent" : true,
-            "type" : "timeseries"
-         },
-         {
-            "datasource" : {
                "type" : "loki",
                "uid" : "t7gGr714k"
             },
@@ -1013,7 +1141,7 @@
                "h" : 21,
                "w" : 23,
                "x" : 0,
-               "y" : 16
+               "y" : 22
             },
             "id" : 22,
             "options" : {
@@ -1033,7 +1161,9 @@
                      "type" : "loki",
                      "uid" : "t7gGr714k"
                   },
+                  "editorMode" : "code",
                   "expr" : "{source=~\"(file|log|oslog|syslog|process)\"}",
+                  "legendFormat" : "",
                   "queryType" : "range",
                   "refId" : "A"
                }
@@ -1074,7 +1204,7 @@
       "timezone" : "",
       "title" : "Gomon Dashboard",
       "uid" : "g-Il9JVVz",
-      "version" : 6,
+      "version" : 12,
       "weekStart" : ""
    },
    "meta" : {
@@ -1095,7 +1225,7 @@
       "canEdit" : true,
       "canSave" : true,
       "canStar" : true,
-      "created" : "2023-02-12T10:22:00-05:00",
+      "created" : "2023-02-14T11:09:15-05:00",
       "createdBy" : "admin",
       "expires" : "0001-01-01T00:00:00Z",
       "folderId" : 0,
@@ -1111,9 +1241,9 @@
       "publicDashboardUid" : "",
       "slug" : "gomon-dashboard",
       "type" : "db",
-      "updated" : "2023-02-13T21:33:29-05:00",
+      "updated" : "2023-04-27T11:11:59-04:00",
       "updatedBy" : "admin",
       "url" : "/d/g-Il9JVVz/gomon-dashboard",
-      "version" : 9
+      "version" : 12
    }
 }

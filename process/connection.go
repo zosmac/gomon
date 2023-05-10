@@ -16,7 +16,9 @@ func Connections(tb Table) {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
-			gocore.LogError("connections", fmt.Errorf("%v\n%s", r, buf))
+			gocore.Error("connections", fmt.Errorf("%v", r), map[string]string{
+				"stacktrace": string(buf),
+			}).Err()
 		}
 	}()
 

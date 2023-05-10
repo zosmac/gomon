@@ -83,14 +83,14 @@ func observe() error {
 			nlMsg := make([]byte, connectorMaxMessageSize)
 			n, _, err := syscall.Recvfrom(h.fd, nlMsg, 0)
 			if err != nil {
-				gocore.LogError("Recvfrom", err)
+				gocore.Error("Recvfrom", err).Err()
 				return
 			}
 			msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
 			for _, m := range msgs {
 				if m.Header.Type == syscall.NLMSG_ERROR {
-					gocore.LogError("netlink", syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4]))))
+					gocore.Error("netlink", syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4])))).Err()
 					break
 				}
 
@@ -174,14 +174,14 @@ func taskstats() {
 		nlMsg := make([]byte, 1024)
 		n, _, err := syscall.Recvfrom(h.gd, nlMsg, 0)
 		if err != nil {
-			gocore.LogError("Recvfrom", err)
+			gocore.Error("Recvfrom", err).Err()
 			return
 		}
 		msgs, _ := syscall.ParseNetlinkMessage(nlMsg[:n])
 
 		for _, m := range msgs {
 			if m.Header.Type == syscall.NLMSG_ERROR {
-				gocore.LogError("netlink", syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4]))))
+				gocore.Error("netlink", syscall.Errno(-int32(gocore.HostEndian.Uint32(m.Data[:4])))).Err()
 				break
 			}
 			data := m.Data[unix.GENL_HDRLEN:]
@@ -224,7 +224,7 @@ func taskstats() {
 				ts.Uname = gocore.Username(int(ts.Ac_uid))
 				ts.Gname = gocore.Groupname(int(ts.Ac_gid))
 
-				message.Encode([]message.Content{&ts})
+				message.Measurements([]message.Content{&ts})
 			}
 		}
 	}

@@ -66,15 +66,15 @@ func Encoder(ctx context.Context) error {
 	return nil
 }
 
-// Measure sends measurements to encode.
-func Measure(ms []Content) error {
+// Measurements sends measurements to encode.
+func Measurements(ms []Content) error {
 	measureChan <- ms
 	return nil
 }
 
-// Observe sends observations to encode.
-func Observe(os []Content) error {
-	observeChan <- os
+// Observations sends observations to encode.
+func Observations(ms []Content) error {
+	observeChan <- ms
 	return nil
 }
 
@@ -111,7 +111,7 @@ func encode(ctx context.Context) {
 			Rotate(t)
 		case <-ctx.Done():
 			Close()
-			gocore.LogInfo("Encoder", ctx.Err())
+			gocore.Error("Encoder", ctx.Err()).Info()
 			return
 		}
 	}
@@ -146,7 +146,7 @@ func Rotate(t time.Time) {
 		err := jsonEncoder.Encode(i)
 		cache = nil
 		if err != nil {
-			gocore.LogError("Encode", err)
+			gocore.Error("Encode", err).Err()
 			return
 		}
 	}
@@ -155,7 +155,7 @@ func Rotate(t time.Time) {
 
 	info, err := os.Stdout.Stat()
 	if err != nil {
-		gocore.LogError("Stat", err)
+		gocore.Error("Stat", err).Err()
 		return
 	}
 
@@ -165,7 +165,7 @@ func Rotate(t time.Time) {
 
 	oldpath, err := gocore.FdPath(int(os.Stdout.Fd()))
 	if err != nil {
-		gocore.LogError("FdPath", err)
+		gocore.Error("FdPath", err).Err()
 		return
 	}
 
@@ -174,13 +174,13 @@ func Rotate(t time.Time) {
 	newpath := filepath.Join(filepath.Dir(oldpath), base+"-"+timestamp+ext)
 
 	if err := os.Rename(oldpath, newpath); err != nil {
-		gocore.LogError("Rename", err)
+		gocore.Error("Rename", err).Err()
 		return
 	}
 
 	sout, err := os.Create(oldpath)
 	if err != nil {
-		gocore.LogError("Create", err)
+		gocore.Error("Create", err).Err()
 		return
 	}
 	chown(sout, info)

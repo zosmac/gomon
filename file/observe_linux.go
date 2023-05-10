@@ -86,7 +86,7 @@ func observe() error {
 			n, err := syscall.Read(obs.fd, events)
 			if err != nil {
 				if !errors.Is(err, syscall.EBADF) {
-					gocore.LogError("Read", err)
+					gocore.Error("Read", err).Err()
 				}
 				return
 			}

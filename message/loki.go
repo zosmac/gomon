@@ -5,6 +5,7 @@ package message
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,6 +35,10 @@ type (
 )
 
 var (
+	// LokiStreams counts the number of observations streamed to Loki.
+	LokiStreams int
+
+	// lokiStatusRequest queries Loki if it is running.
 	lokiStatusRequest = http.Request{
 		Method: http.MethodGet,
 		URL: &url.URL{
@@ -43,6 +48,7 @@ var (
 		},
 	}
 
+	// lokiPushRequest sends observations to Loke.
 	lokiPushRequest = http.Request{
 		Method: http.MethodPost,
 		URL: &url.URL{
@@ -54,7 +60,7 @@ var (
 	}
 )
 
-// lokiTest pings for the Loki server to determine if it is ready for accepting file, log, and process observer observations.
+// lokiTest pings the Loki server to determine if it is ready for accepting file, log, and process observations.
 func lokiTest() bool {
 	if resp, err := http.DefaultClient.Do(&lokiStatusRequest); err == nil {
 		buf, err := io.ReadAll(resp.Body)
@@ -90,10 +96,13 @@ func lokiFormatter(name, tag string, val reflect.Value) any {
 				return tuple{name, strconv.FormatFloat(val.Float(), 'e', -1, 64)}
 			}
 		}
-		gocore.LogError(
-			"lokiMessage property type not recognized",
-			fmt.Errorf("%s %v", name, val.Interface()),
-		)
+		gocore.Error("loki message",
+			errors.New("property type not recognized"),
+			map[string]string{
+				"name":  name,
+				"value": val.String(),
+			},
+		).Err()
 	}
 	return nil
 }
@@ -133,6 +142,7 @@ func lokiEncode(ms []Content) bool {
 	lokiPushRequest.Body = io.NopCloser(bytes.NewReader(buf))
 	if resp, err := http.DefaultClient.Do(&lokiPushRequest); err == nil {
 		resp.Body.Close()
+		LokiStreams += len(s.Streams)
 		return true
 	}
 	return false
