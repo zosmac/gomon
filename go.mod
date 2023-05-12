@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/StackExchange/wmi v1.2.1
 	github.com/prometheus/client_golang v1.15.1
-	github.com/zosmac/gocore v0.0.0-20230509235905-005df2e2892e
+	github.com/zosmac/gocore v0.0.0-20230512022451-62890258afc3
 	golang.org/x/net v0.10.0
 	golang.org/x/sys v0.8.0
 	gopkg.in/yaml.v3 v3.0.1

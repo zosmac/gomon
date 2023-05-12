@@ -111,20 +111,18 @@ func lokiFormatter(name, tag string, val reflect.Value) any {
 func lokiEncode(ms []Content) bool {
 	var s streams
 	for _, m := range ms {
-		ls := map[string]string{}
+		labels := map[string]string{}
 		for _, l := range gocore.Format("", "", reflect.ValueOf(m), lokiFormatter) {
 			l := l.(tuple)
-			ls[l[0]] = l[1]
+			labels[l[0]] = l[1]
 		}
 
-		labels := map[string]string{}
-
-		timestamp := ls["timestamp"]
-		message := ls["message"]
-		labels["source"] = ls["source"]
-		labels["event"] = ls["event"]
-		if labels["source"] != "file" {
-			labels["name"] = ls["id_name"] // file name already in message text
+		timestamp := labels["timestamp"]
+		message := labels["message"]
+		delete(labels, "timestamp")
+		delete(labels, "message")
+		if labels["source"] == "file" {
+			delete(labels, "name") // file name already in message text
 		}
 
 		s.Streams = append(s.Streams, stream{

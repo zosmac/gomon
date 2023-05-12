@@ -14,13 +14,13 @@ import (
 var (
 	// flags defines the command line flags.
 	Flags = struct {
-		LogEvent
+		logEvent
 		// following flags are for linux only
 		logDirectory    string
 		logRegex        gocore.Regexp
 		logRegexExclude gocore.Regexp
 	}{
-		LogEvent:     LevelError,
+		logEvent:     eventInfo,
 		logDirectory: "/var/log",
 		logRegex: gocore.Regexp{
 			Regexp: regexp.MustCompile(`^.*\.log$`),
@@ -35,7 +35,7 @@ var (
 func init() {
 	s := strings.Join(logEvents.ValidValues(), "|")
 	gocore.Flags.Var(
-		&Flags.LogEvent,
+		&Flags.logEvent,
 		"loglevel",
 		"[-loglevel "+s+"]",
 		"Filter out log entries below this logging level threshold `"+s+"`",
@@ -64,16 +64,16 @@ func init() {
 }
 
 // Set is a flag.Value interface method to enable logLevel as a command line flag.
-func (l *LogEvent) Set(level string) error {
+func (l *logEvent) Set(level string) error {
 	level = strings.ToLower(level)
-	if logEvents.IsValid(LogEvent(level)) {
-		*l = LogEvent(level)
+	if logEvents.IsValid(logEvent(level)) {
+		*l = logEvent(level)
 		return nil
 	}
 	return fmt.Errorf("valid values are %s", strings.Join(logEvents.ValidValues(), ", "))
 }
 
 // String is a flag.Value interface method to enable logLevel as a command line flag.
-func (l *LogEvent) String() string {
+func (l *logEvent) String() string {
 	return string(*l)
 }

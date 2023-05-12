@@ -37,7 +37,7 @@ func Measure() (ms []message.Content) {
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			gocore.Error("IF info", err).Err()
+			gocore.Error("IFLIST2", err).Err()
 			continue
 		}
 
@@ -52,7 +52,7 @@ func Measure() (ms []message.Content) {
 			unsafe.Pointer(nil),
 			0,
 		); rv != 0 {
-			gocore.Error("IF info", err).Err()
+			gocore.Error("IFINFO2", err).Err()
 			continue
 		}
 		if i.ifm_type != syscall.RTM_IFINFO2 {

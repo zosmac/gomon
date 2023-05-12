@@ -15,7 +15,7 @@ func init() {
 
 type (
 	// LogEvent log level event type.
-	LogEvent string
+	logEvent string
 
 	// Id identifies the message.
 	Id struct {
@@ -26,7 +26,7 @@ type (
 
 	// message defines the properties of a log message.
 	observation struct {
-		message.Header[LogEvent] `gomon:"property"`
+		message.Header[logEvent] `gomon:"property"`
 		Id                       `json:"id" gomon:""`
 		Message                  string `json:"message" gomon:"property"`
 	}
@@ -34,33 +34,24 @@ type (
 
 const (
 	// message events.
-	LevelTrace LogEvent = "trace"
-	LevelDebug LogEvent = "debug"
-	LevelInfo  LogEvent = "info"
-	LevelWarn  LogEvent = "warn"
-	LevelError LogEvent = "error"
-	LevelFatal LogEvent = "fatal"
+	eventTrace logEvent = "trace"
+	eventDebug logEvent = "debug"
+	eventInfo  logEvent = "info"
+	eventWarn  logEvent = "warn"
+	eventError logEvent = "error"
+	eventFatal logEvent = "fatal"
 )
 
 var (
 	// logLevels valid event values for messages, in severity order.
-	logEvents = gocore.ValidValue[LogEvent]{}.Define(
-		LevelTrace,
-		LevelDebug,
-		LevelInfo,
-		LevelWarn,
-		LevelError,
-		LevelFatal,
+	logEvents = gocore.ValidValue[logEvent]{}.Define(
+		eventTrace,
+		eventDebug,
+		eventInfo,
+		eventWarn,
+		eventError,
+		eventFatal,
 	)
-
-	EventMap = map[LogEvent]gocore.LogLevel{
-		LevelTrace: gocore.LevelTrace,
-		LevelDebug: gocore.LevelDebug,
-		LevelInfo:  gocore.LevelInfo,
-		LevelWarn:  gocore.LevelWarn,
-		LevelError: gocore.LevelError,
-		LevelFatal: gocore.LevelFatal,
-	}
 )
 
 // Events returns the list of acceptable Event values for this message.
