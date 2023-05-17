@@ -1,6 +1,6 @@
 // Copyright © 2021-2023 The Gomon Project.
 
-package main
+package serve
 
 import (
 	"encoding/json"
@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/zosmac/gocore"
 
 	"gopkg.in/yaml.v3"
@@ -69,6 +70,24 @@ var (
 	// prometheusDone signals that main's measure is complete.
 	prometheusDone = make(chan struct{}, 1)
 )
+
+// prometheusHandler responds to Prometheus Collect requests.
+func prometheusHandler() error {
+	// enable Prometheus collection (we don't use the default registry as it adds Go runtime metrics)
+	registry := prometheus.NewRegistry()
+	if err := registry.Register(&prometheusCollector{}); err != nil {
+		return gocore.Error("Prometheus Registry", err)
+	}
+
+	http.Handle(
+		"/metrics",
+		promhttp.HandlerFor(registry, promhttp.HandlerOpts{}),
+	)
+
+	measures.Endpoints = append(measures.Endpoints, "metrics")
+
+	return nil
+}
 
 // Describe returns metric descriptions for prometheusCollector.
 // This is irrelevant as Collect() uses prometheus.MustNewConstMetric

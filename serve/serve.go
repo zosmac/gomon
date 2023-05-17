@@ -1,6 +1,6 @@
 // Copyright © 2021-2023 The Gomon Project.
 
-package main
+package serve
 
 import (
 	"bytes"
@@ -13,8 +13,6 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/zosmac/gocore"
 	"golang.org/x/net/websocket"
 
@@ -26,24 +24,6 @@ var (
 	// scheme is http/s based on whether certicate and key are defined in the user's .ssh directory.
 	scheme = "http" // default
 )
-
-// prometheusHandler responds to Prometheus Collect requests.
-func prometheusHandler() error {
-	// enable Prometheus collection (we don't use the default registry as it adds Go runtime metrics)
-	registry := prometheus.NewRegistry()
-	if err := registry.Register(&prometheusCollector{}); err != nil {
-		return gocore.Error("Prometheus Registry", err)
-	}
-
-	http.Handle(
-		"/metrics",
-		promhttp.HandlerFor(registry, promhttp.HandlerOpts{}),
-	)
-
-	measures.Endpoints = append(measures.Endpoints, "metrics")
-
-	return nil
-}
 
 // gomonHandler retrieves the process NodeGraph.
 func gomonHandler() error {
@@ -134,7 +114,7 @@ func assetHandler() error {
 }
 
 // serve sets up gomon's endpoints and starts the server.
-func serve(ctx context.Context) {
+func Serve(ctx context.Context) {
 	// define http request handlers
 	if err := prometheusHandler(); err != nil {
 		gocore.Error("prometheusHandler", err).Warn()

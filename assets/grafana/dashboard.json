@@ -616,7 +616,7 @@
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
-                  "expr" : "rate(gomon_main_collections[$__rate_interval])",
+                  "expr" : "rate(gomon_serve_collections[$__rate_interval])",
                   "instant" : false,
                   "key" : "Q-b42f8d77-3dd8-49c0-90c1-d1da26dfe2bb-0",
                   "legendFormat" : "{{id}} collections",
@@ -630,15 +630,28 @@
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
-                  "expr" : "rate(gomon_main_collection_time_seconds[$__rate_interval])",
+                  "expr" : "rate(gomon_serve_collection_time_seconds[$__rate_interval])",
                   "instant" : false,
                   "key" : "Q-7f6a36dd-dfaf-4e7f-909d-6156e36ae533-1",
                   "legendFormat" : "{{id}} collection time",
                   "range" : true,
                   "refId" : "B"
+               },
+               {
+                  "datasource" : {
+                     "type" : "prometheus",
+                     "uid" : "JBvRr714k"
+                  },
+                  "editorMode" : "code",
+                  "exemplar" : true,
+                  "expr" : "rate(gomon_serve_loki_streams[$__rate_interval])",
+                  "hide" : false,
+                  "legendFormat" : "loki streams",
+                  "range" : true,
+                  "refId" : "C"
                }
             ],
-            "title" : "Prometheus Collections",
+            "title" : "Prometheus and Loki Collections",
             "transparent" : true,
             "type" : "timeseries"
          },
@@ -1162,7 +1175,7 @@
                      "uid" : "t7gGr714k"
                   },
                   "editorMode" : "code",
-                  "expr" : "{source=~\"(file|log|oslog|syslog|process)\"}",
+                  "expr" : "{source=~\"(file|logs|process)\"}",
                   "legendFormat" : "",
                   "queryType" : "range",
                   "refId" : "A"
@@ -1204,7 +1217,7 @@
       "timezone" : "",
       "title" : "Gomon Dashboard",
       "uid" : "g-Il9JVVz",
-      "version" : 12,
+      "version" : 1,
       "weekStart" : ""
    },
    "meta" : {
@@ -1234,6 +1247,7 @@
       "folderUrl" : "",
       "hasAcl" : false,
       "isFolder" : false,
+      "isStarred" : true,
       "provisioned" : false,
       "provisionedExternalId" : "",
       "publicDashboardAccessToken" : "",
@@ -1241,9 +1255,9 @@
       "publicDashboardUid" : "",
       "slug" : "gomon-dashboard",
       "type" : "db",
-      "updated" : "2023-04-27T11:11:59-04:00",
+      "updated" : "2023-05-17T15:27:19-04:00",
       "updatedBy" : "admin",
       "url" : "/d/g-Il9JVVz/gomon-dashboard",
-      "version" : 12
+      "version" : 1
    }
 }

@@ -1,6 +1,6 @@
 // Copyright © 2021-2023 The Gomon Project.
 
-package main
+package serve
 
 import (
 	"errors"
