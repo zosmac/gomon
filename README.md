@@ -81,6 +81,9 @@ To enable collection, open the `prometheus.yml` configuration file for the *Prom
 
 ```yml
   - job_name: "gomon"
+    scheme: https
+    tls_config:
+      ca_file: /etc/ssh/cert.pem
     static_configs:
       - targets: ["localhost:1234"]
 ```
