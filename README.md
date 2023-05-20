@@ -33,7 +33,7 @@ What *gomon* **observes** of the system are reports of events captured by the lo
 
 Gomon records its measurements and observations and reports them in a message stream. By default, *gomon* streams these messages as JSON objects to standard out.
 
-Analysis of *gomon*'s message stream may yield insights into the system's operations through discovery of event patterns and interrelationships and what these signify about the condition and operation of the system. An excellent application for stream analysis and visualization is *[Grafana](https://grafana.com)*. Together with *[Prometheus](http://prometheus.io)* to record the measurements, and *[Loki](https://grafana.com/oss/loki/)* to record the observations, *Grafana* can chart the measurements and report the observations. Look in the `gomon/assets` folder for sample configuration files for *[Prometheus](assets/prometheus.yml)* and *[Grafana](assets/grafana/dashboard.json)* to enable this scenario.
+Analysis of *gomon*'s message stream may yield insights into the system's operations through discovery of event patterns and interrelationships and what these signify about the condition and operation of the system. An excellent application for stream analysis and visualization is *[Grafana](https://grafana.com)*. Together with *[Prometheus](http://prometheus.io)* to record the measurements, and *[Loki](https://grafana.com/oss/loki/)* to record the observations, *Grafana* can chart the measurements and report the observations. Look in the `gomon/assets` folder for sample configuration files for *[Prometheus](assets/prometheus.yml)* and *[Grafana](assets/dashboard.json)* to enable this scenario.
 
 The inspection of process relationships is also available if *[Graphviz](<https://graphviz.org>)* is installed. *Gomon* can use *Graphviz* to render a web view of the inter-process and remote host connections of the system.
 
@@ -108,24 +108,24 @@ To install *Grafana*, select an appropriate binary from the [Grafana download pa
 
 ### **Add the *[data sources](http://localhost:3000/datasources/new)* for *Prometheus* and *Loki* to *Grafana***
 
-![Grafana data sources](assets/grafana/datasource-add.png)
+![Grafana data sources](assets/datasource-add.png)
 
 ### **Configure the *Prometheus* data source**
 
 *Note: while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field. Then, scroll down and select* **Save & test.**
 
-![Configure Prometheus](assets/grafana/prometheus-config.png)
+![Configure Prometheus](assets/prometheus-config.png)
 
 ### **Configure the *Loki* data source**
 
 *Note: while the Data Source's Settings Panel shows the default data source URL, you must still type it into the URL field. Then, scroll down and select* **Save & test.**
 
-![Configure Loki](assets/grafana/loki-config.png)
+![Configure Loki](assets/loki-config.png)
 
-### **Install the *[Gomon Dashboard](assets/grafana/dashboard.json)* to *Grafana***
+### **Install the *[Gomon Dashboard](assets/dashboard.json)* to *Grafana***
 
 ```zsh
-curl ${GRAFANA_CRED} -X POST -i -w "\n" -H "Content-Type: application/json" -T ${GOMON_DIR}/assets/grafana/dashboard.json "http://localhost:3000/api/dashboards/db"
+curl ${GRAFANA_CRED} -X POST -i -w "\n" -H "Content-Type: application/json" -T ${GOMON_DIR}/assets/dashboard.json "http://localhost:3000/api/dashboards/db"
 ```
 
 ### **Start the servers**
@@ -161,13 +161,13 @@ sudo gomon -pretty -port 1234
 
 ### **Gomon Dashboard**
 
-[![grafana dashboard](assets/grafana/dashboard.png)](<http://localhost:3000>)
+[![grafana dashboard](assets/dashboard.png)](<http://localhost:3000>)
 
 ### **Inter-process and remote host connections node graph**
 
 If *[Graphviz](<https://graphviz.org>)* is installed, *Gomon* can render a node graph of the inter-process and remote host connections via the `/gomon` endpoint:
 
-[![graphviz process nodegraph](assets/graphviz-process-nodegraph.png)](<http://localhost:1234/gomon>)
+[![graphviz process nodegraph](assets/graphviz.png)](<http://localhost:1234/gomon>)
 
 To download and install *[Graphviz](<https://graphviz.org/download/source/>)*, select a stable release, download its tar file, build, and install.
 

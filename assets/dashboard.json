@@ -35,7 +35,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "JBvRr714k"
+               "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
             },
             "description" : "",
             "fieldConfig" : {
@@ -93,12 +93,12 @@
                },
                "textMode" : "value_and_name"
             },
-            "pluginVersion" : "9.4.0-beta1",
+            "pluginVersion" : "9.5.3",
             "targets" : [
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -113,7 +113,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -132,7 +132,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "JBvRr714k"
+               "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
             },
             "description" : "",
             "fieldConfig" : {
@@ -220,12 +220,12 @@
                },
                "textMode" : "value_and_name"
             },
-            "pluginVersion" : "9.4.0-beta1",
+            "pluginVersion" : "9.5.3",
             "targets" : [
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -241,7 +241,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -255,7 +255,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -275,7 +275,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "JBvRr714k"
+               "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
             },
             "description" : "",
             "fieldConfig" : {
@@ -363,12 +363,12 @@
                },
                "textMode" : "value_and_name"
             },
-            "pluginVersion" : "9.4.0-beta1",
+            "pluginVersion" : "9.5.3",
             "targets" : [
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -382,7 +382,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -402,7 +402,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "JBvRr714k"
+               "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
             },
             "fieldConfig" : {
                "defaults" : {
@@ -480,7 +480,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "exemplar" : true,
                   "expr" : "gomon_system_load_average_one_minute",
@@ -491,7 +491,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "exemplar" : true,
                   "expr" : "gomon_system_load_average_five_minute",
@@ -502,7 +502,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "exemplar" : true,
                   "expr" : "gomon_system_load_average_fifteen_minute",
@@ -518,7 +518,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "JBvRr714k"
+               "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
             },
             "fieldConfig" : {
                "defaults" : {
@@ -612,7 +612,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -626,7 +626,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -640,7 +640,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -658,7 +658,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "JBvRr714k"
+               "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
             },
             "description" : "",
             "fieldConfig" : {
@@ -736,7 +736,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -749,7 +749,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -762,7 +762,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -775,7 +775,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -788,7 +788,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "expr" : "rate(gomon_network_receive_bytes{id='lo0'}[$__rate_interval])",
@@ -800,7 +800,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "expr" : "-rate(gomon_network_transmit_bytes{id='lo0'}[$__rate_interval])",
@@ -817,7 +817,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "JBvRr714k"
+               "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
             },
             "description" : "",
             "fieldConfig" : {
@@ -896,7 +896,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "builder",
                   "exemplar" : false,
@@ -915,7 +915,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "JBvRr714k"
+               "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
             },
             "fieldConfig" : {
                "defaults" : {
@@ -992,7 +992,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -1005,7 +1005,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -1019,7 +1019,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -1032,7 +1032,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : true,
@@ -1051,7 +1051,7 @@
          {
             "datasource" : {
                "type" : "prometheus",
-               "uid" : "JBvRr714k"
+               "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
             },
             "description" : "",
             "fieldConfig" : {
@@ -1130,7 +1130,7 @@
                {
                   "datasource" : {
                      "type" : "prometheus",
-                     "uid" : "JBvRr714k"
+                     "uid" : "d9a2f68f-fcbe-4620-a59c-f5573ec33e05"
                   },
                   "editorMode" : "code",
                   "exemplar" : false,
@@ -1148,7 +1148,7 @@
          {
             "datasource" : {
                "type" : "loki",
-               "uid" : "t7gGr714k"
+               "uid" : "b7f627c0-ba17-4fb5-a8c5-11ec04895710"
             },
             "gridPos" : {
                "h" : 21,
@@ -1172,11 +1172,9 @@
                {
                   "datasource" : {
                      "type" : "loki",
-                     "uid" : "t7gGr714k"
+                     "uid" : "b7f627c0-ba17-4fb5-a8c5-11ec04895710"
                   },
-                  "editorMode" : "code",
                   "expr" : "{source=~\"(file|logs|process)\"}",
-                  "legendFormat" : "",
                   "queryType" : "range",
                   "refId" : "A"
                }
@@ -1217,7 +1215,7 @@
       "timezone" : "",
       "title" : "Gomon Dashboard",
       "uid" : "g-Il9JVVz",
-      "version" : 1,
+      "version" : 3,
       "weekStart" : ""
    },
    "meta" : {
@@ -1238,7 +1236,7 @@
       "canEdit" : true,
       "canSave" : true,
       "canStar" : true,
-      "created" : "2023-02-14T11:09:15-05:00",
+      "created" : "2023-05-19T21:59:02-04:00",
       "createdBy" : "admin",
       "expires" : "0001-01-01T00:00:00Z",
       "folderId" : 0,
@@ -1247,7 +1245,6 @@
       "folderUrl" : "",
       "hasAcl" : false,
       "isFolder" : false,
-      "isStarred" : true,
       "provisioned" : false,
       "provisionedExternalId" : "",
       "publicDashboardAccessToken" : "",
@@ -1255,9 +1252,9 @@
       "publicDashboardUid" : "",
       "slug" : "gomon-dashboard",
       "type" : "db",
-      "updated" : "2023-05-17T15:27:19-04:00",
+      "updated" : "2023-05-19T22:17:25-04:00",
       "updatedBy" : "admin",
       "url" : "/d/g-Il9JVVz/gomon-dashboard",
-      "version" : 1
+      "version" : 3
    }
 }
