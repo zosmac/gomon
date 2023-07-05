@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -74,15 +75,10 @@ func NodeGraph(req *http.Request) []byte {
 
 	var (
 		clusterEdges string
-		hosts        string
-		hostNode     Pid
-		hostEdges    string
-		processes    []string
-		processNodes []Pid
-		processEdges []string
-		datas        string
-		dataNode     Pid
-		dataEdges    string
+		hosts        []string
+		prcss        [][]string
+		datas        []string
+		edges        []string
 		include      = map[Pid]struct{}{} // record which processes have a connection to include in report
 		nodes        = map[Pid]struct{}{}
 	)
@@ -114,9 +110,18 @@ func NodeGraph(req *http.Request) []byte {
 		}
 	}
 
-	em := map[string]string{}
+	em := map[string]map[string]struct{}{}
 
-	for _, p := range pt {
+	pids := make([]Pid, 0, len(pt))
+	for pid := range pt {
+		pids = append(pids, pid)
+	}
+	sort.Slice(pids, func(i, j int) bool {
+		return pids[i] < pids[j]
+	})
+
+	for _, pid := range pids {
+		p := pt[pid]
 		for _, conn := range p.Connections {
 			if conn.Self.Pid == 0 || conn.Peer.Pid == 0 || // ignore kernel process
 				conn.Self.Pid == 1 || conn.Peer.Pid == 1 || // ignore launchd processes
@@ -130,191 +135,145 @@ func NodeGraph(req *http.Request) []byte {
 			if conn.Peer.Pid < 0 { // peer is remote host or listener
 				host, port, _ := net.SplitHostPort(conn.Peer.Name)
 
-				dir := "forward"
-				// name for listen port is device inode: on linux decimal and on darwin hexadecimal
-				if _, err := strconv.Atoi(conn.Self.Name); err == nil || conn.Self.Name[0:2] == "0x" { // listen socket
-					dir = "back"
-				}
-
 				if _, ok := nodes[conn.Peer.Pid]; !ok {
 					nodes[conn.Peer.Pid] = struct{}{}
-					hosts += fmt.Sprintf(`
-    %d [shape=cds style=filled fillcolor=%q height=0.6 width=2 label="%s:%s\n%s" tooltip=%q]`,
+					hosts = append(hosts, fmt.Sprintf(
+						`%d [shape=cds style=filled fillcolor=%q height=0.6 width=2 label="%s:%s\n%s" tooltip=%q]`,
 						conn.Peer.Pid,
 						color(conn.Peer.Pid),
 						conn.Type,
 						port,
 						gocore.Hostname(host),
 						conn.Peer.Name,
-					)
-				}
-				if hostNode == 0 {
-					hostNode = conn.Peer.Pid
+					))
 				}
 
-				// TODO: host arrow on east/right edge
-				hostEdges += fmt.Sprintf(`
-  %d -> %d [dir=%s color=%q tooltip="%s&#10142;%s\n%s"]`, // non-breaking space/hyphen
-					conn.Peer.Pid,
-					conn.Self.Pid,
-					dir,
-					color(conn.Self.Pid)+";0.5:"+color(conn.Peer.Pid),
-					conn.Type+":"+conn.Peer.Name,
+				id := fmt.Sprintf("%d -> %d", conn.Self.Pid, conn.Peer.Pid)
+				if _, ok := em[id]; !ok {
+					em[id] = map[string]struct{}{}
+				}
+				em[id][fmt.Sprintf(
+					"%s:%s&#10142;%s",
+					conn.Type,
+					conn.Peer.Name,
 					conn.Self.Name,
-					shortname(tb, conn.Self.Pid),
-				)
+				)] = struct{}{}
 			} else if conn.Peer.Pid >= math.MaxInt32 { // peer is data
 				peer := conn.Type + ":" + conn.Peer.Name
 
-				datas += fmt.Sprintf(`
-    %d [shape=note style=filled fillcolor=%q height=0.2 label=%q tooltip=%q]`,
+				datas = append(datas, fmt.Sprintf(
+					`%d [shape=note style=filled fillcolor=%q height=0.2 label=%q tooltip=%q]`,
 					conn.Peer.Pid,
 					color(conn.Peer.Pid),
 					peer,
 					conn.Peer.Name,
-				)
-				if dataNode == 0 {
-					dataNode = conn.Peer.Pid
-				}
+				))
 
 				// show edge for data connections only once
 				id := fmt.Sprintf("%d -> %d", conn.Self.Pid, conn.Peer.Pid)
 				if _, ok := em[id]; !ok {
-					em[id] = ""
-					dataEdges += fmt.Sprintf(`
-  %d -> %d [dir=forward color=%q tooltip="%s\n%s"]`,
-						conn.Self.Pid,
-						conn.Peer.Pid,
-						color(conn.Peer.Pid)+";0.5:"+color(conn.Self.Pid),
-						shortname(tb, conn.Self.Pid),
-						peer,
-					)
+					em[id] = map[string]struct{}{}
 				}
+				em[id][fmt.Sprintf(
+					"%s\n%s",
+					shortname(tb, conn.Self.Pid),
+					peer,
+				)] = struct{}{}
 			} else { // peer is process
 				include[conn.Peer.Pid] = struct{}{}
-
-				depth := len(tb[conn.Self.Pid].Ancestors)
-				for i := len(processNodes); i <= depth; i++ {
-					processNodes = append(processNodes, 0)
-					processEdges = append(processEdges, "")
-				}
-				if processNodes[depth] == 0 {
-					processNodes[depth] = conn.Self.Pid
-				}
-
-				if conn.Type == "parent" {
-					processEdges[depth] += fmt.Sprintf(`
-  %d -> %d [class=parent dir=forward tooltip="%s&#10142;%s\n"]`, // non-breaking space/hyphen
-						conn.Self.Pid,
-						conn.Peer.Pid,
-						shortname(tb, conn.Self.Pid),
-						shortname(tb, conn.Peer.Pid),
-					)
-					continue
+				pids := append(conn.Peer.Pid.Ancestors(tb), conn.Peer.Pid)
+				for i := range pids[:len(pids)-1] { // add "in-laws"
+					include[pids[i]] = struct{}{}
+					id := fmt.Sprintf("%d -> %d", pids[i], pids[i+1])
+					if _, ok := em[id]; !ok {
+						em[id] = map[string]struct{}{}
+					}
+					em[id][fmt.Sprintf(
+						"parent:%s&#10142;%s\n",
+						shortname(tb, pids[i]),
+						shortname(tb, pids[i+1]),
+					)] = struct{}{}
 				}
 
 				// show edge for inter-process connections only once
-				id := fmt.Sprintf("%d -> %d", conn.Self.Pid, conn.Peer.Pid)
-				di := fmt.Sprintf("%d -> %d", conn.Peer.Pid, conn.Self.Pid)
-
-				_, ok := em[id]
-				if ok {
-					em[id] += fmt.Sprintf("%s:%s&#10142;%s\n", // non-breaking space/hyphen
-						conn.Type,
-						conn.Self.Name,
-						conn.Peer.Name,
-					)
-				} else if _, ok = em[di]; ok {
-					em[di] += fmt.Sprintf("%s:%s&#10142;%s\n", // non-breaking space/hyphen
-						conn.Type,
-						conn.Peer.Name,
-						conn.Self.Name,
-					)
-				} else {
-					em[id] = fmt.Sprintf("%s&#10142;%s\n%s:%s&#10142;%s\n", // non-breaking space/hyphen
-						shortname(tb, conn.Self.Pid),
-						shortname(tb, conn.Peer.Pid),
-						conn.Type,
-						conn.Self.Name,
-						conn.Peer.Name,
-					)
+				self, peer := conn.Self.Name, conn.Peer.Name
+				selfPid, peerPid := conn.Self.Pid, conn.Peer.Pid
+				if len(selfPid.Ancestors(tb)) > len(peerPid.Ancestors(tb)) ||
+					len(selfPid.Ancestors(tb)) == len(peerPid.Ancestors(tb)) && conn.Self.Pid > conn.Peer.Pid {
+					selfPid, peerPid = peerPid, selfPid
+					self, peer = peer, self
 				}
+				id := fmt.Sprintf("%d -> %d", selfPid, peerPid)
+				if _, ok := em[id]; !ok {
+					em[id] = map[string]struct{}{}
+				}
+				em[id][fmt.Sprintf("%s:%s&#10142;%s\n", // non-breaking space/hyphen
+					conn.Type,
+					self,
+					peer,
+				)] = struct{}{}
 			}
 		}
 	}
 
-	for pid, p := range tb {
+	pids = make([]Pid, 0, len(tb))
+	for pid := range tb {
+		pids = append(pids, pid)
+	}
+	sort.Slice(pids, func(i, j int) bool {
+		return pids[i] < pids[j]
+	})
+
+	for _, pid := range pids {
 		if _, ok := include[pid]; !ok {
 			continue
 		}
 
-		for i := len(processes); i <= len(p.Ancestors); i++ {
-			processes = append(processes, fmt.Sprintf(`
-    subgraph processes_%d {
-      cluster=true rank=same label="Process depth %[1]d"`,
-				i+1,
-			))
+		depth := len(pid.Ancestors(tb))
+		for i := len(prcss); i <= depth; i++ {
+			prcss = append(prcss, []string{})
 		}
 
-		node := fmt.Sprintf(`
-      %d [shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="%s://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
+		prcss[depth] = append(prcss[depth], fmt.Sprintf(
+			`%d [shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="%s://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
 			pid,
 			color(pid),
 			scheme,
 			flags.port,
 			tb[pid].Id.Name,
 			longname(tb, pid),
-		)
-		processes[len(p.Ancestors)] += node
-
-		depth := len(tb[pid].Ancestors)
+		))
 
 		for edge, tooltip := range em {
 			fields := strings.Fields(edge)
 			self, _ := strconv.Atoi(fields[0])
 			peer, _ := strconv.Atoi(fields[2])
 			if Pid(self) == pid {
-				if tooltip != "" {
-					processEdges[depth] += fmt.Sprintf(`
-  %s [dir=both color=%q tooltip=%q]`,
+				if len(tooltip) > 0 {
+					dir := "both"
+					var tts string
+					for tt := range tooltip {
+						if strings.HasPrefix(tt, "parent") {
+							tts = tt + tts
+						} else {
+							tts += tt
+						}
+					}
+					if peer < 0 || peer >= math.MaxInt32 ||
+						len(tooltip) == 1 && strings.HasPrefix(tts, "parent") {
+						dir = "forward"
+					}
+
+					edges = append(edges, fmt.Sprintf(
+						`%s [dir=%s color=%q tooltip="%s"]`,
 						edge,
+						dir,
 						color(Pid(peer))+";0.5:"+color(Pid(self)),
-						tooltip,
-					)
+						tts,
+					))
 				}
 				delete(em, edge)
 			}
-		}
-	}
-
-	for i := range processes {
-		processes[i] += "\n    }"
-	}
-
-	if len(processNodes) > 0 {
-		if hostNode != 0 {
-			clusterEdges += fmt.Sprintf(`
-  %d -> %d [style=invis ltail="hosts" lhead="processes_1"]`,
-				hostNode,
-				processNodes[0],
-			)
-		}
-		for i := range processNodes[:len(processNodes)-1] {
-			clusterEdges += fmt.Sprintf(`
-  %d -> %d [style=invis ltail="processes_%d" lhead="processes_%d"]`,
-				processNodes[i],
-				processNodes[i+1],
-				i+1,
-				i+2,
-			)
-		}
-		if dataNode != 0 {
-			clusterEdges += fmt.Sprintf(`
-  %d -> %d [style=invis ltail="processes_%d" lhead="files"]`,
-				processNodes[len(processNodes)-1],
-				dataNode,
-				len(processNodes),
-			)
 		}
 	}
 
@@ -330,6 +289,84 @@ func NodeGraph(req *http.Request) []byte {
 		time.Now().Local().Format(`\lMon Jan 02 2006 at 03:04:05PM MST\l"`),
 	)
 
+	sort.Slice(hosts, func(i, j int) bool {
+		a, _ := strconv.Atoi(hosts[i][:strings.Index(hosts[i], " ")])
+		b, _ := strconv.Atoi(hosts[j][:strings.Index(hosts[j], " ")])
+		return a < b
+	})
+
+	var clusterNodes []string
+	if len(hosts) > 0 {
+		clusterNodes = append(
+			clusterNodes,
+			hosts[0][:strings.Index(hosts[0], " ")],
+			"hosts",
+		)
+	}
+
+	var procs []string
+	for i, prcs := range prcss {
+		if len(prcs) > 0 {
+			sort.Slice(prcs, func(i, j int) bool {
+				a, _ := strconv.Atoi(prcs[i][:strings.Index(prcs[i], " ")])
+				b, _ := strconv.Atoi(prcs[j][:strings.Index(prcs[j], " ")])
+				return a < b
+			})
+			clusterNodes = append(
+				clusterNodes,
+				prcs[0][:strings.Index(prcs[0], " ")],
+				fmt.Sprintf("processes_%d", i+1),
+			)
+
+			procs = append(procs, fmt.Sprintf(`subgraph processes_%d {cluster=true rank=same label="Process depth %[1]d"`, i+1))
+			procs = append(procs, prcs...)
+			procs = append(procs, "}")
+		}
+	}
+
+	sort.Slice(datas, func(i, j int) bool {
+		a, _ := strconv.Atoi(datas[i][:strings.Index(datas[i], " ")])
+		b, _ := strconv.Atoi(datas[j][:strings.Index(datas[j], " ")])
+		return a < b
+	})
+
+	if len(datas) > 0 {
+		clusterNodes = append(
+			clusterNodes,
+			datas[0][:strings.Index(datas[0], " ")],
+			"datas",
+		)
+	}
+
+	for i := range clusterNodes[:len(clusterNodes)-2] {
+		if i%2 == 0 {
+			clusterEdges += fmt.Sprintf(
+				"  %s -> %s [style=invis ltail=%q lhead=%q]\n",
+				clusterNodes[i],
+				clusterNodes[i+2],
+				clusterNodes[i+1],
+				clusterNodes[i+3],
+			)
+		}
+	}
+
+	sort.Slice(edges, func(i, j int) bool {
+		s := strings.SplitN(edges[i], " ", 4)
+		t := strings.SplitN(edges[j], " ", 4)
+		a, _ := strconv.Atoi(s[0])
+		b, _ := strconv.Atoi(t[0])
+		c, _ := strconv.Atoi(s[2])
+		if c < 0 {
+			a, c = c, a
+		}
+		d, _ := strconv.Atoi(t[2])
+		if d < 0 {
+			b, d = d, b
+		}
+		return a < b ||
+			a == b && c < d
+	})
+
 	return dot(`digraph "Gomon Process Connections Nodegraph" {
   stylesheet="/assets/mode.css"
   label=` + glabel + `
@@ -340,25 +377,20 @@ func NodeGraph(req *http.Request) []byte {
   compound=true
   constraint=false
   ordering=out
+  remincross=false
   nodesep=0.03
   ranksep=2
   node [margin=0]
-  subgraph hosts {
-    cluster=true rank=source label="External Connections"` +
-		hosts + `
+  subgraph hosts {cluster=true rank=source label="External Connections"
+    ` + strings.Join(hosts, "\n    ") + `
   }
-  subgraph processes {
-	cluster=true label=Processes` +
-		strings.Join(processes, "") + `
+  subgraph processes {cluster=true label=Processes
+      ` + strings.Join(procs, "\n      ") + `
   }
-  subgraph files {
-	cluster=true rank=sink label="Open Files"` +
-		datas + `
-  }` +
-		clusterEdges +
-		hostEdges +
-		strings.Join(processEdges, "") +
-		dataEdges + `
+  subgraph datas {cluster=true rank=sink label="Open Files"
+    ` + strings.Join(datas, "\n    ") + `
+  }
+` + clusterEdges + strings.Join(edges, "\n  ") + `
 }`)
 }
 
@@ -402,7 +434,8 @@ func parseQuery(r *http.Request) (query, error) {
 // family identifies all of the ancestor and children processes of a process.
 func family(tb process.Table, tr process.Tree, pid Pid) process.Table {
 	pt := process.Table{}
-	for pid := pid; pid > 0; pid = tb[pid].Ppid { // ancestors
+	pids := append(pid.Ancestors(tb), pid)
+	for _, pid := range pids { // ancestors
 		pt[pid] = tb[pid]
 	}
 
@@ -411,8 +444,7 @@ func family(tb process.Table, tr process.Tree, pid Pid) process.Table {
 		return order(node, tr, pt)
 	}
 
-	pids := tr.Flatten(tb, o)
-	for _, pid := range pids {
+	for _, pid := range tr.Flatten(tb, o) {
 		pt[pid] = tb[pid]
 	}
 

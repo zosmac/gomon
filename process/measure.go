@@ -103,23 +103,12 @@ func BuildTable() Table {
 	for _, pid := range pids {
 		id, props, metrics := pid.metrics()
 		tb[pid] = &measurement{
-			Ancestors:   []Pid{},
 			Header:      message.Measurement(),
 			Id:          id,
 			Properties:  props,
 			Metrics:     metrics,
 			Connections: epm[pid],
 		}
-	}
-
-	for pid, p := range tb {
-		p.Ancestors = func() []Pid {
-			var pids []Pid
-			for pid = tb[pid].Ppid; pid > 1; pid = tb[pid].Ppid {
-				pids = append([]Pid{pid}, pids...)
-			}
-			return pids
-		}()
 	}
 
 	return tb

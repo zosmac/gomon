@@ -5,6 +5,7 @@ package process
 import (
 	"fmt"
 	"runtime"
+	"sort"
 
 	"github.com/zosmac/gocore"
 )
@@ -22,25 +23,40 @@ func Connections(tb Table) {
 		}
 	}()
 
-	epm := map[[3]string]Pid{} // is distinguishing dup'd and inherited descriptors an issue?
+	pids := make([]Pid, 0, len(tb))
+	for pid := range tb {
+		pids = append(pids, pid)
+	}
+	sort.Slice(pids, func(i, j int) bool {
+		return pids[i] < pids[j]
+	})
 
 	// build a map for identifying intra-host peer endpoints
-	for _, p := range tb {
+	epm := map[[3]string][]Pid{} // is distinguishing dup'd and inherited descriptors an issue?
+	for _, pid := range pids {
+		p := tb[pid]
 		for _, conn := range p.Connections {
 			if conn.Type == "unix" && conn.Self.Name != "" && conn.Peer.Name[0] == '/' { // named socket
-				epm[[3]string{conn.Type, conn.Self.Name, ""}] = conn.Self.Pid
+				epm[[3]string{conn.Type, conn.Self.Name, ""}] =
+					append(epm[[3]string{conn.Type, conn.Self.Name, ""}], conn.Self.Pid)
 			} else {
-				epm[[3]string{conn.Type, conn.Self.Name, conn.Peer.Name}] = conn.Self.Pid
+				epm[[3]string{conn.Type, conn.Self.Name, conn.Peer.Name}] =
+					append(epm[[3]string{conn.Type, conn.Self.Name, conn.Peer.Name}], conn.Self.Pid)
 			}
 		}
 	}
 
-	hdpid := Pid(0) // -hdpid for host "pid", hdpid + math.MaxInt32 for data "pid"
-	for _, p := range tb {
-		pid := p.Pid
-		for i, conn := range p.Connections {
-			hdpid++
+	for ep, pids := range epm {
+		sort.Slice(pids, func(i, j int) bool {
+			return pids[i] < pids[j]
+		})
+		epm[ep] = pids
+	}
 
+	for _, pid := range pids {
+		p := tb[pid]
+		var conns []Connection
+		for i, conn := range p.Connections {
 			if conn.Peer.Name == "" {
 				continue // listener
 			}
@@ -49,36 +65,28 @@ func Connections(tb Table) {
 				continue // data connection
 			}
 
-			rpid, ok := epm[[3]string{conn.Type, conn.Peer.Name, conn.Self.Name}]
+			rpids, ok := epm[[3]string{conn.Type, conn.Peer.Name, conn.Self.Name}]
 			if !ok {
-				if rpid, ok = epm[[3]string{conn.Type, conn.Peer.Name, ""}]; ok { // partner with unix named socket
-					for i, cn := range tb[rpid].Connections {
-						if cn.Self.Name == conn.Peer.Name {
-							tb[rpid].Connections[i].Peer.Name = conn.Self.Name
-							tb[rpid].Connections[i].Peer.Pid = pid
+				if rpids, ok = epm[[3]string{conn.Type, conn.Peer.Name, ""}]; ok { // partner with unix named socket
+					for _, rpid := range rpids {
+						for i, cn := range tb[rpid].Connections {
+							if cn.Self.Name == conn.Peer.Name {
+								tb[rpid].Connections[i].Peer.Name = conn.Self.Name
+								tb[rpid].Connections[i].Peer.Pid = pid
+							}
 						}
 					}
 				}
 			}
 			if ok {
-				p.Connections[i].Peer.Pid = rpid // intra-process connection
+				p.Connections[i].Peer.Pid = rpids[0] // intra-process connection
+				for _, rpid := range rpids[1:] {
+					conn := p.Connections[i]
+					conn.Peer.Pid = rpid
+					conns = append(conns, conn)
+				}
 			}
 		}
-		if p.Ppid > 0 {
-			p.Connections = append([]Connection{
-				{
-					Type: "parent",
-					Self: Endpoint{
-						Name: tb[p.Ppid].Id.Name,
-						Pid:  p.Ppid,
-					},
-					Peer: Endpoint{
-						Name: p.Id.Name,
-						Pid:  p.Pid,
-					},
-				}},
-				p.Connections...,
-			)
-		}
+		p.Connections = append(p.Connections, conns...)
 	}
 }

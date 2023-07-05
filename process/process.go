@@ -24,3 +24,11 @@ type (
 func (pid Pid) String() string {
 	return strconv.Itoa(int(pid))
 }
+
+func (pid Pid) Ancestors(tb Table) []Pid {
+	var pids []Pid
+	for pid := tb[pid].Ppid; pid > 1; pid = tb[pid].Ppid { // ancestors
+		pids = append([]Pid{pid}, pids...)
+	}
+	return pids
+}

@@ -97,7 +97,6 @@ type (
 
 	// measurement for the message.
 	measurement struct {
-		Ancestors                            []Pid
 		message.Header[message.MeasureEvent] `gomon:""`
 		Id                                   `json:"id" gomon:""`
 		Properties                           `gomon:""`
