@@ -34,7 +34,7 @@ func gomonHandler() error {
 			w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
 			w.Header().Add("Content-Type", "image/svg+xml")
 			w.Header().Add("Content-Encoding", "gzip")
-			w.Write(NodeGraph(r))
+			w.Write(Nodegraph(r))
 		},
 	)
 	measures.Endpoints = append(measures.Endpoints, "gomon")
@@ -82,7 +82,7 @@ func wsHandler() error {
 						continue
 					}
 
-					if err := websocket.Message.Send(ws, NodeGraph(ws.Request())); err != nil {
+					if err := websocket.Message.Send(ws, Nodegraph(ws.Request())); err != nil {
 						gocore.Error("websocket Send", err).Warn()
 						ws.Close()
 						return

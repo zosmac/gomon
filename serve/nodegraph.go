@@ -2,21 +2,27 @@
 
 package serve
 
+/*
+#cgo CFLAGS:
+#cgo LDFLAGS: -lgvc -lcgraph
+
+#include <graphviz/gvc.h>
+#include <stdlib.h>
+*/
+import "C"
+
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 	"math"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
-	"os/exec"
 	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/process"
@@ -48,7 +54,59 @@ var (
 	}
 )
 
-// color defines the color for graphviz nodes and edges
+// dot calls Graphviz to render the process NodeGraph as gzipped SVG.
+func dot(graphviz string) []byte {
+	graph := C.CString(graphviz)
+	defer C.free(unsafe.Pointer(graph))
+
+	gvc := C.gvContext()
+	defer C.gvFreeContext(gvc)
+
+	g := C.agmemread(graph)
+	defer C.agclose(g)
+
+	layout := C.CString("dot")
+	defer C.free(unsafe.Pointer(layout))
+	C.gvLayout(gvc, g, layout)
+	defer C.gvFreeLayout(gvc, g)
+
+	format := C.CString("svgz")
+	defer C.free(unsafe.Pointer(format))
+	var data *C.char
+	var length C.uint
+	rc, err := C.gvRenderData(gvc, g, format, &data, &length)
+	if rc != 0 {
+		gocore.Error("dot", err).Err()
+		return nil
+	}
+	buf := C.GoBytes(unsafe.Pointer(data), C.int(length))
+	C.gvFreeRenderData(data)
+	return buf
+}
+
+// dot calls the Graphviz dot command to render the process NodeGraph as gzipped SVG.
+// func dot(graphviz string) []byte {
+// 	cmd := exec.Command("dot", "-v", "-Tsvgz")
+// 	cmd.Stdin = bytes.NewBufferString(graphviz)
+// 	stdout := &bytes.Buffer{}
+// 	stderr := &bytes.Buffer{}
+// 	cmd.Stdout = stdout
+// 	cmd.Stderr = stderr
+// 	if err := cmd.Run(); err != nil {
+// 		gocore.Error("dot", err, map[string]string{
+// 			"stderr": stderr.String(),
+// 		}).Err()
+// 		sc := bufio.NewScanner(strings.NewReader(graphviz))
+// 		for i := 1; sc.Scan(); i++ {
+// 			fmt.Fprintf(os.Stderr, "%4.d %s\n", i, sc.Text())
+// 		}
+// 		return nil
+// 	}
+
+// 	return stdout.Bytes()
+// }
+
+// color defines the color for graphviz nodes and edges.
 func color(pid Pid) string {
 	var color string
 	if pid < 0 {
@@ -60,8 +118,8 @@ func color(pid Pid) string {
 	return color
 }
 
-// NodeGraph produces the process connections node graph.
-func NodeGraph(req *http.Request) []byte {
+// Nodegraph produces the process connections node graph.
+func Nodegraph(req *http.Request) []byte {
 	defer func() {
 		if r := recover(); r != nil {
 			buf := make([]byte, 4096)
@@ -74,13 +132,14 @@ func NodeGraph(req *http.Request) []byte {
 	}()
 
 	var (
-		clusterEdges string
-		hosts        []string
-		prcss        [][]string
-		datas        []string
-		edges        []string
-		include      = map[Pid]struct{}{} // record which processes have a connection to include in report
-		nodes        = map[Pid]struct{}{}
+		clusterNodes [][2]string                // One node in each cluster is linked to a node in the
+		clusterEdges string                     //  next to maintain left to right order of clusters.
+		hosts        = map[Pid]string{}         // The host (IP) nodes in the leftmost cluster.
+		prcss        = map[int]map[Pid]string{} // The process nodes in the process clusters.
+		datas        = map[Pid]string{}         // The file, unix socket, pipe and kernel connections in the rightmost cluster.
+		include      = map[Pid]struct{}{}       // Processes that have a connection to include in report.
+		edges        = map[[2]Pid]string{}
+		edgeTooltips = map[[2]Pid]map[string]struct{}{}
 	)
 
 	tb := process.BuildTable()
@@ -110,8 +169,6 @@ func NodeGraph(req *http.Request) []byte {
 		}
 	}
 
-	em := map[string]map[string]struct{}{}
-
 	pids := make([]Pid, 0, len(pt))
 	for pid := range pt {
 		pids = append(pids, pid)
@@ -135,24 +192,23 @@ func NodeGraph(req *http.Request) []byte {
 			if conn.Peer.Pid < 0 { // peer is remote host or listener
 				host, port, _ := net.SplitHostPort(conn.Peer.Name)
 
-				if _, ok := nodes[conn.Peer.Pid]; !ok {
-					nodes[conn.Peer.Pid] = struct{}{}
-					hosts = append(hosts, fmt.Sprintf(
-						`%d [shape=cds style=filled fillcolor=%q height=0.6 width=2 label="%s:%s\n%s" tooltip=%q]`,
-						conn.Peer.Pid,
+				if _, ok := hosts[conn.Peer.Pid]; !ok {
+					hosts[conn.Peer.Pid] = fmt.Sprintf(
+						`[shape=cds style=filled fillcolor=%q height=0.6 width=2 label="%s:%s\n%s" tooltip=%q]`,
 						color(conn.Peer.Pid),
 						conn.Type,
 						port,
 						gocore.Hostname(host),
 						conn.Peer.Name,
-					))
+					)
 				}
 
-				id := fmt.Sprintf("%d -> %d", conn.Self.Pid, conn.Peer.Pid)
-				if _, ok := em[id]; !ok {
-					em[id] = map[string]struct{}{}
+				// flip the source and target to get Host shown to left in node graph
+				id := [2]Pid{conn.Peer.Pid, conn.Self.Pid}
+				if _, ok := edgeTooltips[id]; !ok {
+					edgeTooltips[id] = map[string]struct{}{}
 				}
-				em[id][fmt.Sprintf(
+				edgeTooltips[id][fmt.Sprintf(
 					"%s:%s&#10142;%s",
 					conn.Type,
 					conn.Peer.Name,
@@ -161,21 +217,21 @@ func NodeGraph(req *http.Request) []byte {
 			} else if conn.Peer.Pid >= math.MaxInt32 { // peer is data
 				peer := conn.Type + ":" + conn.Peer.Name
 
-				datas = append(datas, fmt.Sprintf(
-					`%d [shape=note style=filled fillcolor=%q height=0.2 label=%q tooltip=%q]`,
-					conn.Peer.Pid,
-					color(conn.Peer.Pid),
-					peer,
-					conn.Peer.Name,
-				))
-
-				// show edge for data connections only once
-				id := fmt.Sprintf("%d -> %d", conn.Self.Pid, conn.Peer.Pid)
-				if _, ok := em[id]; !ok {
-					em[id] = map[string]struct{}{}
+				if _, ok := datas[conn.Peer.Pid]; !ok {
+					datas[conn.Peer.Pid] = fmt.Sprintf(
+						`[shape=note style=filled fillcolor=%q height=0.2 label=%q tooltip=%q]`,
+						color(conn.Peer.Pid),
+						peer,
+						conn.Peer.Name,
+					)
 				}
-				em[id][fmt.Sprintf(
-					"%s\n%s",
+
+				id := [2]Pid{conn.Self.Pid, conn.Peer.Pid}
+				if _, ok := edgeTooltips[id]; !ok {
+					edgeTooltips[id] = map[string]struct{}{}
+				}
+				edgeTooltips[id][fmt.Sprintf(
+					"%s&#10142;%s",
 					shortname(tb, conn.Self.Pid),
 					peer,
 				)] = struct{}{}
@@ -184,12 +240,12 @@ func NodeGraph(req *http.Request) []byte {
 				pids := append(conn.Peer.Pid.Ancestors(tb), conn.Peer.Pid)
 				for i := range pids[:len(pids)-1] { // add "in-laws"
 					include[pids[i]] = struct{}{}
-					id := fmt.Sprintf("%d -> %d", pids[i], pids[i+1])
-					if _, ok := em[id]; !ok {
-						em[id] = map[string]struct{}{}
+					id := [2]Pid{pids[i], pids[i+1]}
+					if _, ok := edgeTooltips[id]; !ok {
+						edgeTooltips[id] = map[string]struct{}{}
 					}
-					em[id][fmt.Sprintf(
-						"parent:%s&#10142;%s\n",
+					edgeTooltips[id][fmt.Sprintf(
+						"parent:%s&#10142;%s",
 						shortname(tb, pids[i]),
 						shortname(tb, pids[i+1]),
 					)] = struct{}{}
@@ -203,11 +259,12 @@ func NodeGraph(req *http.Request) []byte {
 					selfPid, peerPid = peerPid, selfPid
 					self, peer = peer, self
 				}
-				id := fmt.Sprintf("%d -> %d", selfPid, peerPid)
-				if _, ok := em[id]; !ok {
-					em[id] = map[string]struct{}{}
+				id := [2]Pid{selfPid, peerPid}
+				if _, ok := edgeTooltips[id]; !ok {
+					edgeTooltips[id] = map[string]struct{}{}
 				}
-				em[id][fmt.Sprintf("%s:%s&#10142;%s\n", // non-breaking space/hyphen
+				edgeTooltips[id][fmt.Sprintf(
+					"%s:%s&#10142;%s",
 					conn.Type,
 					self,
 					peer,
@@ -216,8 +273,8 @@ func NodeGraph(req *http.Request) []byte {
 		}
 	}
 
-	pids = make([]Pid, 0, len(tb))
-	for pid := range tb {
+	pids = make([]Pid, 0, len(include))
+	for pid := range include {
 		pids = append(pids, pid)
 	}
 	sort.Slice(pids, func(i, j int) bool {
@@ -225,54 +282,51 @@ func NodeGraph(req *http.Request) []byte {
 	})
 
 	for _, pid := range pids {
-		if _, ok := include[pid]; !ok {
-			continue
-		}
-
 		depth := len(pid.Ancestors(tb))
-		for i := len(prcss); i <= depth; i++ {
-			prcss = append(prcss, []string{})
+		if _, ok := prcss[depth]; !ok {
+			prcss[depth] = map[Pid]string{}
 		}
 
-		prcss[depth] = append(prcss[depth], fmt.Sprintf(
-			`%d [shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="%s://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
-			pid,
+		prcss[depth][pid] = fmt.Sprintf(
+			`[shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="%s://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
 			color(pid),
 			scheme,
 			flags.port,
 			tb[pid].Id.Name,
 			longname(tb, pid),
-		))
+		)
 
-		for edge, tooltip := range em {
-			fields := strings.Fields(edge)
-			self, _ := strconv.Atoi(fields[0])
-			peer, _ := strconv.Atoi(fields[2])
-			if Pid(self) == pid {
+		for id, tooltip := range edgeTooltips {
+			self := id[0]
+			peer := id[1]
+			if self == pid || self < 0 && peer == pid {
 				if len(tooltip) > 0 {
 					dir := "both"
-					var tts string
+					var tts []string
 					for tt := range tooltip {
-						if strings.HasPrefix(tt, "parent") {
-							tts = tt + tts
-						} else {
-							tts += tt
-						}
+						tts = append(tts, tt)
 					}
+					sort.Slice(tts, func(i, j int) bool {
+						if strings.HasPrefix(tts[i], "parent") {
+							return true
+						} else if strings.HasPrefix(tts[j], "parent") {
+							return false
+						} else {
+							return tts[i] < tts[j]
+						}
+					})
 					if peer < 0 || peer >= math.MaxInt32 ||
-						len(tooltip) == 1 && strings.HasPrefix(tts, "parent") {
+						len(tooltip) == 1 && strings.HasPrefix(tts[0], "parent") {
 						dir = "forward"
 					}
 
-					edges = append(edges, fmt.Sprintf(
-						`%s [dir=%s color=%q tooltip="%s"]`,
-						edge,
+					edges[id] = fmt.Sprintf(
+						`[dir=%s color=%q tooltip="%s"]`,
 						dir,
-						color(Pid(peer))+";0.5:"+color(Pid(self)),
-						tts,
-					))
+						color(peer)+";0.5:"+color(self),
+						strings.Join(tts, "\n"),
+					)
 				}
-				delete(em, edge)
 			}
 		}
 	}
@@ -289,83 +343,77 @@ func NodeGraph(req *http.Request) []byte {
 		time.Now().Local().Format(`\lMon Jan 02 2006 at 03:04:05PM MST\l"`),
 	)
 
-	sort.Slice(hosts, func(i, j int) bool {
-		a, _ := strconv.Atoi(hosts[i][:strings.Index(hosts[i], " ")])
-		b, _ := strconv.Atoi(hosts[j][:strings.Index(hosts[j], " ")])
-		return a < b
-	})
-
-	var clusterNodes []string
-	if len(hosts) > 0 {
+	host, pid := cluster(hosts)
+	if host != "" {
 		clusterNodes = append(
 			clusterNodes,
-			hosts[0][:strings.Index(hosts[0], " ")],
-			"hosts",
+			[2]string{pid.String(), "hosts"},
 		)
 	}
 
-	var procs []string
-	for i, prcs := range prcss {
-		if len(prcs) > 0 {
-			sort.Slice(prcs, func(i, j int) bool {
-				a, _ := strconv.Atoi(prcs[i][:strings.Index(prcs[i], " ")])
-				b, _ := strconv.Atoi(prcs[j][:strings.Index(prcs[j], " ")])
-				return a < b
-			})
-			clusterNodes = append(
-				clusterNodes,
-				prcs[0][:strings.Index(prcs[0], " ")],
-				fmt.Sprintf("processes_%d", i+1),
-			)
-
-			procs = append(procs, fmt.Sprintf(`subgraph processes_%d {cluster=true rank=same label="Process depth %[1]d"`, i+1))
-			procs = append(procs, prcs...)
-			procs = append(procs, "}")
-		}
+	var depths []int
+	for depth := range prcss {
+		depths = append(depths, depth)
 	}
+	sort.Ints(depths)
 
-	sort.Slice(datas, func(i, j int) bool {
-		a, _ := strconv.Atoi(datas[i][:strings.Index(datas[i], " ")])
-		b, _ := strconv.Atoi(datas[j][:strings.Index(datas[j], " ")])
-		return a < b
-	})
+	var procs string
+	for _, depth := range depths {
+		prcs, pid := cluster(prcss[depth])
+		if prcs == "" {
+			continue
+		}
+		procs += fmt.Sprintf(
+			"   subgraph processes_%d {cluster=true rank=same label=\"Process depth %[1]d\"\n",
+			depth+1,
+		)
+		procs += prcs
+		procs += "   }\n"
 
-	if len(datas) > 0 {
 		clusterNodes = append(
 			clusterNodes,
-			datas[0][:strings.Index(datas[0], " ")],
-			"datas",
+			[2]string{pid.String(), fmt.Sprintf("processes_%d", depth+1)},
 		)
 	}
 
-	for i := range clusterNodes[:len(clusterNodes)-2] {
-		if i%2 == 0 {
-			clusterEdges += fmt.Sprintf(
-				"  %s -> %s [style=invis ltail=%q lhead=%q]\n",
-				clusterNodes[i],
-				clusterNodes[i+2],
-				clusterNodes[i+1],
-				clusterNodes[i+3],
-			)
-		}
+	data, pid := cluster(datas)
+	if data != "" {
+		clusterNodes = append(
+			clusterNodes,
+			[2]string{pid.String(), "datas"},
+		)
 	}
 
-	sort.Slice(edges, func(i, j int) bool {
-		s := strings.SplitN(edges[i], " ", 4)
-		t := strings.SplitN(edges[j], " ", 4)
-		a, _ := strconv.Atoi(s[0])
-		b, _ := strconv.Atoi(t[0])
-		c, _ := strconv.Atoi(s[2])
-		if c < 0 {
-			a, c = c, a
-		}
-		d, _ := strconv.Atoi(t[2])
-		if d < 0 {
-			b, d = d, b
-		}
+	for i := range clusterNodes[:len(clusterNodes)-1] {
+		clusterEdges += fmt.Sprintf(
+			"  %s -> %s [style=invis ltail=%q lhead=%q]\n",
+			clusterNodes[i][0],
+			clusterNodes[i+1][0],
+			clusterNodes[i][1],
+			clusterNodes[i+1][1],
+		)
+	}
+
+	ids := make([][2]Pid, 0, len(edges))
+	for id := range edges {
+		ids = append(ids, id)
+	}
+
+	sort.Slice(ids, func(i, j int) bool {
+		a, b, c, d := ids[i][0], ids[j][0], ids[i][1], ids[j][1]
 		return a < b ||
 			a == b && c < d
 	})
+
+	var es string
+	for _, id := range ids {
+		es += fmt.Sprintf(
+			"  %d -> %d %s\n",
+			id[0],
+			id[1],
+			edges[id],
+		)
+	}
 
 	return dot(`digraph "Gomon Process Connections Nodegraph" {
   stylesheet="/assets/mode.css"
@@ -374,46 +422,21 @@ func NodeGraph(req *http.Request) []byte {
   labeljust=l
   rankdir=LR
   newrank=true
-  compound=true
-  constraint=false
-  ordering=out
   remincross=false
   nodesep=0.03
   ranksep=2
   node [margin=0]
-  subgraph hosts {cluster=true rank=source label="External Connections"
-    ` + strings.Join(hosts, "\n    ") + `
+  subgraph hosts {cluster=true rank=same label="External Connections"
+` + host + `
   }
   subgraph processes {cluster=true label=Processes
-      ` + strings.Join(procs, "\n      ") + `
+` + procs + `
   }
-  subgraph datas {cluster=true rank=sink label="Open Files"
-    ` + strings.Join(datas, "\n    ") + `
+  subgraph datas {cluster=true rank=same label="Data Sources"
+` + data + `
   }
-` + clusterEdges + strings.Join(edges, "\n  ") + `
+` + clusterEdges + es + `
 }`)
-}
-
-// dot calls the Graphviz dot command to render the process NodeGraph as SVG.
-func dot(graphviz string) []byte {
-	cmd := exec.Command("dot", "-v", "-Tsvgz")
-	cmd.Stdin = bytes.NewBufferString(graphviz)
-	stdout := &bytes.Buffer{}
-	stderr := &bytes.Buffer{}
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	if err := cmd.Run(); err != nil {
-		gocore.Error("dot", err, map[string]string{
-			"stderr": stderr.String(),
-		}).Err()
-		sc := bufio.NewScanner(strings.NewReader(graphviz))
-		for i := 1; sc.Scan(); i++ {
-			fmt.Fprintf(os.Stderr, "%4.d %s\n", i, sc.Text())
-		}
-		return nil
-	}
-
-	return stdout.Bytes()
 }
 
 // parseQuery extracts the query from the HTTP request.
@@ -434,17 +457,12 @@ func parseQuery(r *http.Request) (query, error) {
 // family identifies all of the ancestor and children processes of a process.
 func family(tb process.Table, tr process.Tree, pid Pid) process.Table {
 	pt := process.Table{}
-	pids := append(pid.Ancestors(tb), pid)
-	for _, pid := range pids { // ancestors
+	for _, pid := range pid.Ancestors(tb) { // ancestors
 		pt[pid] = tb[pid]
 	}
 
 	tr = tr.FindTree(pid)
-	o := func(node Pid, pt process.Table) int {
-		return order(node, tr, pt)
-	}
-
-	for _, pid := range tr.Flatten(tb, o) {
+	for _, pid := range tr.Flatten(tb, func(node Pid, pt process.Table) int { return order(tr) }) {
 		pt[pid] = tb[pid]
 	}
 
@@ -452,22 +470,10 @@ func family(tb process.Table, tr process.Tree, pid Pid) process.Table {
 }
 
 // order returns the process' depth in the tree for sorting.
-func order(node Pid, tr process.Tree, _ process.Table) int {
+func order(tr process.Tree) int {
 	var depth int
 	for _, tr := range tr {
-		dt := depthTree(tr) + 1
-		if depth < dt {
-			depth = dt
-		}
-	}
-	return depth
-}
-
-// depthTree enables sort of deepest process trees first.
-func depthTree(tr process.Tree) int {
-	depth := 0
-	for _, tr := range tr {
-		dt := depthTree(tr) + 1
+		dt := order(tr) + 1
 		if depth < dt {
 			depth = dt
 		}
@@ -493,4 +499,30 @@ func shortname(tb process.Table, pid Pid) string {
 		return fmt.Sprintf("%s[%d]", p.Id.Name, pid)
 	}
 	return ""
+}
+
+func cluster(nodes map[Pid]string) (string, Pid) {
+	if len(nodes) == 0 {
+		return "", 0
+	}
+
+	pids := make([]Pid, 0, len(nodes))
+	for pid := range nodes {
+		pids = append(pids, pid)
+	}
+
+	sort.Slice(pids, func(i, j int) bool {
+		return pids[i] < pids[j]
+	})
+
+	var ns string
+	for _, pid := range pids {
+		ns += fmt.Sprintf(
+			"    %d %s\n",
+			pid,
+			nodes[pid],
+		)
+	}
+
+	return ns, pids[0]
 }
