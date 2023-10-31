@@ -3,8 +3,8 @@
 package serve
 
 /*
-#cgo CFLAGS:
-#cgo LDFLAGS: -lgvc -lcgraph
+#cgo CFLAGS: -I/Users/keefe/Developer/local/include
+#cgo LDFLAGS: -L/Users/keefe/Developer/local/lib -lgvc -lcgraph
 
 #include <graphviz/gvc.h>
 #include <stdlib.h>
@@ -17,6 +17,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"runtime"
 	"sort"
 	"strconv"
@@ -41,21 +42,30 @@ type (
 var (
 	// colors on HSV spectrum that work well in light and dark mode
 	colors = []string{
-		"0.0 0.75 0.80",
-		"0.1 0.75 0.75",
-		"0.2 0.75 0.7",
-		"0.3 0.75 0.75",
-		"0.4 0.75 0.75",
-		"0.5 0.75 0.75",
-		"0.6 0.75 0.9",
-		"0.7 0.75 1.0", // blue needs to be a bit brighter
-		"0.8 0.75 0.9",
-		"0.9 0.75 0.85",
+		"0.0 0.75 0.8  0.5",
+		"0.1 0.75 0.75 0.5",
+		"0.2 0.75 0.7  0.5",
+		"0.3 0.75 0.75 0.5",
+		"0.4 0.75 0.75 0.5",
+		"0.5 0.75 0.75 0.5",
+		"0.6 0.75 0.9  0.5",
+		"0.7 0.75 1.0  0.5", // blue needs to be a bit brighter
+		"0.8 0.75 0.9  0.5",
+		"0.9 0.75 0.85 0.5",
 	}
 )
 
 // dot calls Graphviz to render the process NodeGraph as gzipped SVG.
 func dot(graphviz string) []byte {
+	// first write the graph to a file
+	if cwd, err := os.Getwd(); err == nil {
+		if f, err := os.CreateTemp(cwd, "graphviz.*.gv"); err == nil {
+			os.Chmod(f.Name(), 0644)
+			f.WriteString(graphviz)
+			f.Close()
+		}
+	}
+
 	graph := C.CString(graphviz)
 	defer C.free(unsafe.Pointer(graph))
 
@@ -417,15 +427,19 @@ func Nodegraph(req *http.Request) []byte {
 
 	return dot(`digraph "Gomon Process Connections Nodegraph" {
   stylesheet="/assets/mode.css"
+  truecolor=true
+  fontname=Helvetica
+  fontsize=13.0
   label=` + glabel + `
   labelloc=t
   labeljust=l
   rankdir=LR
   newrank=true
   remincross=false
-  nodesep=0.03
+  nodesep=0.05
   ranksep=2
-  node [margin=0]
+  node [margin=0 fontname=Helvetica fontsize=11.0
+  ]
   subgraph hosts {cluster=true rank=same label="External Connections"
 ` + host + `
   }
@@ -501,6 +515,7 @@ func shortname(tb process.Table, pid Pid) string {
 	return ""
 }
 
+// cluster returns list of nodes in cluster and id of first node.
 func cluster(nodes map[Pid]string) (string, Pid) {
 	if len(nodes) == 0 {
 		return "", 0
