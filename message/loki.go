@@ -38,6 +38,14 @@ var (
 	// LokiStreams counts the number of observations streamed to Loki.
 	LokiStreams int
 
+	// lokiLabels identifies the unique label types gomon sends to Loki
+	lokiLabels = map[string]struct{}{
+		"host":     {},
+		"platform": {},
+		"source":   {},
+		"event":    {},
+	}
+
 	// lokiStatusRequest queries Loki if it is running.
 	lokiStatusRequest = http.Request{
 		Method: http.MethodGet,
@@ -112,17 +120,21 @@ func lokiEncode(ms []Content) bool {
 	var s streams
 	for _, m := range ms {
 		labels := map[string]string{}
+		var timestamp, message string
 		for _, l := range gocore.Format("", "", reflect.ValueOf(m), lokiFormatter) {
 			l := l.(tuple)
-			labels[l[0]] = l[1]
-		}
-
-		timestamp := labels["timestamp"]
-		message := labels["message"]
-		delete(labels, "timestamp")
-		delete(labels, "message")
-		if labels["source"] == "file" {
-			delete(labels, "name") // file name already in message text
+			switch l[0] {
+			case "timestamp":
+				timestamp = l[1]
+			case "message":
+				message = l[1] + message
+			default:
+				if _, ok := lokiLabels[l[0]]; ok {
+					labels[l[0]] = l[1]
+				} else {
+					message += " " + l[0] + "=" + l[1]
+				}
+			}
 		}
 
 		s.Streams = append(s.Streams, stream{

@@ -3,8 +3,8 @@
 package serve
 
 /*
-#cgo CFLAGS: -I/Users/keefe/Developer/local/include
-#cgo LDFLAGS: -L/Users/keefe/Developer/local/lib -lgvc -lcgraph
+#cgo CFLAGS: -I/usr/local/include
+#cgo LDFLAGS: -L/usr/local/lib -lgvc -lcgraph
 
 #include <graphviz/gvc.h>
 #include <stdlib.h>

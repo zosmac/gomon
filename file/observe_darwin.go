@@ -38,7 +38,7 @@ type handle struct {
 }
 
 // open obtains a directory handle for observer.
-func open(directory string) (*handle, error) {
+func open(_ string) (*handle, error) {
 	cname := gocore.CreateCFString(flags.fileDirectory + "\x00")
 	defer C.CFRelease(C.CFTypeRef(cname))
 	context := C.malloc(C.sizeof_struct_FSEventStreamContext)
@@ -214,10 +214,10 @@ func rename(id, absn, abso string) {
 }
 
 // addDir adds host specific handling for a directory.
-func addDir(abs string) error {
+func addDir(_ string) error {
 	return nil
 }
 
 // removeDir removes host specific handling for a directory.
-func removeDir(abs string) {
+func removeDir(_ string) {
 }

@@ -144,9 +144,10 @@ func Serve(ctx context.Context) {
 		// 2. go build -o ~/go/bin generate_cert.go
 		// 3. cd ~/.ssh
 		// 4. generate_cert -host localhost
-		// 5. add cert.pem to keychain
-		// 6. in Safari, visit https://localhost:1234/gomon
-		// 7. authorize untrusted self-signed certificate
+		// 5. openssl x509 -noout -text -in cert.pem
+		// 6. add cert.pem to keychain
+		// 7. in Safari, visit https://localhost:1234/gomon
+		// 8. authorize untrusted self-signed certificate
 
 		u, _ := user.Current()
 		serve := func() error { return server.ListenAndServe() }

@@ -94,9 +94,10 @@ func (obs *observer) close() {
 
 // notify assembles a message and encodes it
 func notify(ev fileEvent, id, name, oldn string) {
-	msg := name
+	var msg string
 	if ev == fileRename {
-		msg += " <- " + oldn
+		msg = "newname=" + name
+		name = oldn
 	}
 	obs.msgChan <- &observation{
 		Header: message.Observation(time.Now(), ev),

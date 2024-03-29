@@ -19,6 +19,7 @@ type (
 	Header[T ~string] struct {
 		Timestamp time.Time `json:"timestamp" gomon:"property"`
 		Host      string    `json:"host" gomon:"property"`
+		Platform  string    `json:"platform" gomon:"property"`
 		Source    string    `json:"source" gomon:"property"`
 		Event     T         `json:"event" gomon:"property"`
 	}
@@ -46,6 +47,7 @@ func Measurement() Header[MeasureEvent] {
 	return Header[MeasureEvent]{
 		Timestamp: time.Now(),
 		Host:      gocore.Host,
+		Platform:  gocore.Platform,
 		Source:    source(),
 		Event:     measure,
 	}
@@ -58,6 +60,7 @@ func Observation[T ~string](t time.Time, event T) Header[T] {
 	return Header[T]{
 		Timestamp: t,
 		Host:      gocore.Host,
+		Platform:  gocore.Platform,
 		Source:    source(),
 		Event:     event,
 	}
