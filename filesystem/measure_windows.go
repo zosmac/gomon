@@ -30,7 +30,6 @@ func filesystems() ([]message.Request, error) {
 		if len(drive) == 0 {
 			break // The drive strings list ends with 2 null terminators
 		}
-		i := i
 		qs = append(qs,
 			func() []message.Content {
 				driveType := windows.GetDriveType(&driveStrings[i])

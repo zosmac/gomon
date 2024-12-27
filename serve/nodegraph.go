@@ -3,27 +3,29 @@
 package serve
 
 /*
-#cgo CFLAGS: -I/usr/local/include
-#cgo LDFLAGS: -L/usr/local/lib -lgvc -lcgraph
+//#cgo CFLAGS: -I/usr/local/include
+//#cgo LDFLAGS: -L/usr/local/lib -lgvc -lcgraph
 
-#include <graphviz/gvc.h>
-#include <stdlib.h>
+//#include <graphviz/gvc.h>
+//#include <stdlib.h>
 */
-import "C"
+//import "C"
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"math"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/process"
@@ -56,6 +58,45 @@ var (
 )
 
 // dot calls Graphviz to render the process NodeGraph as gzipped SVG.
+// func dot(graphviz string) []byte {
+// 	// first write the graph to a file
+// 	if cwd, err := os.Getwd(); err == nil {
+// 		if f, err := os.CreateTemp(cwd, "graphviz.*.gv"); err == nil {
+// 			os.Chmod(f.Name(), 0644)
+// 			f.WriteString(graphviz)
+// 			f.Close()
+// 		}
+// 	}
+
+// 	graph := C.CString(graphviz)
+// 	defer C.free(unsafe.Pointer(graph))
+
+// 	gvc := C.gvContext()
+// 	defer C.gvFreeContext(gvc)
+
+// 	g := C.agmemread(graph)
+// 	defer C.agclose(g)
+
+// 	layout := C.CString("dot")
+// 	defer C.free(unsafe.Pointer(layout))
+// 	C.gvLayout(gvc, g, layout)
+// 	defer C.gvFreeLayout(gvc, g)
+
+// 	format := C.CString("svgz")
+// 	defer C.free(unsafe.Pointer(format))
+// 	var data *C.char
+// 	var length C.uint
+// 	rc, err := C.gvRenderData(gvc, g, format, &data, &length)
+// 	if rc != 0 {
+// 		gocore.Error("dot", err).Err()
+// 		return nil
+// 	}
+// 	buf := C.GoBytes(unsafe.Pointer(data), C.int(length))
+// 	C.gvFreeRenderData(data)
+// 	return buf
+// }
+
+// dot calls the Graphviz dot command to render the process NodeGraph as gzipped SVG.
 func dot(graphviz string) []byte {
 	// first write the graph to a file
 	if cwd, err := os.Getwd(); err == nil {
@@ -66,55 +107,25 @@ func dot(graphviz string) []byte {
 		}
 	}
 
-	graph := C.CString(graphviz)
-	defer C.free(unsafe.Pointer(graph))
-
-	gvc := C.gvContext()
-	defer C.gvFreeContext(gvc)
-
-	g := C.agmemread(graph)
-	defer C.agclose(g)
-
-	layout := C.CString("dot")
-	defer C.free(unsafe.Pointer(layout))
-	C.gvLayout(gvc, g, layout)
-	defer C.gvFreeLayout(gvc, g)
-
-	format := C.CString("svgz")
-	defer C.free(unsafe.Pointer(format))
-	var data *C.char
-	var length C.uint
-	rc, err := C.gvRenderData(gvc, g, format, &data, &length)
-	if rc != 0 {
-		gocore.Error("dot", err).Err()
+	cmd := exec.Command("dot", "-v", "-Tsvgz")
+	cmd.Stdin = bytes.NewBufferString(graphviz)
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	if err := cmd.Run(); err != nil {
+		gocore.Error("dot", err, map[string]string{
+			"stderr": stderr.String(),
+		}).Err()
+		sc := bufio.NewScanner(strings.NewReader(graphviz))
+		for i := 1; sc.Scan(); i++ {
+			fmt.Fprintf(os.Stderr, "%4.d %s\n", i, sc.Text())
+		}
 		return nil
 	}
-	buf := C.GoBytes(unsafe.Pointer(data), C.int(length))
-	C.gvFreeRenderData(data)
-	return buf
+
+	return stdout.Bytes()
 }
-
-// dot calls the Graphviz dot command to render the process NodeGraph as gzipped SVG.
-// func dot(graphviz string) []byte {
-// 	cmd := exec.Command("dot", "-v", "-Tsvgz")
-// 	cmd.Stdin = bytes.NewBufferString(graphviz)
-// 	stdout := &bytes.Buffer{}
-// 	stderr := &bytes.Buffer{}
-// 	cmd.Stdout = stdout
-// 	cmd.Stderr = stderr
-// 	if err := cmd.Run(); err != nil {
-// 		gocore.Error("dot", err, map[string]string{
-// 			"stderr": stderr.String(),
-// 		}).Err()
-// 		sc := bufio.NewScanner(strings.NewReader(graphviz))
-// 		for i := 1; sc.Scan(); i++ {
-// 			fmt.Fprintf(os.Stderr, "%4.d %s\n", i, sc.Text())
-// 		}
-// 		return nil
-// 	}
-
-// 	return stdout.Bytes()
-// }
 
 // color defines the color for graphviz nodes and edges.
 func color(pid Pid) string {

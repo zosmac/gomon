@@ -165,7 +165,6 @@ func remove(f file, id string) {
 	if f.isDir {
 		abs := f.abs
 		for rel, f := range obs.watched {
-			f := f
 			if _, err := gocore.Subdir(abs, f.abs); err == nil {
 				delete(obs.watched, rel)
 				if !f.isDir {

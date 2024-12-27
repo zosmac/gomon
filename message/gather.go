@@ -24,7 +24,6 @@ func Gather(fs []Request, timeout time.Duration) []Content {
 	rs := make(chan []Content, len(fs))
 
 	for _, f := range fs {
-		f := f
 		go func() {
 			defer wg.Done()
 			select {
