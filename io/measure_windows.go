@@ -200,7 +200,7 @@ func Measure() (ms []message.Content) {
 		}
 
 		var reads, readBytes, writes, writeBytes uint64
-		for i := 0; i < runtime.NumCPU(); i++ {
+		for i := range runtime.NumCPU() {
 			stats := (*filesystemStatistics)(unsafe.Pointer(&buf[i*sizeof]))
 			reads += uint64(stats.UserFileReads)
 			readBytes += uint64(stats.UserFileReadBytes)

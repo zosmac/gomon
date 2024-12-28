@@ -195,7 +195,7 @@ func nlInetPeerInode(addr net.Addr) (int, error) {
 	if len(ip) == net.IPv4len {
 		src[0] = (*(*uint32)(unsafe.Pointer(&ip[0])))
 	} else {
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			src[i] = ((*[4]uint32)(unsafe.Pointer(&ip[0])))[i]
 		}
 	}
