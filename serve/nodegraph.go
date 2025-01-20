@@ -479,7 +479,7 @@ func parseQuery(r *http.Request) (query, error) {
 	}, nil
 }
 
-// family identifies all of the ancestor and children processes of a process.
+// family identifies all of the ancestor and descendant processes of a process.
 func family(tb process.Table, tr process.Tree, pid Pid) process.Table {
 	pt := process.Table{}
 	for _, pid := range pid.Ancestors(tb) { // ancestors
@@ -487,21 +487,23 @@ func family(tb process.Table, tr process.Tree, pid Pid) process.Table {
 	}
 
 	tr = tr.FindTree(pid)
-	for _, pid := range tr.Flatten(tb, func(node Pid, pt process.Table) int { return order(tr) }) {
+	for _, pid := range (process.Meta{
+		Tree:  tr,
+		Table: tb,
+		Order: func(node Pid, _ *process.Process) int {
+			return depthTree(tr)
+		}}).All() {
 		pt[pid] = tb[pid]
 	}
 
 	return pt
 }
 
-// order returns the process' depth in the tree for sorting.
-func order(tr process.Tree) int {
-	var depth int
+// depthTree enables sort of deepest process trees first.
+func depthTree(tr process.Tree) int {
+	depth := 0
 	for _, tr := range tr {
-		dt := order(tr) + 1
-		if depth < dt {
-			depth = dt
-		}
+		depth = max(depth, depthTree(tr)+1)
 	}
 	return depth
 }

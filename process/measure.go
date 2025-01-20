@@ -14,10 +14,13 @@ import (
 
 type (
 	// Table defines a process table as a map of pids to processes.
-	Table = gocore.Table[Pid, *measurement]
+	Table = gocore.Table[Pid, *Process]
 
 	// Tree organizes the processes into a hierarchy
-	Tree = gocore.Tree[Pid, int, *measurement]
+	Tree = gocore.Tree[Pid]
+
+	// Meta defines the metadata for the tree.
+	Meta = gocore.Meta[Pid, *Process, int]
 )
 
 var (
