@@ -5,7 +5,7 @@ package process
 import (
 	"fmt"
 	"runtime"
-	"sort"
+	"slices"
 
 	"github.com/zosmac/gocore"
 )
@@ -27,9 +27,7 @@ func Connections(tb Table) {
 	for pid := range tb {
 		pids = append(pids, pid)
 	}
-	sort.Slice(pids, func(i, j int) bool {
-		return pids[i] < pids[j]
-	})
+	slices.Sort(pids)
 
 	// build a map for identifying intra-host peer endpoints
 	epm := map[[3]string][]Pid{} // is distinguishing dup'd and inherited descriptors an issue?
@@ -47,9 +45,7 @@ func Connections(tb Table) {
 	}
 
 	for ep, pids := range epm {
-		sort.Slice(pids, func(i, j int) bool {
-			return pids[i] < pids[j]
-		})
+		slices.Sort(pids)
 		epm[ep] = pids
 	}
 

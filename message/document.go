@@ -3,10 +3,11 @@
 package message
 
 import (
+	"cmp"
 	"fmt"
 	"path/filepath"
 	"reflect"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/zosmac/gocore"
@@ -54,14 +55,16 @@ type field struct {
 
 // Document the messages when the document flag specified on the command line.
 func Document() {
-	sort.SliceStable(fields, func(i, j int) bool {
-		if fields[i].key != fields[j].key {
-			return fields[i].key < fields[j].key
+	slices.SortStableFunc(fields, func(a, b field) int {
+		if c := cmp.Compare(a.key, b.key); c != 0 {
+			return c
 		}
-		if fields[i].Property {
-			return !fields[j].Property
+		if a.Property == b.Property {
+			return 0
+		} else if a.Property {
+			return -1
 		}
-		return false // retain order of metric fields
+		return 1 // b is a property
 	})
 
 	headers := []string{

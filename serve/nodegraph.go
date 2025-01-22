@@ -14,6 +14,7 @@ package serve
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"fmt"
 	"math"
 	"net"
@@ -22,7 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -194,9 +195,7 @@ func Nodegraph(req *http.Request) []byte {
 	for pid := range pt {
 		pids = append(pids, pid)
 	}
-	sort.Slice(pids, func(i, j int) bool {
-		return pids[i] < pids[j]
-	})
+	slices.Sort(pids)
 
 	for _, pid := range pids {
 		p := pt[pid]
@@ -298,9 +297,7 @@ func Nodegraph(req *http.Request) []byte {
 	for pid := range include {
 		pids = append(pids, pid)
 	}
-	sort.Slice(pids, func(i, j int) bool {
-		return pids[i] < pids[j]
-	})
+	slices.Sort(pids)
 
 	for _, pid := range pids {
 		depth := len(pid.Ancestors(tb))
@@ -327,13 +324,13 @@ func Nodegraph(req *http.Request) []byte {
 					for tt := range tooltip {
 						tts = append(tts, tt)
 					}
-					sort.Slice(tts, func(i, j int) bool {
-						if strings.HasPrefix(tts[i], "parent") {
-							return true
-						} else if strings.HasPrefix(tts[j], "parent") {
-							return false
+					slices.SortFunc(tts, func(a, b string) int {
+						if strings.HasPrefix(a, "parent") {
+							return -1
+						} else if strings.HasPrefix(b, "parent") {
+							return 1
 						} else {
-							return tts[i] < tts[j]
+							return cmp.Compare(a, b)
 						}
 					})
 					if peer < 0 || peer >= math.MaxInt32 ||
@@ -376,7 +373,7 @@ func Nodegraph(req *http.Request) []byte {
 	for depth := range prcss {
 		depths = append(depths, depth)
 	}
-	sort.Ints(depths)
+	slices.Sort(depths)
 
 	var procs string
 	for _, depth := range depths {
@@ -420,10 +417,11 @@ func Nodegraph(req *http.Request) []byte {
 		ids = append(ids, id)
 	}
 
-	sort.Slice(ids, func(i, j int) bool {
-		a, b, c, d := ids[i][0], ids[j][0], ids[i][1], ids[j][1]
-		return a < b ||
-			a == b && c < d
+	slices.SortFunc(ids, func(a, b [2]Pid) int {
+		return cmp.Or(
+			cmp.Compare(a[0], b[0]),
+			cmp.Compare(a[1], b[1]),
+		)
 	})
 
 	var es string
@@ -490,7 +488,7 @@ func family(tb process.Table, tr process.Tree, pid Pid) process.Table {
 	for _, pid := range (process.Meta{
 		Tree:  tr,
 		Table: tb,
-		Order: func(node Pid, _ *process.Process) int {
+		Order: func(_ Pid, _ *process.Process) int {
 			return depthTree(tr)
 		}}).All() {
 		pt[pid] = tb[pid]
@@ -539,9 +537,7 @@ func cluster(nodes map[Pid]string) (string, Pid) {
 		pids = append(pids, pid)
 	}
 
-	sort.Slice(pids, func(i, j int) bool {
-		return pids[i] < pids[j]
-	})
+	slices.Sort(pids)
 
 	var ns string
 	for _, pid := range pids {
