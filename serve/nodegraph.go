@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"strconv"
@@ -56,6 +57,9 @@ var (
 		"0.8 0.75 0.9  0.5",
 		"0.9 0.75 0.85 0.5",
 	}
+
+	// prevCPU is used to limit reporting only of processes that consumed CPU since the previous measurement.
+	prevCPU = map[Pid]time.Duration{}
 )
 
 // dot calls Graphviz to render the process NodeGraph as gzipped SVG.
@@ -159,7 +163,7 @@ func Nodegraph(req *http.Request) []byte {
 		hosts        = map[Pid]string{}         // The host (IP) nodes in the leftmost cluster.
 		prcss        = map[int]map[Pid]string{} // The process nodes in the process clusters.
 		datas        = map[Pid]string{}         // The file, unix socket, pipe and kernel connections in the rightmost cluster.
-		include      = map[Pid]struct{}{}       // Processes that have a connection to include in report.
+		include      = process.Table{}          // Processes that have a connection to include in report.
 		edges        = map[[2]Pid]string{}
 		edgeTooltips = map[[2]Pid]map[string]struct{}{}
 	)
@@ -168,6 +172,11 @@ func Nodegraph(req *http.Request) []byte {
 	tr := process.BuildTree(tb)
 	process.Connections(tb)
 
+	currCPU := map[Pid]time.Duration{}
+	for pid, p := range tb {
+		currCPU[pid] = p.Total
+	}
+
 	query, _ := parseQuery(req)
 	if query.pid != 0 && tb[query.pid] == nil {
 		query.pid = 0 // reset to default
@@ -175,12 +184,17 @@ func Nodegraph(req *http.Request) []byte {
 
 	pt := process.Table{}
 	if query.pid > 0 { // build this process' "extended family"
-		pt = family(tb, tr, query.pid)
-	} else { // only consider non-daemon and remote host connected processes
+		for _, pid := range tr.Family(query.pid).All() {
+			pt[pid] = tb[pid]
+		}
+	} else { // only report non-daemon, remote host connected, and cpu consuming processes
 		for pid, p := range tb {
+			if pcpu, ok := prevCPU[pid]; ok && pcpu < currCPU[pid] {
+				pt[pid] = tb[pid]
+			}
 			if p.Ppid > 1 {
-				for pid, p := range family(tb, tr, pid) {
-					pt[pid] = p
+				for _, pid := range tr.Family(pid).All() {
+					pt[pid] = tb[pid]
 				}
 			}
 			for _, conn := range p.Connections {
@@ -191,14 +205,9 @@ func Nodegraph(req *http.Request) []byte {
 		}
 	}
 
-	pids := make([]Pid, 0, len(pt))
-	for pid := range pt {
-		pids = append(pids, pid)
-	}
-	slices.Sort(pids)
+	prevCPU = currCPU
 
-	for _, pid := range pids {
-		p := pt[pid]
+	for _, p := range pt {
 		for _, conn := range p.Connections {
 			if conn.Self.Pid == 0 || conn.Peer.Pid == 0 || // ignore kernel process
 				conn.Self.Pid == 1 || conn.Peer.Pid == 1 || // ignore launchd processes
@@ -207,7 +216,7 @@ func Nodegraph(req *http.Request) []byte {
 				continue
 			}
 
-			include[conn.Self.Pid] = struct{}{}
+			include[conn.Self.Pid] = tb[conn.Self.Pid]
 
 			if conn.Peer.Pid < 0 { // peer is remote host or listener
 				host, port, _ := net.SplitHostPort(conn.Peer.Name)
@@ -256,10 +265,10 @@ func Nodegraph(req *http.Request) []byte {
 					peer,
 				)] = struct{}{}
 			} else { // peer is process
-				include[conn.Peer.Pid] = struct{}{}
-				pids := append(conn.Peer.Pid.Ancestors(tb), conn.Peer.Pid)
-				for i := range pids[:len(pids)-1] { // add "in-laws"
-					include[pids[i]] = struct{}{}
+				include[conn.Peer.Pid] = tb[conn.Peer.Pid]
+				pids := append(tr.Ancestors(conn.Peer.Pid), conn.Peer.Pid)
+				for i := range len(pids) - 1 { // add "in-laws"
+					include[pids[i]] = tb[pids[i]]
 					id := [2]Pid{pids[i], pids[i+1]}
 					if _, ok := edgeTooltips[id]; !ok {
 						edgeTooltips[id] = map[string]struct{}{}
@@ -274,8 +283,8 @@ func Nodegraph(req *http.Request) []byte {
 				// show edge for inter-process connections only once
 				self, peer := conn.Self.Name, conn.Peer.Name
 				selfPid, peerPid := conn.Self.Pid, conn.Peer.Pid
-				if len(selfPid.Ancestors(tb)) > len(peerPid.Ancestors(tb)) ||
-					len(selfPid.Ancestors(tb)) == len(peerPid.Ancestors(tb)) && conn.Self.Pid > conn.Peer.Pid {
+				if len(tr.Ancestors(selfPid)) > len(tr.Ancestors(peerPid)) ||
+					len(tr.Ancestors(selfPid)) == len(tr.Ancestors(peerPid)) && conn.Self.Pid > conn.Peer.Pid {
 					selfPid, peerPid = peerPid, selfPid
 					self, peer = peer, self
 				}
@@ -293,18 +302,12 @@ func Nodegraph(req *http.Request) []byte {
 		}
 	}
 
-	pids = make([]Pid, 0, len(include))
-	for pid := range include {
-		pids = append(pids, pid)
+	itr := process.BuildTree(include)
+	for i := range itr.DepthTree() {
+		prcss[i] = map[Pid]string{}
 	}
-	slices.Sort(pids)
 
-	for _, pid := range pids {
-		depth := len(pid.Ancestors(tb))
-		if _, ok := prcss[depth]; !ok {
-			prcss[depth] = map[Pid]string{}
-		}
-
+	for depth, pid := range itr.All() {
 		prcss[depth][pid] = fmt.Sprintf(
 			`[shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="%s://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
 			color(pid),
@@ -361,7 +364,7 @@ func Nodegraph(req *http.Request) []byte {
 		time.Now().Local().Format(`\lMon Jan 02 2006 at 03:04:05PM MST\l"`),
 	)
 
-	host, pid := cluster(hosts)
+	host, pid := cluster(tb, hosts)
 	if host != "" {
 		clusterNodes = append(
 			clusterNodes,
@@ -369,15 +372,9 @@ func Nodegraph(req *http.Request) []byte {
 		)
 	}
 
-	var depths []int
-	for depth := range prcss {
-		depths = append(depths, depth)
-	}
-	slices.Sort(depths)
-
 	var procs string
-	for _, depth := range depths {
-		prcs, pid := cluster(prcss[depth])
+	for depth := range len(prcss) {
+		prcs, pid := cluster(tb, prcss[depth])
 		if prcs == "" {
 			continue
 		}
@@ -394,7 +391,7 @@ func Nodegraph(req *http.Request) []byte {
 		)
 	}
 
-	data, pid := cluster(datas)
+	data, pid := cluster(tb, datas)
 	if data != "" {
 		clusterNodes = append(
 			clusterNodes,
@@ -402,7 +399,7 @@ func Nodegraph(req *http.Request) []byte {
 		)
 	}
 
-	for i := range clusterNodes[:len(clusterNodes)-1] {
+	for i := range len(clusterNodes) - 1 {
 		clusterEdges += fmt.Sprintf(
 			"  %s -> %s [style=invis ltail=%q lhead=%q]\n",
 			clusterNodes[i][0],
@@ -477,35 +474,6 @@ func parseQuery(r *http.Request) (query, error) {
 	}, nil
 }
 
-// family identifies all of the ancestor and descendant processes of a process.
-func family(tb process.Table, tr process.Tree, pid Pid) process.Table {
-	pt := process.Table{}
-	for _, pid := range pid.Ancestors(tb) { // ancestors
-		pt[pid] = tb[pid]
-	}
-
-	tr = tr.FindTree(pid)
-	for _, pid := range (process.Meta{
-		Tree:  tr,
-		Table: tb,
-		Order: func(_ Pid, _ *process.Process) int {
-			return depthTree(tr)
-		}}).All() {
-		pt[pid] = tb[pid]
-	}
-
-	return pt
-}
-
-// depthTree enables sort of deepest process trees first.
-func depthTree(tr process.Tree) int {
-	depth := 0
-	for _, tr := range tr {
-		depth = max(depth, depthTree(tr)+1)
-	}
-	return depth
-}
-
 // longname formats the full Executable name and pid.
 func longname(tb process.Table, pid Pid) string {
 	if p, ok := tb[pid]; ok {
@@ -527,7 +495,7 @@ func shortname(tb process.Table, pid Pid) string {
 }
 
 // cluster returns list of nodes in cluster and id of first node.
-func cluster(nodes map[Pid]string) (string, Pid) {
+func cluster(tb process.Table, nodes map[Pid]string) (string, Pid) {
 	if len(nodes) == 0 {
 		return "", 0
 	}
@@ -537,7 +505,17 @@ func cluster(nodes map[Pid]string) (string, Pid) {
 		pids = append(pids, pid)
 	}
 
-	slices.Sort(pids)
+	slices.SortFunc(pids, func(a, b Pid) int {
+		if a >= 0 && a < math.MaxInt32 { // processes
+			if n := cmp.Compare(
+				filepath.Base(tb[a].Executable),
+				filepath.Base(tb[b].Executable),
+			); n != 0 {
+				return n
+			}
+		}
+		return cmp.Compare(a, b)
+	})
 
 	var ns string
 	for _, pid := range pids {

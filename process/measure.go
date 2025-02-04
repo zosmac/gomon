@@ -16,11 +16,8 @@ type (
 	// Table defines a process table as a map of pids to processes.
 	Table = gocore.Table[Pid, *Process]
 
-	// Tree organizes the processes into a hierarchy
+	// Tree organizes the process pids into a hierarchy.
 	Tree = gocore.Tree[Pid]
-
-	// Meta defines the metadata for the tree.
-	Meta = gocore.Meta[Pid, *Process, int]
 )
 
 var (
@@ -28,8 +25,8 @@ var (
 	clMap  = map[Pid]CommandLine{}
 	clLock sync.Mutex
 
-	// oldTimes used to limit reporting only to processes that consumed CPU since the previous measurement.
-	oldTimes = map[Pid]time.Duration{}
+	// prevCPU is used to limit reporting only of processes that consumed CPU since the previous measurement.
+	prevCPU = map[Pid]time.Duration{}
 
 	// endpoints of processes periodically populated by lsof.
 	epMap  = map[Pid][]Connection{}
@@ -40,22 +37,22 @@ var (
 func Measure() (ProcStats, []message.Content) {
 	tb := BuildTable()
 
-	newTimes := map[Pid]time.Duration{}
+	currCPU := map[Pid]time.Duration{}
 	for pid, p := range tb {
-		newTimes[pid] = p.Total
+		currCPU[pid] = p.Total
 	}
 
 	var ms []message.Content
 	var active, execed int
 	var total time.Duration
-	for pid, nt := range newTimes {
-		if ot, ok := oldTimes[pid]; ok {
+	for pid, nt := range currCPU {
+		if ot, ok := prevCPU[pid]; ok {
 			if nt > ot {
 				active++
 				total += nt - ot
 				ms = append(ms, tb[pid])
 			}
-			delete(oldTimes, pid)
+			delete(prevCPU, pid)
 		} else {
 			execed++
 			if nt > 0 {
@@ -69,13 +66,13 @@ func Measure() (ProcStats, []message.Content) {
 		Count:  len(tb),
 		Active: active,
 		Execed: execed,
-		Exited: len(oldTimes),
+		Exited: len(prevCPU),
 		CPU:    total,
 	}
 
 	var pids []int
 	clLock.Lock()
-	for pid := range oldTimes { // process exited
+	for pid := range prevCPU { // process exited
 		pids = append(pids, int(pid))
 		delete(clMap, pid)
 	}
@@ -83,7 +80,7 @@ func Measure() (ProcStats, []message.Content) {
 
 	logs.Remove(pids)
 
-	oldTimes = newTimes
+	prevCPU = currCPU
 
 	return ps, ms
 }

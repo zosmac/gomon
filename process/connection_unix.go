@@ -92,8 +92,10 @@ var (
 
 	// hostPid is a pseudo pid for a network node (e.g. remote host).
 	hostPid Pid = -1
+
 	// dataPid is a pseudo pid for a data node (e.g. file, pipe, unix socket, kernel connection).
 	dataPid Pid = math.MaxInt32
+
 	// nodes maps a node's name to its pseudo pid.
 	nodes = map[string]Pid{}
 )
