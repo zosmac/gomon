@@ -9,5 +9,5 @@ import (
 
 // lsofCommand builds a host specific command line for lsof.
 func lsofCommand() []string {
-	return strings.Fields(fmt.Sprintf("lsof -l -n -P -X -r%dm====%%T====", 10))
+	return strings.Fields(fmt.Sprintf("lsof +c0 -l -n -P -X -r%dm====%%T====", 10))
 }
