@@ -23,6 +23,17 @@ import (
 var (
 	// scheme is http/s based on whether certicate and key are defined in the user's .ssh directory.
 	scheme = "http" // default
+
+	httpHeader = func() http.Header {
+		header := http.Header{
+			"Access-Control-Allow-Origin": []string{"http://localhost"},
+			"Content-Type":                []string{"image/svg+xml"},
+		}
+		if OUTPUT_FORMAT == "svgz" {
+			header.Add("Content-Encoding", "gzip")
+		}
+		return header
+	}
 )
 
 // gomonHandler retrieves the process NodeGraph.
@@ -31,9 +42,11 @@ func gomonHandler() error {
 		"/gomon/",
 		func(w http.ResponseWriter, r *http.Request) {
 			measures.HTTPRequests++
-			w.Header().Add("Access-Control-Allow-Origin", "http://localhost")
-			w.Header().Add("Content-Type", "image/svg+xml")
-			w.Header().Add("Content-Encoding", "gzip")
+			for key, values := range httpHeader() {
+				for _, value := range values {
+					w.Header().Add(key, value)
+				}
+			}
 			w.Write(Nodegraph(r))
 		},
 	)
@@ -61,11 +74,7 @@ func wsHandler() error {
 					Host:   "localhost",
 				},
 				Version: websocket.ProtocolVersionHybi,
-				Header: http.Header{
-					"Access-Control-Allow-Origin": []string{"http://localhost"},
-					"Content-Type":                []string{"image/svg+xml"},
-					"Content-Encoding":            []string{"gzip"},
-				},
+				Header:  httpHeader(),
 			},
 			Handler: func(ws *websocket.Conn) {
 				// TODO: want to make this interactive, but not too demanding
