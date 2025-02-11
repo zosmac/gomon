@@ -3,17 +3,15 @@
 package serve
 
 /*
-//#cgo CFLAGS: -I/usr/local/include
-//#cgo LDFLAGS: -L/usr/local/lib -lgvc -lcgraph
+#cgo CFLAGS: -I/usr/local/include
+#cgo LDFLAGS: -L/usr/local/lib -lgvc -lcgraph
 
-//#include <graphviz/gvc.h>
-//#include <stdlib.h>
+#include <graphviz/gvc.h>
+#include <stdlib.h>
 */
-//import "C"
+import "C"
 
 import (
-	"bufio"
-	"bytes"
 	"cmp"
 	"fmt"
 	"math"
@@ -21,13 +19,13 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/process"
@@ -155,7 +153,7 @@ func Nodegraph(req *http.Request) []byte {
 		include[pid] = p
 		for _, conn := range p.Connections {
 			if conn.Self.Pid == 0 || conn.Peer.Pid == 0 || // ignore kernel process
-				conn.Self.Pid == 1 || // ignore launchd processes
+				conn.Self.Pid == 1 || conn.Peer.Pid == 1 || // ignore launchd process
 				conn.Self.Pid == conn.Peer.Pid || // ignore inter-process connections
 				query.pid == 0 && conn.Peer.Pid >= math.MaxInt32 || // ignore data connections for the "all process" query
 				(query.pid > 0 && query.pid != conn.Self.Pid && // ignore hosts and datas of connected processes
@@ -183,10 +181,11 @@ func Nodegraph(req *http.Request) []byte {
 					edgeTooltips[id] = map[string]struct{}{}
 				}
 				edgeTooltips[id][fmt.Sprintf(
-					"%s:%s&#10142;%s",
+					"%s:%s&#10142;%s[%d]",
 					conn.Type,
 					conn.Peer.Name,
 					conn.Self.Name,
+					conn.Self.Pid,
 				)] = struct{}{}
 			} else if conn.Peer.Pid >= math.MaxInt32 { // peer is data
 				peer := conn.Type + ":" + conn.Peer.Name
@@ -211,6 +210,9 @@ func Nodegraph(req *http.Request) []byte {
 				)] = struct{}{}
 			} else { // peer is process
 				include[conn.Peer.Pid] = tb[conn.Peer.Pid]
+				for _, pid := range tr.Ancestors(conn.Peer.Pid) {
+					include[pid] = tb[pid] // add ancestor for BuildTree
+				}
 
 				// show edge for inter-process connections only once
 				self, peer := conn.Self.Name, conn.Peer.Name
@@ -225,10 +227,12 @@ func Nodegraph(req *http.Request) []byte {
 					edgeTooltips[id] = map[string]struct{}{}
 				}
 				edgeTooltips[id][fmt.Sprintf(
-					"%s:%s&#10142;%s",
+					"%s:%s[%d]&#10142;%s[%d]",
 					conn.Type,
 					self,
+					selfPid,
 					peer,
+					peerPid,
 				)] = struct{}{}
 			}
 		}
@@ -486,37 +490,6 @@ func cluster(tb process.Table, nodes map[Pid]string) (string, Pid) {
 }
 
 // dot calls the Graphviz dot command to render the process NodeGraph as gzipped SVG.
-func dot(graphviz string) []byte {
-	// first write the graph to a file
-	// if cwd, err := os.Getwd(); err == nil {
-	// 	if f, err := os.CreateTemp(cwd, "graphviz.*.gv"); err == nil {
-	// 		os.Chmod(f.Name(), 0644)
-	// 		f.WriteString(graphviz)
-	// 		f.Close()
-	// 	}
-	// }
-
-	cmd := exec.Command("dot", "-v", "-Tsvgz")
-	cmd.Stdin = bytes.NewBufferString(graphviz)
-	stdout := &bytes.Buffer{}
-	stderr := &bytes.Buffer{}
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	if err := cmd.Run(); err != nil {
-		gocore.Error("dot", err, map[string]string{
-			"stderr": stderr.String(),
-		}).Err()
-		sc := bufio.NewScanner(strings.NewReader(graphviz))
-		for i := 1; sc.Scan(); i++ {
-			fmt.Fprintf(os.Stderr, "%4.d %s\n", i, sc.Text())
-		}
-		return nil
-	}
-
-	return stdout.Bytes()
-}
-
-// dot calls Graphviz to render the process NodeGraph as gzipped SVG.
 // func dot(graphviz string) []byte {
 // 	// first write the graph to a file
 // 	if cwd, err := os.Getwd(); err == nil {
@@ -527,30 +500,63 @@ func dot(graphviz string) []byte {
 // 		}
 // 	}
 
-// 	graph := C.CString(graphviz)
-// 	defer C.free(unsafe.Pointer(graph))
-
-// 	gvc := C.gvContext()
-// 	defer C.gvFreeContext(gvc)
-
-// 	g := C.agmemread(graph)
-// 	defer C.agclose(g)
-
-// 	layout := C.CString("dot")
-// 	defer C.free(unsafe.Pointer(layout))
-// 	C.gvLayout(gvc, g, layout)
-// 	defer C.gvFreeLayout(gvc, g)
-
-// 	format := C.CString("svgz")
-// 	defer C.free(unsafe.Pointer(format))
-// 	var data *C.char
-// 	var length C.uint
-// 	rc, err := C.gvRenderData(gvc, g, format, &data, &length)
-// 	if rc != 0 {
-// 		gocore.Error("dot", err).Err()
+// 	// cmd := exec.Command("dot", "-v", "-Tsvgz")
+// 	cmd := exec.Command("dot", "-v", "-Tsvg")
+// 	cmd.Stdin = bytes.NewBufferString(graphviz)
+// 	stdout := &bytes.Buffer{}
+// 	stderr := &bytes.Buffer{}
+// 	cmd.Stdout = stdout
+// 	cmd.Stderr = stderr
+// 	if err := cmd.Run(); err != nil {
+// 		gocore.Error("dot", err, map[string]string{
+// 			"stderr": stderr.String(),
+// 		}).Err()
+// 		sc := bufio.NewScanner(strings.NewReader(graphviz))
+// 		for i := 1; sc.Scan(); i++ {
+// 			fmt.Fprintf(os.Stderr, "%4.d %s\n", i, sc.Text())
+// 		}
 // 		return nil
 // 	}
-// 	buf := C.GoBytes(unsafe.Pointer(data), C.int(length))
-// 	C.gvFreeRenderData(data)
-// 	return buf
+
+// 	return stdout.Bytes()
 // }
+
+// dot calls Graphviz to render the process NodeGraph as gzipped SVG.
+func dot(graphviz string) []byte {
+	// first write the graph to a file
+	if cwd, err := os.Getwd(); err == nil {
+		if f, err := os.CreateTemp(cwd, "graphviz.*.gv"); err == nil {
+			os.Chmod(f.Name(), 0644)
+			f.WriteString(graphviz)
+			f.Close()
+		}
+	}
+
+	graph := C.CString(graphviz)
+	defer C.free(unsafe.Pointer(graph))
+
+	gvc := C.gvContext()
+	defer C.gvFreeContext(gvc)
+
+	g := C.agmemread(graph)
+	defer C.agclose(g)
+
+	layout := C.CString("dot")
+	defer C.free(unsafe.Pointer(layout))
+	C.gvLayout(gvc, g, layout)
+	defer C.gvFreeLayout(gvc, g)
+
+	format := C.CString("svgz")
+	// format := C.CString("svg")
+	defer C.free(unsafe.Pointer(format))
+	var data *C.char
+	var length C.uint
+	rc, err := C.gvRenderData(gvc, g, format, &data, &length)
+	if rc != 0 {
+		gocore.Error("dot", err).Err()
+		return nil
+	}
+	buf := C.GoBytes(unsafe.Pointer(data), C.int(length))
+	C.gvFreeRenderData(data)
+	return buf
+}
