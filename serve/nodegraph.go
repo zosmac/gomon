@@ -211,20 +211,6 @@ func Nodegraph(req *http.Request) []byte {
 				)] = struct{}{}
 			} else { // peer is process
 				include[conn.Peer.Pid] = tb[conn.Peer.Pid]
-				pids := append(tr.Ancestors(conn.Peer.Pid), conn.Peer.Pid)
-
-				for i := range len(pids) - 1 { // add "in-laws"
-					include[pids[i]] = tb[pids[i]]
-					id := [2]Pid{pids[i], pids[i+1]}
-					if _, ok := edgeTooltips[id]; !ok {
-						edgeTooltips[id] = map[string]struct{}{}
-					}
-					edgeTooltips[id][fmt.Sprintf(
-						"parent:%s&#10142;%s",
-						shortname(tb, pids[i]),
-						shortname(tb, pids[i+1]),
-					)] = struct{}{}
-				}
 
 				// show edge for inter-process connections only once
 				self, peer := conn.Self.Name, conn.Peer.Name
@@ -249,6 +235,30 @@ func Nodegraph(req *http.Request) []byte {
 	}
 
 	itr := process.BuildTree(include)
+
+	// connect the parents to their children
+	var parents []Pid
+	for depth, pid := range itr.All() {
+		if depth == 0 {
+			parents = []Pid{pid}
+			continue
+		} else if depth < len(parents) {
+			parents = parents[:depth]
+			parents = append(parents, pid)
+		} else if depth == len(parents) {
+			parents = append(parents, pid)
+		}
+		id := [2]Pid{parents[depth-1], parents[depth]}
+		if _, ok := edgeTooltips[id]; !ok {
+			edgeTooltips[id] = map[string]struct{}{}
+		}
+		edgeTooltips[id][fmt.Sprintf(
+			"parent:%s&#10142;%s",
+			shortname(tb, id[0]),
+			shortname(tb, id[1]),
+		)] = struct{}{}
+	}
+
 	for i := range itr.DepthTree() {
 		prcss[i] = map[Pid]string{}
 	}
