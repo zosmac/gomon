@@ -29,7 +29,7 @@ var (
 			"Access-Control-Allow-Origin": []string{"http://localhost"},
 			"Content-Type":                []string{"image/svg+xml"},
 		}
-		if OUTPUT_FORMAT == "svgz" {
+		if output_format == "svgz" {
 			header.Add("Content-Encoding", "gzip")
 		}
 		return header

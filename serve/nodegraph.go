@@ -22,8 +22,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -38,18 +36,18 @@ type (
 	// Pid alias for Pid in process package.
 	Pid = process.Pid
 
-	// query from http request.
-	query struct {
+	// query parameters for request.
+	Query struct {
 		pid Pid
 	}
 )
 
 const (
-	// USE_DOT_COMMAND specifies whether nodegraph rendering uses the graphviz API or the dot command.
-	USE_DOT_COMMAND = false
+	// use_dot_command specifies whether nodegraph rendering uses the graphviz API or the dot command.
+	use_dot_command = false
 
-	// OUTPUT_FORMAT specifies the output file format for graphviz to generate.
-	OUTPUT_FORMAT = "svg" // unfortunately, using "svgz" often produces "Error: deflation finish problem 0 cnt=102"
+	// output_format specifies the output file format for graphviz to generate.
+	output_format = "svg" // unfortunately, using "svgz" often produces "Error: deflation finish problem 0 cnt=102"
 )
 
 var (
@@ -77,255 +75,60 @@ func color(pid Pid) string {
 	if pid < 0 {
 		pid = -pid
 	}
-	if pid > 0 {
-		color = colors[(int(pid-1))%len(colors)]
-	}
+	color = colors[(int(pid))%len(colors)]
 	return color
 }
 
 // Nodegraph produces the process connections node graph.
 func Nodegraph(req *http.Request) []byte {
-	defer func() {
-		if r := recover(); r != nil {
-			buf := make([]byte, 4096)
-			n := runtime.Stack(buf, false)
-			buf = buf[:n]
-			gocore.Error("nodegraph", fmt.Errorf("%v", r), map[string]string{
-				"stacktrace": string(buf),
-			}).Err()
-		}
-	}()
+	return process.Nodegraph[string, string, []byte](parseQuery(req))
+}
 
-	var (
-		clusterNodes [][2]string                // One node in each cluster is linked to a node in the
-		clusterEdges string                     //  next to maintain left to right order of clusters.
-		hosts        = map[Pid]string{}         // The host (IP) nodes in the leftmost cluster.
-		prcss        = map[int]map[Pid]string{} // The process nodes in the process clusters.
-		datas        = map[Pid]string{}         // The file, unix socket, pipe and kernel connections in the rightmost cluster.
-		include      = process.Table{}          // Processes that have a connection to include in report.
-		edges        = map[[2]Pid]string{}
-		edgeTooltips = map[[2]Pid]map[string]struct{}{}
-	)
+// Pid returns the query's pid.
+func (query Query) Pid() Pid {
+	return query.pid
+}
 
-	tb := process.BuildTable()
-	tr := process.BuildTree(tb)
-	process.Connections(tb)
+// Arrow returns the character to use in edges' tooltip connections list.
+func (query Query) Arrow() string {
+	return " &#10142; "
+}
 
-	currCPU := map[Pid]time.Duration{}
-	for pid, p := range tb {
-		currCPU[pid] = p.Total
-	}
+func (query Query) BuildGraph(
+	tb process.Table,
+	itr process.Tree,
+	hosts map[Pid]string,
+	prcss map[int]map[Pid]string,
+	datas map[Pid]string,
+	edges map[[2]Pid][]string,
+) []byte {
+	var clusterNodes [][2]string // One node in each cluster is linked invisibly to a node
+	var clusterEdges string      //  in the next to maintain left to right order of clusters.
 
-	query, _ := parseQuery(req)
-	if query.pid != 0 && tb[query.pid] == nil {
-		query.pid = 0 // reset to default
-	}
-
-	gocore.Error("nodegraph", nil, map[string]string{
-		"pid": query.pid.String(),
-	}).Info()
-
-	pt := process.Table{}
-	if query.pid > 0 { // build this process' "extended family"
-		for _, pid := range tr.Family(query.pid).All() {
-			pt[pid] = tb[pid]
-		}
-		for _, p := range tb {
-			for _, conn := range p.Connections {
-				if conn.Peer.Pid == query.pid {
-					for _, pid := range tr.Ancestors(conn.Self.Pid) {
-						pt[pid] = tb[pid]
-					}
-					pt[conn.Self.Pid] = tb[conn.Self.Pid]
-				}
-			}
-		}
-	} else { // only report non-daemon, remote host connected, and cpu consuming processes
-		for pid, p := range tb {
-			if pcpu, ok := prevCPU[pid]; !ok || pcpu < currCPU[pid] {
-				pt[pid] = tb[pid]
-			}
-			if p.Ppid > 1 {
-				for _, pid := range tr.Family(pid).All() {
-					pt[pid] = tb[pid]
-				}
-			}
-			for _, conn := range p.Connections {
-				if conn.Peer.Pid < 0 {
-					pt[conn.Self.Pid] = tb[conn.Self.Pid]
-				}
-			}
-		}
-	}
-
-	prevCPU = currCPU
-
-	for pid, p := range pt {
-		include[pid] = p
-		for _, conn := range p.Connections {
-			if conn.Self.Pid == 0 || conn.Peer.Pid == 0 || // ignore kernel process
-				conn.Self.Pid == 1 || conn.Peer.Pid == 1 || // ignore launchd process
-				conn.Self.Pid == conn.Peer.Pid || // ignore inter-process connections
-				query.pid == 0 && conn.Peer.Pid >= math.MaxInt32 || // ignore data connections for the "all process" query
-				(query.pid > 0 && query.pid != conn.Self.Pid && // ignore hosts and datas of connected processes
-					(conn.Peer.Pid < 0 || conn.Peer.Pid >= math.MaxInt32)) {
-				continue
-			}
-
-			if conn.Peer.Pid < 0 { // peer is remote host or listener
-				host, port, _ := net.SplitHostPort(conn.Peer.Name)
-
-				if _, ok := hosts[conn.Peer.Pid]; !ok {
-					hosts[conn.Peer.Pid] = fmt.Sprintf(
-						`[shape=cds style=filled fillcolor=%q height=0.6 width=2 label="%s:%s\n%s" tooltip=%q]`,
-						color(conn.Peer.Pid),
-						conn.Type,
-						port,
-						gocore.Hostname(host),
-						conn.Peer.Name,
-					)
-				}
-
-				// flip the source and target to get Host shown to left in node graph
-				id := [2]Pid{conn.Peer.Pid, conn.Self.Pid}
-				if _, ok := edgeTooltips[id]; !ok {
-					edgeTooltips[id] = map[string]struct{}{}
-				}
-				edgeTooltips[id][fmt.Sprintf(
-					"%s:%s&#10142;%s[%d]",
-					conn.Type,
-					conn.Peer.Name,
-					conn.Self.Name,
-					conn.Self.Pid,
-				)] = struct{}{}
-			} else if conn.Peer.Pid >= math.MaxInt32 { // peer is data
-				peer := conn.Type + ":" + conn.Peer.Name
-
-				if _, ok := datas[conn.Peer.Pid]; !ok {
-					datas[conn.Peer.Pid] = fmt.Sprintf(
-						`[shape=note style=filled fillcolor=%q height=0.2 label=%q tooltip=%q]`,
-						color(conn.Peer.Pid),
-						peer,
-						conn.Peer.Name,
-					)
-				}
-
-				id := [2]Pid{conn.Self.Pid, conn.Peer.Pid}
-				if _, ok := edgeTooltips[id]; !ok {
-					edgeTooltips[id] = map[string]struct{}{}
-				}
-				edgeTooltips[id][fmt.Sprintf(
-					"%s&#10142;%s",
-					shortname(tb, conn.Self.Pid),
-					peer,
-				)] = struct{}{}
-			} else { // peer is process
-				include[conn.Peer.Pid] = tb[conn.Peer.Pid]
-				for _, pid := range tr.Ancestors(conn.Peer.Pid) {
-					include[pid] = tb[pid] // add ancestor for BuildTree
-				}
-
-				// show edge for inter-process connections only once
-				self, peer := conn.Self.Name, conn.Peer.Name
-				selfPid, peerPid := conn.Self.Pid, conn.Peer.Pid
-				if len(tr.Ancestors(selfPid)) > len(tr.Ancestors(peerPid)) ||
-					len(tr.Ancestors(selfPid)) == len(tr.Ancestors(peerPid)) && conn.Self.Pid > conn.Peer.Pid {
-					selfPid, peerPid = peerPid, selfPid
-					self, peer = peer, self
-				}
-				id := [2]Pid{selfPid, peerPid}
-				if _, ok := edgeTooltips[id]; !ok {
-					edgeTooltips[id] = map[string]struct{}{}
-				}
-				edgeTooltips[id][fmt.Sprintf(
-					"%s:%s[%d]&#10142;%s[%d]",
-					conn.Type,
-					self,
-					selfPid,
-					peer,
-					peerPid,
-				)] = struct{}{}
-			}
-		}
-	}
-
-	itr := process.BuildTree(include)
-
-	// connect the parents to their children
-	var parents []Pid
+	// add process nodes to each cluster, sort connections for tooltip
 	for depth, pid := range itr.All() {
-		if depth == 0 {
-			parents = []Pid{pid}
-			continue
-		} else if depth < len(parents) {
-			parents = parents[:depth]
-			parents = append(parents, pid)
-		} else if depth == len(parents) {
-			parents = append(parents, pid)
-		}
-		id := [2]Pid{parents[depth-1], parents[depth]}
-		if _, ok := edgeTooltips[id]; !ok {
-			edgeTooltips[id] = map[string]struct{}{}
-		}
-		edgeTooltips[id][fmt.Sprintf(
-			"parent:%s&#10142;%s",
-			shortname(tb, id[0]),
-			shortname(tb, id[1]),
-		)] = struct{}{}
-	}
-
-	for i := range itr.DepthTree() {
-		prcss[i] = map[Pid]string{}
-	}
-
-	for depth, pid := range itr.All() {
-		prcss[depth][pid] = fmt.Sprintf(
-			`[shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="%s://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
-			color(pid),
-			scheme,
-			flags.port,
-			tb[pid].Id.Name,
-			longname(tb, pid),
-		)
-
-		for id, tooltip := range edgeTooltips {
+		prcss[depth][pid] = query.ProcNode(tb[pid])
+		for id, edge := range edges {
 			self := id[0]
 			peer := id[1]
 			if self == pid || self < 0 && peer == pid {
-				if len(tooltip) > 0 {
-					dir := "both"
-					var tts []string
-					for tt := range tooltip {
-						tts = append(tts, tt)
+				slices.SortFunc(edge[1:], func(a, b string) int { // tooltips list edge's connection endpoints
+					if strings.HasPrefix(a, "parent") {
+						return -1
+					} else if strings.HasPrefix(b, "parent") {
+						return 1
+					} else {
+						return cmp.Compare(a, b)
 					}
-					slices.SortFunc(tts, func(a, b string) int {
-						if strings.HasPrefix(a, "parent") {
-							return -1
-						} else if strings.HasPrefix(b, "parent") {
-							return 1
-						} else {
-							return cmp.Compare(a, b)
-						}
-					})
-					if peer < 0 || peer >= math.MaxInt32 ||
-						len(tooltip) == 1 && strings.HasPrefix(tts[0], "parent") {
-						dir = "forward"
-					}
-
-					edges[id] = fmt.Sprintf(
-						`[dir=%s color=%q tooltip="%s"]`,
-						dir,
-						color(peer)+";0.5:"+color(self),
-						strings.Join(tts, "\n"),
-					)
-				}
+				})
 			}
 		}
 	}
 
+	// prepare label for nodegraph
 	var pslabel string
-	if query.pid > 0 {
-		pslabel = " Process: " + shortname(tb, query.pid)
+	if query.Pid() > 0 {
+		pslabel = " Process: " + tb[query.Pid()].Shortname()
 	}
 
 	glabel := fmt.Sprintf(
@@ -335,6 +138,7 @@ func Nodegraph(req *http.Request) []byte {
 		time.Now().Local().Format(`\lMon Jan 02 2006 at 03:04:05PM MST\l"`),
 	)
 
+	// build hosts cluster
 	host, pid := cluster(tb, hosts)
 	if host != "" {
 		clusterNodes = append(
@@ -343,12 +147,10 @@ func Nodegraph(req *http.Request) []byte {
 		)
 	}
 
+	// build processes clusters
 	var procs string
 	for depth := range len(prcss) {
 		prcs, pid := cluster(tb, prcss[depth])
-		if prcs == "" {
-			continue
-		}
 		procs += fmt.Sprintf(
 			"   subgraph processes_%d {cluster=true rank=same label=\"Process depth %[1]d\"\n",
 			depth+1,
@@ -362,6 +164,7 @@ func Nodegraph(req *http.Request) []byte {
 		)
 	}
 
+	// build datas cluster (files, sockets, pipes, ...)
 	data, pid := cluster(tb, datas)
 	if data != "" {
 		clusterNodes = append(
@@ -370,6 +173,7 @@ func Nodegraph(req *http.Request) []byte {
 		)
 	}
 
+	// define invisible edges to force left to right positioning of hosts -> processes -> data clusters
 	for i := range len(clusterNodes) - 1 {
 		clusterEdges += fmt.Sprintf(
 			"  %s -> %s [style=invis ltail=%q lhead=%q]\n",
@@ -380,26 +184,26 @@ func Nodegraph(req *http.Request) []byte {
 		)
 	}
 
-	ids := make([][2]Pid, 0, len(edges))
-	for id := range edges {
-		ids = append(ids, id)
-	}
+	// add the edges
+	// var ids [][2]Pid
+	// for id := range edges {
+	// 	ids = append(ids, id)
+	// }
 
-	slices.SortFunc(ids, func(a, b [2]Pid) int {
-		return cmp.Or(
-			cmp.Compare(a[0], b[0]),
-			cmp.Compare(a[1], b[1]),
-		)
-	})
+	// slices.SortFunc(ids, func(a, b [2]Pid) int {
+	// 	return cmp.Or(
+	// 		cmp.Compare(a[0], b[0]),
+	// 		cmp.Compare(a[1], b[1]),
+	// 	)
+	// })
 
 	var es string
-	for _, id := range ids {
-		es += fmt.Sprintf(
-			"  %d -> %d %s\n",
-			id[0],
-			id[1],
-			edges[id],
-		)
+	for id := range edges {
+		dir := "both"
+		if id[1] >= 0 && id[1] < math.MaxInt32 && tb[id[1]].Ppid == id[0] {
+			dir = "forward"
+		}
+		es += fmt.Sprintf("%s dir=%s tooltip=%q]", edges[id][0], dir, strings.Join(edges[id][1:], "\n"))
 	}
 
 	return dot(`digraph "Gomon Process Connections Nodegraph" {
@@ -431,78 +235,122 @@ func Nodegraph(req *http.Request) []byte {
 }
 
 // parseQuery extracts the query from the HTTP request.
-func parseQuery(r *http.Request) (query, error) {
+func parseQuery(r *http.Request) *Query {
 	values, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		return query{}, err
+		gocore.Error("parseQuery", err).Err()
+		return nil
 	}
 	var pid int
 	if v, ok := values["pid"]; ok && len(v) > 0 {
 		pid, _ = strconv.Atoi(v[0])
 	}
-	return query{
+	return &Query{
 		pid: Pid(pid),
-	}, nil
+	}
 }
 
-// longname formats the full Executable name and pid.
-func longname(tb process.Table, pid Pid) string {
-	if p, ok := tb[pid]; ok {
-		name := p.Executable
-		if name == "" {
-			name = p.Id.Name
-		}
-		return fmt.Sprintf("%s[%d]", name, pid)
-	}
-	return ""
+func (query Query) HostNode(conn process.Connection) string {
+	host, port, _ := net.SplitHostPort(conn.Peer.Name)
+	return fmt.Sprintf(
+		`[shape=cds style=filled fillcolor=%q height=0.6 width=2 label="%s:%s\n%s" tooltip=%q]`,
+		color(conn.Peer.Pid),
+		conn.Type,
+		port,
+		gocore.Hostname(host),
+		conn.Peer.Name,
+	)
 }
 
-// shortname formats process name and pid.
-func shortname(tb process.Table, pid Pid) string {
-	if p, ok := tb[pid]; ok {
-		return fmt.Sprintf("%s[%d]", p.Id.Name, pid)
-	}
-	return ""
+func (query Query) DataNode(conn process.Connection) string {
+	return fmt.Sprintf(
+		`[shape=note style=filled fillcolor=%q height=0.2 label=%q tooltip=%q]`,
+		color(conn.Peer.Pid),
+		conn.Type+":"+conn.Peer.Name,
+		conn.Peer.Name,
+	)
+}
+
+func (query Query) ProcNode(p *process.Process) string {
+	return fmt.Sprintf(
+		`[shape=rect style="rounded,filled" fillcolor=%q height=0.3 width=1 URL="%s://localhost:%d/gomon?pid=\N" label="%s\n\N" tooltip=%q]`,
+		color(p.Pid),
+		scheme,
+		flags.port,
+		p.Id.Name,
+		p.Longname(),
+	)
+}
+
+func (query Query) HostEdge(_ process.Table, conn process.Connection) []string {
+	return []string{fmt.Sprintf(
+		`  %d -> %d [color=%q`,
+		conn.Peer.Pid,
+		conn.Self.Pid,
+		color(conn.Self.Pid)+";0.5:"+color(conn.Peer.Pid),
+	)}
+}
+
+func (query Query) DataEdge(_ process.Table, conn process.Connection) []string {
+	return []string{fmt.Sprintf(
+		`  %d -> %d [color=%q`,
+		conn.Self.Pid,
+		conn.Peer.Pid,
+		color(conn.Peer.Pid)+";0.5:"+color(conn.Self.Pid),
+	)}
+}
+
+func (query Query) ProcEdge(_ process.Table, self, peer Pid) []string {
+	return []string{fmt.Sprintf(
+		`  %d -> %d [color=%q`,
+		self,
+		peer,
+		color(peer)+";0.5:"+color(self),
+	)}
 }
 
 // cluster returns list of nodes in cluster and id of first node.
-func cluster(tb process.Table, nodes map[Pid]string) (string, Pid) {
+func cluster(_ process.Table, nodes map[Pid]string) (string, Pid) {
 	if len(nodes) == 0 {
 		return "", 0
 	}
 
-	pids := make([]Pid, 0, len(nodes))
-	for pid := range nodes {
-		pids = append(pids, pid)
-	}
+	// var pids []Pid
+	// for pid := range nodes {
+	// 	pids = append(pids, pid)
+	// }
 
-	slices.SortFunc(pids, func(a, b Pid) int {
-		if a >= 0 && a < math.MaxInt32 { // processes
-			if n := cmp.Compare(
-				filepath.Base(tb[a].Executable),
-				filepath.Base(tb[b].Executable),
-			); n != 0 {
-				return n
-			}
-		}
-		return cmp.Compare(a, b)
-	})
+	// slices.SortFunc(pids, func(a, b Pid) int {
+	// 	if a >= 0 && a < math.MaxInt32 { // processes
+	// 		if n := cmp.Compare(
+	// 			filepath.Base(tb[a].Executable),
+	// 			filepath.Base(tb[b].Executable),
+	// 		); n != 0 {
+	// 			return n
+	// 		}
+	// 	}
+	// 	return cmp.Compare(a, b)
+	// })
 
+	// invis := pids[0]
+	// var ns string
+	// for _, pid := range pids {
+	// 	ns += fmt.Sprintf("    %d %s\n", pid, nodes[pid])
+	// }
+
+	var invis Pid
 	var ns string
-	for _, pid := range pids {
-		ns += fmt.Sprintf(
-			"    %d %s\n",
-			pid,
-			nodes[pid],
-		)
+	for pid, node := range nodes {
+		invis = pid
+		ns += fmt.Sprintf("    %d %s\n", pid, node)
 	}
 
-	return ns, pids[0]
+	return ns, invis
 }
 
 // dot calls the Graphviz dot command to render the process NodeGraph as SVG.
 func dot(graphviz string) (buf []byte) {
-	// to debug the graph, write to a file
+	// // to debug the graph, write to a file
 	// if cwd, err := os.Getwd(); err == nil {
 	// 	if f, err := os.CreateTemp(cwd, "graphviz.*.gv"); err == nil {
 	// 		os.Chmod(f.Name(), 0644)
@@ -511,8 +359,8 @@ func dot(graphviz string) (buf []byte) {
 	// 	}
 	// }
 
-	if USE_DOT_COMMAND {
-		cmd := exec.Command("dot", "-v", "-T"+OUTPUT_FORMAT)
+	if use_dot_command {
+		cmd := exec.Command("dot", "-v", "-T"+output_format)
 		cmd.Stdin = bytes.NewBufferString(graphviz)
 		stdout := &bytes.Buffer{}
 		stderr := &bytes.Buffer{}
@@ -544,7 +392,7 @@ func dot(graphviz string) (buf []byte) {
 		C.gvLayout(gvc, g, layout)
 		defer C.gvFreeLayout(gvc, g)
 
-		format := C.CString(OUTPUT_FORMAT)
+		format := C.CString(output_format)
 		defer C.free(unsafe.Pointer(format))
 		var data *C.char
 		var length C.uint
