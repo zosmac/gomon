@@ -114,15 +114,13 @@ func BuildTable() Table {
 	return tb
 }
 
-// BuildTree builds the process tree.
-func BuildTree(tb Table) Tree {
-	tr := Tree{}
-	for pid := range tb {
-		var pids []Pid
-		for ; pid > 0; pid = tb[pid].Ppid {
-			pids = append([]Pid{pid}, pids...)
-		}
-		tr.Add(pids...)
+func (p *Process) HasParent() bool {
+	return p.Ppid > 0
+}
+
+func (p *Process) Parent() (pid Pid) {
+	if p.Ppid > 0 {
+		pid = p.Ppid
 	}
-	return tr
+	return
 }

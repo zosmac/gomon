@@ -253,5 +253,5 @@ func getPids() ([]Pid, error) {
 	for i, pid := range buf {
 		pids[int(n)-i-1] = Pid(pid) // Darwin returns pids in descending order, so reverse the order
 	}
-	return pids, nil
+	return pids[1:], nil // strip kernel task pid (i.e. pid 0)
 }

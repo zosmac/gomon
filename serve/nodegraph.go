@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -64,9 +65,6 @@ var (
 		"0.8 0.75 0.9  0.5",
 		"0.9 0.75 0.85 0.5",
 	}
-
-	// prevCPU is used to limit reporting only of processes that consumed CPU since the previous measurement.
-	prevCPU = map[Pid]time.Duration{}
 )
 
 // color defines the color for graphviz nodes and edges.
@@ -185,25 +183,19 @@ func (query Query) BuildGraph(
 	}
 
 	// add the edges
-	// var ids [][2]Pid
-	// for id := range edges {
-	// 	ids = append(ids, id)
-	// }
-
-	// slices.SortFunc(ids, func(a, b [2]Pid) int {
-	// 	return cmp.Or(
-	// 		cmp.Compare(a[0], b[0]),
-	// 		cmp.Compare(a[1], b[1]),
-	// 	)
-	// })
-
 	var es string
-	for id := range edges {
+	// for id, edge := range edges { // does sorting improve graph consistency?
+	for id, edge := range gocore.Ordered(edges, func(a, b [2]Pid) int {
+		return cmp.Or(
+			cmp.Compare(a[0], b[0]),
+			cmp.Compare(a[1], b[1]),
+		)
+	}) {
 		dir := "both"
 		if id[1] >= 0 && id[1] < math.MaxInt32 && tb[id[1]].Ppid == id[0] {
 			dir = "forward"
 		}
-		es += fmt.Sprintf("%s dir=%s tooltip=%q]", edges[id][0], dir, strings.Join(edges[id][1:], "\n"))
+		es += fmt.Sprintf("%s dir=%s tooltip=%q]", edge[0], dir, strings.Join(edge[1:], "\n"))
 	}
 
 	return dot(`digraph "Gomon Process Connections Nodegraph" {
@@ -310,38 +302,28 @@ func (query Query) ProcEdge(_ process.Table, self, peer Pid) []string {
 }
 
 // cluster returns list of nodes in cluster and id of first node.
-func cluster(_ process.Table, nodes map[Pid]string) (string, Pid) {
+func cluster(tb process.Table, nodes map[Pid]string) (string, Pid) {
 	if len(nodes) == 0 {
 		return "", 0
 	}
 
-	// var pids []Pid
-	// for pid := range nodes {
-	// 	pids = append(pids, pid)
-	// }
-
-	// slices.SortFunc(pids, func(a, b Pid) int {
-	// 	if a >= 0 && a < math.MaxInt32 { // processes
-	// 		if n := cmp.Compare(
-	// 			filepath.Base(tb[a].Executable),
-	// 			filepath.Base(tb[b].Executable),
-	// 		); n != 0 {
-	// 			return n
-	// 		}
-	// 	}
-	// 	return cmp.Compare(a, b)
-	// })
-
-	// invis := pids[0]
-	// var ns string
-	// for _, pid := range pids {
-	// 	ns += fmt.Sprintf("    %d %s\n", pid, nodes[pid])
-	// }
-
 	var invis Pid
 	var ns string
-	for pid, node := range nodes {
-		invis = pid
+	// for pid, node := range nodes { // does sorting improve graph consistency?
+	for pid, node := range gocore.Ordered(nodes, func(a, b Pid) int {
+		if a >= 0 && a < math.MaxInt32 { // processes
+			if n := cmp.Compare(
+				filepath.Base(tb[a].Executable),
+				filepath.Base(tb[b].Executable),
+			); n != 0 {
+				return n
+			}
+		}
+		return cmp.Compare(a, b)
+	}) {
+		if invis == 0 {
+			invis = pid
+		}
 		ns += fmt.Sprintf("    %d %s\n", pid, node)
 	}
 

@@ -32,7 +32,7 @@ func Nodegraph[I any, E any, R any](query Query[I, E, R]) R {
 	edges := map[[2]Pid][]E{}    // Edges connecting host, process, and data nodes.
 
 	tb := BuildTable()
-	tr := BuildTree(tb)
+	tr := tb.BuildTree()
 	Connections(tb)
 
 	currCPU := map[Pid]time.Duration{}
@@ -159,7 +159,7 @@ func Nodegraph[I any, E any, R any](query Query[I, E, R]) R {
 		}
 	}
 
-	itr := BuildTree(include)
+	itr := include.BuildTree()
 
 	// connect the parents to their children
 	var parents []Pid
