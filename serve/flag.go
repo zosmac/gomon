@@ -71,10 +71,16 @@ func (i *sample) String() string {
 	return time.Duration(*i).String()
 }
 
-// AlignTicker aligns the sample ticking.
-func (i sample) alignTicker() *time.Ticker {
-	d := time.Duration(i)
-	t := time.Now()
-	<-time.After(d - t.Sub(t.Truncate(d)))
-	return time.NewTicker(d)
+// AlignTicker aligns the sample ticking to the sample interval.
+func (i sample) alignTicker() <-chan time.Time {
+	ticker := make(chan time.Time)
+	go func() {
+		d := time.Duration(i)
+		t := time.Now()
+		ticker <- <-time.After(d - t.Sub(t.Truncate(d)))
+		for t := range time.Tick(d) {
+			ticker <- t
+		}
+	}()
+	return ticker
 }

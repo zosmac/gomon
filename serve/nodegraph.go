@@ -79,7 +79,7 @@ func color(pid Pid) string {
 
 // Nodegraph produces the process connections node graph.
 func Nodegraph(req *http.Request) []byte {
-	return process.Nodegraph[string, string, []byte](parseQuery(req))
+	return process.Nodegraph(parseQuery(req))
 }
 
 // Pid returns the query's pid.

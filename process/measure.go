@@ -44,6 +44,10 @@ func Measure() (ProcStats, []message.Content) {
 	ptb := prevProcs
 	procLock.Unlock()
 
+	if len(prevProcs) == 0 { // await until diffs can be computed
+		return ProcStats{}, nil
+	}
+
 	exits := map[Pid]struct{}{}
 	diffCPU := map[Pid]time.Duration{}
 	var cpus []time.Duration

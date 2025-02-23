@@ -27,7 +27,7 @@ func Measure(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 
-		case t := <-ticker.C:
+		case t := <-ticker:
 			start := time.Now()
 			last, ok := lastPrometheusCollection.Load().(time.Time)
 			if !ok || prometheusSample == 0 || t.Sub(last) > 2*prometheusSample {
