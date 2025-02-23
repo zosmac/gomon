@@ -10,8 +10,8 @@ import (
 	"github.com/zosmac/gocore"
 )
 
-// Connections creates a slice of local to remote connections.
-func Connections(tb Table) {
+// connections determines the remote endpoints of each process' connections.
+func connections(epm map[Pid][]Connection) {
 	defer func() {
 		if r := recover(); r != nil {
 			buf := make([]byte, 4096)
@@ -24,40 +24,42 @@ func Connections(tb Table) {
 	}()
 
 	// build a map for identifying intra-host peer endpoints
-	epm := map[[3]string][]Pid{} // is distinguishing dup'd and inherited descriptors an issue?
-	for _, p := range tb {
-		for _, conn := range p.Connections {
+	eps := map[[3]string][]Pid{}
+	for _, conns := range epm {
+		for _, conn := range conns {
 			if conn.Type == "unix" && conn.Self.Name != "" && conn.Peer.Name[0] == '/' { // named socket
-				epm[[3]string{conn.Type, conn.Self.Name, ""}] =
-					append(epm[[3]string{conn.Type, conn.Self.Name, ""}], conn.Self.Pid)
+				eps[[3]string{conn.Type, conn.Self.Name, ""}] =
+					append(eps[[3]string{conn.Type, conn.Self.Name, ""}], conn.Self.Pid)
 			} else if conn.Peer.Pid == 0 {
-				epm[[3]string{conn.Type, conn.Self.Name, ""}] =
-					append(epm[[3]string{conn.Type, conn.Self.Name, ""}], conn.Self.Pid)
-				epm[[3]string{conn.Type, "", conn.Peer.Name}] =
-					append(epm[[3]string{conn.Type, "", conn.Peer.Name}], conn.Self.Pid)
+				eps[[3]string{conn.Type, conn.Self.Name, ""}] =
+					append(eps[[3]string{conn.Type, conn.Self.Name, ""}], conn.Self.Pid)
+				eps[[3]string{conn.Type, "", conn.Peer.Name}] =
+					append(eps[[3]string{conn.Type, "", conn.Peer.Name}], conn.Self.Pid)
 			}
 		}
 	}
 
-	for ep, pids := range epm {
-		if ep[2] == "" {
-			slices.SortFunc(pids, func(a, b Pid) int {
-				return -tb[a].Starttime.Compare(tb[b].Starttime)
-			})
-			epm[ep] = pids[:1] // assume newest process is "owner" of connection
-		}
+	for _, pids := range eps {
+		slices.Sort(pids)
 	}
 
-	for ep, peers := range epm {
+	for ep, peers := range eps {
 		if ep[2] == "" {
 			continue
 		}
-		if selves, ok := epm[[3]string{ep[0], ep[2], ""}]; ok {
+		if selves, ok := eps[[3]string{ep[0], ep[2], ""}]; ok {
 			self := selves[0]
 			for _, peer := range peers {
-				for i, cns := range tb[peer].Connections {
-					if cns.Peer.Name == ep[2] {
-						tb[peer].Connections[i].Peer.Pid = self
+				for i, conn := range epm[peer] {
+					if conn.Peer.Name == ep[2] {
+						conn.Peer.Pid = self
+						epm[peer][i].Peer.Pid = self
+						// add connections for dup'd or inherited endpoints
+						for _, self := range selves[1:] {
+							conn := epm[peer][i]
+							conn.Peer.Pid = self
+							epm[peer] = append(epm[peer], conn)
+						}
 					}
 				}
 			}

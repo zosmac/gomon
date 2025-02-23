@@ -15,12 +15,17 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/logs"
 )
 
 var (
+	// endpoints of processes periodically populated by lsof.
+	epMap  = map[Pid][]Connection{}
+	epLock sync.RWMutex
+
 	// headerRegex for parsing lsof header line of lsof command.
 	headerRegex = regexp.MustCompile(
 		`^(?P<command>COMMAND) ` +
@@ -119,8 +124,20 @@ const (
 	groupState = "state"
 )
 
-// Endpoints starts the lsof command to capture process connections.
-func Endpoints(ctx context.Context) error {
+func getEndpoints() map[Pid][]Connection {
+	epLock.RLock()
+	defer epLock.RUnlock()
+	return epMap
+}
+
+func setEndpoints(epm map[Pid][]Connection) {
+	epLock.Lock()
+	defer epLock.Unlock()
+	epMap = epm
+}
+
+// endpoints starts the lsof command to capture process connection endpoints.
+func endpoints(ctx context.Context) error {
 	stdout, err := gocore.Spawn(ctx, lsofCommand())
 	if err != nil {
 		return gocore.Error("Spawn", err, map[string]string{
@@ -168,10 +185,9 @@ func parseLsof(sc *bufio.Scanner) {
 			indexName = indices[headerGroups[groupName]*2]
 			continue
 		} else if strings.HasPrefix(text, "====") {
-			epLock.Lock()
-			epMap = epm
+			connections(epm)
+			setEndpoints(epm)
 			epm = map[Pid][]Connection{}
-			epLock.Unlock()
 			continue
 		}
 
@@ -180,7 +196,7 @@ func parseLsof(sc *bufio.Scanner) {
 			continue
 		}
 
-		// command := strings.Fields(text[:indexUser])[0]           // COMMAND and PID fields can be jammed together
+		// command := strings.Fields(text[:indexUser])[0]           // COMMAND and PID fields may be jammed together
 		pid, _ := strconv.Atoi(strings.Fields(text[:indexUser])[1]) // so read as one field and split
 		// user := strings.TrimSpace(text[indexUser:indexFd])
 		mode := text[indexMode]

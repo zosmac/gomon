@@ -5,7 +5,6 @@ package process
 import (
 	"fmt"
 	"math"
-	"time"
 
 	"github.com/zosmac/gocore"
 )
@@ -25,20 +24,15 @@ type (
 )
 
 func Nodegraph[I any, E any, R any](query Query[I, E, R]) R {
+	procLock.RLock()
+	tb := procs
+	procLock.RUnlock()
+
 	hosts := map[Pid]I{}         // The host (IP) nodes in the leftmost cluster.
 	prcss := map[int]map[Pid]I{} // The process nodes in the process clusters.
 	datas := map[Pid]I{}         // The file, unix socket, pipe and kernel connections in the rightmost cluster.
 	include := Table{}           // Processes that have a connection to include in report.
 	edges := map[[2]Pid][]E{}    // Edges connecting host, process, and data nodes.
-
-	tb := BuildTable()
-	tr := tb.BuildTree()
-	Connections(tb)
-
-	currCPU := map[Pid]time.Duration{}
-	for pid, p := range tb {
-		currCPU[pid] = p.Total
-	}
 
 	queryPid := query.Pid()
 	if queryPid != 0 && tb[queryPid] == nil {
@@ -49,6 +43,7 @@ func Nodegraph[I any, E any, R any](query Query[I, E, R]) R {
 		"pid": queryPid.String(),
 	}).Info()
 
+	tr := tb.BuildTree()
 	pt := Table{}
 	if queryPid > 0 { // build this process' "extended family"
 		for _, pid := range tr.Family(queryPid).All() {
@@ -64,11 +59,8 @@ func Nodegraph[I any, E any, R any](query Query[I, E, R]) R {
 				}
 			}
 		}
-	} else { // only report non-daemon, remote host connected, and cpu consuming processes
+	} else { // only report non-daemon and remote host connected processes
 		for pid, p := range tb {
-			if pcpu, ok := prevCPU[pid]; !ok || pcpu < currCPU[pid] {
-				pt[pid] = tb[pid]
-			}
 			if p.Ppid > 1 {
 				for _, pid := range tr.Family(pid).All() {
 					pt[pid] = tb[pid]
@@ -82,13 +74,11 @@ func Nodegraph[I any, E any, R any](query Query[I, E, R]) R {
 		}
 	}
 
-	prevCPU = currCPU
-
 	for pid, p := range pt {
 		include[pid] = p
 		for _, conn := range p.Connections {
 			if conn.Self.Pid == 0 || conn.Peer.Pid == 0 || // ignore kernel process
-				conn.Self.Pid == 1 || conn.Peer.Pid == 1 || // ignore launchd process
+				// conn.Self.Pid == 1 || conn.Peer.Pid == 1 || // ignore launchd process
 				conn.Self.Pid == conn.Peer.Pid || // ignore inter-process connections
 				queryPid == 0 && conn.Peer.Pid >= math.MaxInt32 || // ignore data connections for the "all process" query
 				(queryPid > 0 && queryPid != conn.Self.Pid && // ignore hosts and datas of connected processes

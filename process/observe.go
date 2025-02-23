@@ -21,7 +21,7 @@ func Observer(ctx context.Context) error {
 		return err
 	}
 
-	if err := Endpoints(ctx); err != nil {
+	if err := endpoints(ctx); err != nil {
 		return err
 	}
 

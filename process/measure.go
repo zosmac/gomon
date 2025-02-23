@@ -4,6 +4,8 @@ package process
 
 import (
 	"fmt"
+	"slices"
+	"strconv"
 	"sync"
 	"time"
 
@@ -25,40 +27,61 @@ var (
 	clMap  = map[Pid]CommandLine{}
 	clLock sync.Mutex
 
-	// prevCPU is used to limit reporting only of processes that consumed CPU since the previous measurement.
-	prevCPU = map[Pid]time.Duration{}
+	// procs contains the process table recreated with each measurement.
+	procs    = Table{}
+	procLock sync.RWMutex
 
-	// endpoints of processes periodically populated by lsof.
-	epMap  = map[Pid][]Connection{}
-	epLock sync.RWMutex
+	// prevProcs is used to limit reporting only of processes that consumed CPU since the previous measurement.
+	prevProcs = Table{}
 )
 
 // Measure captures all processes' metrics.
 func Measure() (ProcStats, []message.Content) {
-	tb := BuildTable()
+	procLock.Lock()
+	prevProcs = procs
+	procs = BuildTable()
+	tb := procs
+	ptb := prevProcs
+	procLock.Unlock()
 
-	currCPU := map[Pid]time.Duration{}
+	exits := map[Pid]struct{}{}
+	diffCPU := map[Pid]time.Duration{}
+	var cpus []time.Duration
+	for pid := range ptb {
+		exits[pid] = struct{}{}
+	}
+
+	var active, execed int
+	var total time.Duration
 	for pid, p := range tb {
-		currCPU[pid] = p.Total
+		if pp, ok := ptb[pid]; ok {
+			diffCPU[pid] = p.Total - pp.Total
+			cpus = append(cpus, p.Total-pp.Total)
+			if p.Total > pp.Total {
+				active++
+				total += p.Total - pp.Total
+			}
+			delete(exits, pid)
+		} else {
+			diffCPU[pid] = p.Total
+			cpus = append(cpus, p.Total)
+			active++
+			execed++
+			total += p.Total
+		}
 	}
 
 	var ms []message.Content
-	var active, execed int
-	var total time.Duration
-	for pid, nt := range currCPU {
-		if ot, ok := prevCPU[pid]; ok {
-			if nt > ot {
-				active++
-				total += nt - ot
-				ms = append(ms, tb[pid])
-			}
-			delete(prevCPU, pid)
-		} else {
-			execed++
-			if nt > 0 {
-				total += nt
-				ms = append(ms, tb[pid])
-			}
+	slices.Sort(cpus)
+	var minCPU time.Duration
+	if len(cpus) > int(flags.top) {
+		minCPU = cpus[len(cpus)-int(flags.top)-1]
+	} else {
+		minCPU = cpus[0]
+	}
+	for pid, cpu := range diffCPU {
+		if cpu > minCPU {
+			ms = append(ms, tb[pid])
 		}
 	}
 
@@ -66,21 +89,27 @@ func Measure() (ProcStats, []message.Content) {
 		Count:  len(tb),
 		Active: active,
 		Execed: execed,
-		Exited: len(prevCPU),
+		Exited: len(exits),
 		CPU:    total,
 	}
 
+	gocore.Error("Process Measure", nil, map[string]string{
+		"total":  strconv.Itoa(ps.Count),
+		"active": strconv.Itoa(ps.Active),
+		"execed": strconv.Itoa(ps.Execed),
+		"exited": strconv.Itoa(ps.Exited),
+		"CPU":    total.String(),
+	}).Info()
+
 	var pids []int
 	clLock.Lock()
-	for pid := range prevCPU { // process exited
+	for pid := range exits { // process exited
 		pids = append(pids, int(pid))
 		delete(clMap, pid)
 	}
 	clLock.Unlock()
 
 	logs.Remove(pids)
-
-	prevCPU = currCPU
 
 	return ps, ms
 }
@@ -92,12 +121,7 @@ func BuildTable() Table {
 		panic(fmt.Errorf("could not build process table %v", err))
 	}
 
-	var epm map[Pid][]Connection
-	epLock.RLock()
-	if len(epMap) > 0 {
-		epm = epMap
-	}
-	epLock.RUnlock()
+	epm := getEndpoints()
 
 	tb := make(map[Pid]*measurement, len(pids))
 	for _, pid := range pids {
