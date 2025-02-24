@@ -9,6 +9,11 @@ import (
 	"github.com/zosmac/gocore"
 )
 
+type (
+	// sample is a command line flag type.
+	sample time.Duration
+)
+
 var (
 	// flags defines the command line flags.
 	flags = struct {
@@ -53,17 +58,16 @@ func init() {
 		• processes`
 }
 
-// sample is a command line flag type.
-type sample time.Duration
-
 // Set is a flag.Value interface method to enable sample as a command line flag
 func (i *sample) Set(s string) error {
 	d, err := time.ParseDuration(s)
-	if d <= 0 {
-		return errors.New("invalid sample interval")
+	if err != nil {
+		return err
+	} else if d <= 0 {
+		return errors.New("interval <= 0s")
 	}
 	*i = sample(d)
-	return err
+	return nil
 }
 
 // String is a flag.Value interface method to enable sample as a command line flag.
@@ -76,10 +80,13 @@ func (i sample) alignTicker() <-chan time.Time {
 	ticker := make(chan time.Time)
 	go func() {
 		d := time.Duration(i)
-		t := time.Now()
-		ticker <- <-time.After(d - t.Sub(t.Truncate(d)))
-		for t := range time.Tick(d) {
-			ticker <- t
+		for {
+			t := time.Now()
+			next := d - t.Sub(t.Truncate(d))
+			if next < d/4 { // don't let ticker tick too soon
+				next += d
+			}
+			ticker <- <-time.After(next)
 		}
 	}()
 	return ticker
