@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"os"
 	"strconv"
 	"strings"
@@ -47,13 +48,18 @@ func Main(ctx context.Context) error {
 	// fire up the http server
 	serve.Serve(ctx)
 
-	gocore.Error("start", nil, map[string]string{
+	flags := map[string]string{
 		"pid":        strconv.Itoa(os.Getpid()),
 		"command":    strings.Join(os.Args, " "),
 		"executable": gocore.Executable,
 		"version":    gocore.Version,
 		"user":       gocore.Username(os.Getuid()),
-	}).Info()
+	}
+	gocore.Flags.FlagSet.VisitAll(func(f *flag.Flag) {
+		flags[f.Name] = f.Value.String()
+	})
+
+	gocore.Error("start", nil, flags).Info()
 
 	return gocore.Error("stop", serve.Measure(ctx), map[string]string{
 		"command": os.Args[0],
