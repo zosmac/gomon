@@ -39,7 +39,7 @@ var (
 func Measure() (ProcStats, []message.Content) {
 	procLock.Lock()
 	prevProcs = procs
-	procs = BuildTable()
+	procs = buildTable()
 	tb := procs
 	ptb := prevProcs
 	procLock.Unlock()
@@ -118,14 +118,16 @@ func Measure() (ProcStats, []message.Content) {
 	return ps, ms
 }
 
-// BuildTable builds a process table and captures current process state.
-func BuildTable() Table {
+// buildTable builds a process table and captures current process state.
+func buildTable() Table {
 	pids, err := getPids()
 	if err != nil {
 		panic(fmt.Errorf("could not build process table %v", err))
 	}
 
-	epm := getEndpoints()
+	epLock.RLock()
+	epm := epMap
+	epLock.RUnlock()
 
 	tb := make(map[Pid]*measurement, len(pids))
 	for _, pid := range pids {

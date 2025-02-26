@@ -124,18 +124,6 @@ const (
 	groupState = "state"
 )
 
-func getEndpoints() map[Pid][]Connection {
-	epLock.RLock()
-	defer epLock.RUnlock()
-	return epMap
-}
-
-func setEndpoints(epm map[Pid][]Connection) {
-	epLock.Lock()
-	defer epLock.Unlock()
-	epMap = epm
-}
-
 // endpoints starts the lsof command to capture process connection endpoints.
 func endpoints(ctx context.Context) error {
 	stdout, err := gocore.Spawn(ctx, lsofCommand())
@@ -185,8 +173,13 @@ func parseLsof(sc *bufio.Scanner) {
 			indexName = indices[headerGroups[groupName]*2]
 			continue
 		} else if strings.HasPrefix(text, "====") {
-			connections(epm)
-			setEndpoints(epm)
+			gocore.Error("connections", nil, map[string]string{
+				"time": text[4:12],
+			}).Info()
+			connections(epm) // resolve inter process connections
+			epLock.Lock()
+			epMap = epm
+			epLock.Unlock()
 			epm = map[Pid][]Connection{}
 			continue
 		}

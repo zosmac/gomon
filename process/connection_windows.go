@@ -13,7 +13,7 @@ func lsofCommand(ready chan<- struct{}) {
 	ready <- struct{}{}
 }
 
-// Endpoints starts the lsof command to capture process connections.
-func Endpoints(_ context.Context) error {
+// endpoints starts the lsof command to capture process connections.
+func endpoints(_ context.Context) error {
 	return gocore.Unsupported()
 }
