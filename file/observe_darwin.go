@@ -37,6 +37,9 @@ type handle struct {
 	stream C.FSEventStreamRef
 }
 
+// info provides an example for passing user data to the FSEventStream callback function.
+// var info = struct{}{}
+
 // open obtains a directory handle for observer.
 func open(_ string) (*handle, error) {
 	cname := gocore.CreateCFString(flags.fileDirectory + "\x00")
@@ -44,6 +47,7 @@ func open(_ string) (*handle, error) {
 	context := C.malloc(C.sizeof_struct_FSEventStreamContext)
 	defer C.free(context)
 	C.memset(context, 0, C.sizeof_struct_FSEventStreamContext)
+	// (*C.struct_FSEventStreamContext)(context).info = unsafe.Pointer(&info)
 
 	return &handle{
 		stream: C.FSEventStreamCreate(
@@ -90,9 +94,10 @@ func observe() error {
 }
 
 // callback handles events sent on stream.
+// This callback uses neither the stream nor user info parameters. However, cannot declare them both with the _ "unused parameter" naming convention, because C considers _ to be a legitimate name, causing a variable name redefinition error with cgo.
 //
 //export callback
-func callback(stream C.ConstFSEventStreamRef, _ unsafe.Pointer, count C.size_t, paths **C.char, flags *C.FSEventStreamEventFlags, ids *C.FSEventStreamEventId) {
+func callback(_ C.ConstFSEventStreamRef, info unsafe.Pointer, count C.size_t, paths **C.char, flags *C.FSEventStreamEventFlags, ids *C.FSEventStreamEventId) {
 	pths := unsafe.Slice(paths, count)
 	flgs := unsafe.Slice(flags, count)
 	idss := unsafe.Slice(ids, count)

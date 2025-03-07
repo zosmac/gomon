@@ -3,6 +3,7 @@
 package process
 
 import (
+	"fmt"
 	"syscall"
 	"time"
 	"unsafe"
@@ -166,6 +167,16 @@ func observe() error {
 	}()
 
 	return nil
+}
+
+// setuid reports a process change uid. (linux only)
+func (id *Id) setuid(uid int) {
+	notify(id, processSetuid, fmt.Sprintf("%s[%d] uid: %d", id.Name, id.Pid, uid))
+}
+
+// setgid reports a process change gid. (linux only)
+func (id *Id) setgid(gid int) {
+	notify(id, processSetgid, fmt.Sprintf("%s[%d] gid: %d", id.Name, id.Pid, gid))
 }
 
 // taskstats reads netlink process metrics.

@@ -61,13 +61,3 @@ func (id *Id) exec() {
 func (id *Id) exit() {
 	notify(id, processExit, fmt.Sprintf("%s[%d:%s]", id.Name, id.Pid, id.Starttime.Format("20060102-150405")))
 }
-
-// setuid reports a process change uid. (linux only)
-func (id *Id) setuid(uid int) {
-	notify(id, processSetuid, fmt.Sprintf("%s[%d] uid: %d", id.Name, id.Pid, uid))
-}
-
-// setgid reports a process change gid. (linux only)
-func (id *Id) setgid(gid int) {
-	notify(id, processSetgid, fmt.Sprintf("%s[%d] gid: %d", id.Name, id.Pid, gid))
-}
