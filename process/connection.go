@@ -6,8 +6,15 @@ import (
 	"fmt"
 	"runtime"
 	"slices"
+	"sync"
 
 	"github.com/zosmac/gocore"
+)
+
+var (
+	// endpoints of processes periodically populated by lsof on unix.
+	epMap  = map[Pid][]Connection{}
+	epLock sync.RWMutex
 )
 
 // connections determines the remote endpoints of each process' connections.

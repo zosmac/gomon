@@ -15,17 +15,12 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/logs"
 )
 
 var (
-	// endpoints of processes periodically populated by lsof.
-	epMap  = map[Pid][]Connection{}
-	epLock sync.RWMutex
-
 	// headerRegex for parsing lsof header line of lsof command.
 	headerRegex = regexp.MustCompile(
 		`^(?P<command>COMMAND) ` +

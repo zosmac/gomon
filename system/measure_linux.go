@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	// version of the Operating System.
-	version = func() string {
+	// uname provides the name of the Operating System.
+	uname = func() string {
 		var uname syscall.Utsname
 		if syscall.Uname(&uname) != nil {
 			return ""
@@ -36,11 +36,6 @@ var (
 	// factor is the system units for CPU time (i.e. "ticks" or "jiffies").
 	factor = 10000 * time.Microsecond
 )
-
-// uname returns the system name.
-func uname() string {
-	return version
-}
 
 // loadAverage gets the system load averages.
 func loadAverage() LoadAverage {

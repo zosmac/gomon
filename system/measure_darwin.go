@@ -26,8 +26,8 @@ type (
 )
 
 var (
-	// version of the Operating System.
-	version = func() string {
+	// uname provides the name of the Operating System.
+	uname = func() string {
 		var size C.size_t
 		if rv, err := C.sysctl(
 			&[]C.int{C.CTL_KERN, C.KERN_VERSION}[0],
@@ -95,11 +95,6 @@ var (
 
 func (r kernReturn) Error() string {
 	return "mach/kern_return.h: " + strconv.Itoa(int(r))
-}
-
-// uname returns the system name.
-func uname() string {
-	return version
 }
 
 // loadAverage gets the system load averages.

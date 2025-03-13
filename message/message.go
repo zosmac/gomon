@@ -3,6 +3,7 @@
 package message
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -37,6 +38,12 @@ const (
 )
 
 var (
+	// host identifies the local host.
+	host, _ = os.Hostname()
+
+	// platform identifies the local OS.
+	platform = runtime.GOOS + "_" + runtime.GOARCH
+
 	// MeasureEvents has only the single type "measure".
 	MeasureEvents = gocore.ValidValue[MeasureEvent]{}.Define(measure)
 )
@@ -46,8 +53,8 @@ var (
 func Measurement() Header[MeasureEvent] {
 	return Header[MeasureEvent]{
 		Timestamp: time.Now(),
-		Host:      gocore.Host,
-		Platform:  gocore.Platform,
+		Host:      host,
+		Platform:  platform,
 		Source:    source(),
 		Event:     measure,
 	}
@@ -59,8 +66,8 @@ func Measurement() Header[MeasureEvent] {
 func Observation[T ~string](t time.Time, event T) Header[T] {
 	return Header[T]{
 		Timestamp: t,
-		Host:      gocore.Host,
-		Platform:  gocore.Platform,
+		Host:      host,
+		Platform:  platform,
 		Source:    source(),
 		Event:     event,
 	}

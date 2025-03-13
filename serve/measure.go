@@ -77,6 +77,7 @@ func measure() (ms []message.Content) {
 	ms = append(ms, filesystem.Measure()...)
 	ms = append(ms, network.Measure()...)
 
+	measures.Header.Timestamp = start
 	measures.CollectionTime += time.Since(start)
 	measures.LokiStreams += message.LokiStreams
 	ms = append(ms, &measures)

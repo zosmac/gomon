@@ -15,7 +15,9 @@ func init() {
 type (
 	// Id identifies the message.
 	Id struct {
+		Name string `json:"name" gomon:"property"`
 	}
+
 	// WebServer reports the address and endpoints of gomon.
 	WebServer struct {
 		Address   string   `json:"address" gomon:"property"`
@@ -49,8 +51,10 @@ type (
 )
 
 var (
+	// measures records the metrics for the server's operations.
 	measures = measurement{
 		Header: message.Measurement(),
+		Id:     Id{Name: "gomon"},
 	}
 )
 
@@ -59,7 +63,7 @@ func (*measurement) Events() []string {
 	return message.MeasureEvents.ValidValues()
 }
 
-// ID returns the identifier for an I/O message.
+// ID returns the identifier for a server message.
 func (m *measurement) ID() string {
-	return "gomon"
+	return m.Id.Name
 }

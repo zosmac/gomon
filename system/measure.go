@@ -16,8 +16,10 @@ func Measure(ps process.ProcStats) message.Content {
 	mem, swap := memory()
 	return &measurement{
 		Header: header,
+		Id: Id{
+			Name: uname,
+		},
 		Properties: Properties{
-			Uname:    uname(),
 			Boottime: gocore.Boottime,
 		},
 		Metrics: Metrics{

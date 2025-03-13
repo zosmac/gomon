@@ -23,6 +23,15 @@ var (
 	pdhGetFormattedCounterValue = pdhapi.NewProc("PdhGetFormattedCounterValue").Call
 	pdhRemoveCounter            = pdhapi.NewProc("PdhRemoveCounter").Call
 	pdhCloseQuery               = pdhapi.NewProc("PdhCloseQuery").Call
+
+	// uname provides the name of the Operating System.
+	uname = func() string {
+		wos := []win32OperatingSystem{}
+		if wmi.Query(wmi.CreateQuery(&wos, ""), &wos) == nil {
+			return wos[0].Name + " " + wos[0].Version
+		}
+		return ""
+	}()
 )
 
 // Performance Data Helper
@@ -65,16 +74,6 @@ type (
 		Version string
 	}
 )
-
-// uname returns the system name.
-func uname() string {
-	wos := []win32OperatingSystem{}
-	if wmi.Query(wmi.CreateQuery(&wos, ""), &wos) == nil {
-		return wos[0].Name + " " + wos[0].Version
-	}
-
-	return ""
-}
 
 // loadAverage gets the system load averages. Unsupported on windows.
 func loadAverage() LoadAverage {

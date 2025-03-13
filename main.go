@@ -48,10 +48,11 @@ func Main(ctx context.Context) error {
 	// fire up the http server
 	serve.Serve(ctx)
 
+	executable, _ := os.Executable()
 	flags := map[string]string{
 		"pid":        strconv.Itoa(os.Getpid()),
 		"command":    strings.Join(os.Args, " "),
-		"executable": gocore.Executable,
+		"executable": executable,
 		"version":    gocore.Version,
 		"user":       gocore.Username(os.Getuid()),
 	}

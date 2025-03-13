@@ -16,11 +16,11 @@ func init() {
 type (
 	// Id identifies the message.
 	Id struct {
+		Name string `json:"name" gomon:"property"`
 	}
 
 	// Properties defines measurement properties.
 	Properties struct {
-		Uname    string    `json:"uname" gomon:"property"`
 		Boottime time.Time `json:"boottime" gomon:"property"`
 	}
 
@@ -89,6 +89,6 @@ func (*measurement) Events() []string {
 }
 
 // ID returns the identifier for the system message.
-func (*measurement) ID() string {
-	return ""
+func (m *measurement) ID() string {
+	return m.Id.Name
 }
