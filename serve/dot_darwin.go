@@ -46,7 +46,7 @@ func dot(graphviz string) []byte {
 	defer C.free(unsafe.Pointer(format))
 
 	var data *C.char
-	var length C.uint
+	var length C.size_t
 	if rc, err := C.gvRenderData(gvc, g, format, &data, &length); rc != 0 {
 		gocore.Error("dot", err).Err()
 		return nil
