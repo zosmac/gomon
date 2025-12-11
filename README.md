@@ -45,6 +45,7 @@ To set up *Gomon*, first download and install *[Go](https://golang.org/dl/)*. Th
 ```zsh
 go install github.com/zosmac/gomon/cmd/gomon@latest
 ```
+
 ## Running *Gomon*
 
 As performing several of the measurements and observations requires root authority, use `sudo` to invoke `gomon`:
