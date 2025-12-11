@@ -4,6 +4,7 @@
 
 - [Overview](#overview)
 - [Installing *Gomon*](#installing-gomon)
+- [Running *Gomon*](#running-gomon)
 - [Employing *Prometheus*, *Loki*, and *Grafana*](#employing-prometheus-loki-and-grafana)
   - [Prometheus](#prometheus)
   - [Loki](#loki)
@@ -25,11 +26,11 @@
   
 ## Overview
 
-The `gomon` command starts itself as a server that monitors its system. *Gomon* periodically measures the state of the system, including its CPU, memory, filesystems, network interfaces, and processes. *Gomon* also observes system logs and the system's management of files and processes. Hence, gomon's processing consists of two fundamental operations: **measurement** and **observation**.
+The `gomon` command starts itself as a server that monitors its system. *Gomon* periodically measures resource usage. *Gomon* also observes events occurring on the system. Hence, gomon's processing consists of two fundamental operations: **measurement** and **observation**.
 
-What *gomon* **measures** of the system is performed through kernel interfaces that report the state of resources of the system: the CPU, the memory, the filesystems, the network interfaces, and the processes.
+What *gomon* **measures** of the system is performed through kernel interfaces that report the state and usage of resources of the system: the CPU and memory, the filesystems, the I/O devices, the network interfaces, and the processes.
 
-What *gomon* **observes** of the system are reports of events captured by the logging, file management, and process management subsystems. While *gomon* cannot observe the events directly, it assumes that the subsystems' reporting is timely. A potential enhancement to *gomon* would be for it to initiate periodically its own log, file, and process events to sample the lag between initiation and reporting of events. This could dovetail nicely with *gomon*'s measurement operation.
+What *gomon* **observes** of the system are events reported by the log, file, and process management subsystems. While *gomon* cannot observe the events directly, it assumes that the subsystems' reporting is timely. A potential enhancement to *gomon* would be for it to initiate periodically its own log, file, and process events to sample the lag between initiation and reporting of events. This could dovetail nicely with *gomon*'s measurement operation.
 
 Gomon records its measurements and observations and reports them in a message stream. By default, *gomon* streams these messages as JSON objects to standard out.
 
@@ -44,6 +45,7 @@ To set up *Gomon*, first download and install *[Go](https://golang.org/dl/)*. Th
 ```zsh
 go install github.com/zosmac/gomon/cmd/gomon@latest
 ```
+## Running *Gomon*
 
 As performing several of the measurements and observations requires root authority, use `sudo` to invoke `gomon`:
 
@@ -62,6 +64,12 @@ gomon -pretty
 *Gomon* periodically (default every 15s) makes system measurements and gathers observations, consolidating these into a *stream* that it writes to standard out as JSON objects.
 
 To view all the flags that the `gomon` command accepts for configuration, enter `gomon -help`. To see all the metrics that *Gomon* captures, enter `gomon -document`.
+
+To tailor the **measurements** and **observations** that *Gomon* captures, use the `-measures` and `-events` flags. Each takes a comma separated list of what to capture. By default, `-measures` takes `filesystem,io,network,process,system`, while `-events` takes `file,logs,process`. To completely disable captures for either, specify `none`. For example, to capture only the `system` and `process` metrics, run
+
+```zsh
+sudo gomon -measures system,process -events none
+```
 
 ## Employing *Prometheus*, *Loki*, and *Grafana*
 
