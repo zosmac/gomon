@@ -53,7 +53,7 @@ func (r *rotate) Set(s string) error {
 }
 
 // String is a flag.Value interface method to enable rotate as a command line flag.
-func (r *rotate) String() string {
+func (r rotate) String() string {
 	return r.interval.String()
 }
 

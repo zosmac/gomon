@@ -3,8 +3,8 @@
 package serve
 
 /*
-#cgo CFLAGS: -I/usr/local/include
-#cgo LDFLAGS: -L/usr/local/lib -lgvc -lcgraph
+#cgo CFLAGS: -I/usr/local/graphviz/include -I/Applications/GraphvizSwift.app/Contents/Frameworks/include
+#cgo LDFLAGS: -L/usr/local/graphviz/lib -L/Applications/GraphvizSwift.app/Contents/Frameworks/lib -lgvc -lcgraph
 
 #include <graphviz/gvc.h>
 #include <stdlib.h>

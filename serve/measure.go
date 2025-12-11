@@ -6,6 +6,7 @@ import (
 	"context"
 	"path"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -19,7 +20,15 @@ import (
 	"github.com/zosmac/gomon/system"
 )
 
-func Measure(ctx context.Context) error {
+func Measure(ctx context.Context, opts gocore.Options) error {
+
+	// start the process endpoints observer (i.e. lsof)
+	if slices.Contains(opts.Selected, "process") {
+		if err := process.Endpoints(ctx); err != nil {
+			return err
+		}
+	}
+
 	// capture and write with encoder
 	ticker := flags.sample.alignTicker()
 	for {
@@ -31,7 +40,7 @@ func Measure(ctx context.Context) error {
 			start := time.Now()
 			last, ok := lastPrometheusCollection.Load().(time.Time)
 			if !ok || prometheusSample == 0 || t.Sub(last) > 2*prometheusSample {
-				ms := measure()
+				ms := measure(opts)
 				message.Measurements(ms)
 				gocore.Error("encode", nil, map[string]string{
 					"count": strconv.Itoa(len(ms)),
@@ -42,7 +51,7 @@ func Measure(ctx context.Context) error {
 		case ch := <-prometheusChan:
 			count := measures.Collections
 			start := measures.CollectionTime
-			for _, m := range measure() {
+			for _, m := range measure(opts) {
 				gocore.Format(
 					"gomon_"+path.Base(reflect.Indirect(reflect.ValueOf(m)).Type().PkgPath()),
 					"",
@@ -66,16 +75,35 @@ func Measure(ctx context.Context) error {
 }
 
 // measure gathers measurements of each subsystem.
-func measure() (ms []message.Content) {
+func measure(opts gocore.Options) (ms []message.Content) {
 	start := time.Now()
 
-	ps, pm := process.Measure()
-	sm := system.Measure(ps)
+	var ps process.ProcStats
+	var pm []message.Content
+	var sm message.Content
+	if slices.Contains(opts.Selected, "system") &&
+		slices.Contains(opts.Selected, "process") {
+		ps, pm = process.Measure()
+		sm = system.Measure(ps)
+	} else if slices.Contains(opts.Selected, "system") &&
+		!slices.Contains(opts.Selected, "process") {
+		ps, _ = process.Measure()
+		sm = system.Measure(ps)
+	} else if !slices.Contains(opts.Selected, "system") && 
+		slices.Contains(opts.Selected, "process") {
+		_, pm = process.Measure()
+	}
 	ms = append(ms, sm)
 	ms = append(ms, pm...)
-	ms = append(ms, io.Measure()...)
-	ms = append(ms, filesystem.Measure()...)
-	ms = append(ms, network.Measure()...)
+	if slices.Contains(opts.Selected, "io") {
+		ms = append(ms, io.Measure()...)
+	}
+	if slices.Contains(opts.Selected, "filesystem") {
+		ms = append(ms, filesystem.Measure()...)
+	}
+	if slices.Contains(opts.Selected, "network") {
+		ms = append(ms, network.Measure()...)
+	}
 
 	measures.Header.Timestamp = start
 	measures.CollectionTime += time.Since(start)

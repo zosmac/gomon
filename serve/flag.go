@@ -30,7 +30,7 @@ func init() {
 	gocore.Flags.Var(
 		&flags.port,
 		"port",
-		"[-port n]",
+		"[-port <n>]",
 		"Port number for Gomon REST server",
 	)
 
@@ -46,8 +46,7 @@ func init() {
 
 	gocore.Flags.CommandDescription = `Monitors the local host,
 	measuring state and usage of:
-		• system cpu
-		• system memory
+		• system cpu and memory
 		• filesystems
 		• I/O devices
 		• network interfaces
@@ -71,8 +70,8 @@ func (i *sample) Set(s string) error {
 }
 
 // String is a flag.Value interface method to enable sample as a command line flag.
-func (i *sample) String() string {
-	return time.Duration(*i).String()
+func (i sample) String() string {
+	return time.Duration(i).String()
 }
 
 // AlignTicker aligns the sample ticking to the sample interval.

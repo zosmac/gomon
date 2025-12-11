@@ -74,6 +74,6 @@ func (l *logEvent) Set(level string) error {
 }
 
 // String is a flag.Value interface method to enable logLevel as a command line flag.
-func (l *logEvent) String() string {
-	return string(*l)
+func (l logEvent) String() string {
+	return string(l)
 }

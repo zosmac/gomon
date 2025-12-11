@@ -79,5 +79,6 @@ func source() string {
 	runtime.Callers(3, pc)
 	fs := runtime.CallersFrames(pc)
 	f, _ := fs.Next()
-	return strings.Split(filepath.Base(f.Function), ".")[0]
+	s, _, _ := strings.Cut(filepath.Base(f.Function), ".")
+	return s
 }

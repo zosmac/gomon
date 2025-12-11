@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/StackExchange/wmi"
+	"github.com/yusufpapurcu/wmi"
 	"github.com/zosmac/gocore"
 	"github.com/zosmac/gomon/message"
 	"golang.org/x/sys/windows"

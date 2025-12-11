@@ -8,7 +8,7 @@ import (
 
 	"github.com/zosmac/gocore"
 
-	"github.com/StackExchange/wmi"
+	"github.com/yusufpapurcu/wmi"
 
 	"golang.org/x/sys/windows"
 )

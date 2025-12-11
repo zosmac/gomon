@@ -6,6 +6,7 @@ import (
 	"context"
 	"flag"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -33,23 +34,29 @@ func Main(ctx context.Context) error {
 		return gocore.Error("encoder", err)
 	}
 
-	if err := logs.Observer(ctx); err != nil {
-		return gocore.Error("logs Observer", err)
+	if slices.Contains(flags.events.Selected, "logs") {
+		if err := logs.Observer(ctx); err != nil {
+			return gocore.Error("logs Observer", err)
+		}
 	}
 
-	if err := file.Observer(ctx); err != nil {
-		return gocore.Error("files Observer", err)
+	if slices.Contains(flags.events.Selected, "file") {
+		if err := file.Observer(ctx); err != nil {
+			return gocore.Error("files Observer", err)
+		}
 	}
 
-	if err := process.Observer(ctx); err != nil {
-		return gocore.Error("processes Observer", err)
+	if slices.Contains(flags.events.Selected, "process") {
+		if err := process.Observer(ctx); err != nil {
+			return gocore.Error("processes Observer", err)
+		}
 	}
 
 	// fire up the http server
 	serve.Serve(ctx)
 
 	executable, _ := os.Executable()
-	flags := map[string]string{
+	settings := map[string]string{
 		"pid":        strconv.Itoa(os.Getpid()),
 		"command":    strings.Join(os.Args, " "),
 		"executable": executable,
@@ -57,12 +64,17 @@ func Main(ctx context.Context) error {
 		"user":       gocore.Username(os.Getuid()),
 	}
 	gocore.Flags.FlagSet.VisitAll(func(f *flag.Flag) {
-		flags[f.Name] = f.Value.String()
+		settings[f.Name] = f.Value.String()
 	})
 
-	gocore.Error("start", nil, flags).Info()
+	gocore.Error("start", nil, settings).Info()
 
-	return gocore.Error("stop", serve.Measure(ctx), map[string]string{
+	if slices.Contains(flags.measures.Selected, "none") {
+		<-ctx.Done()
+		return gocore.Error("stop", ctx.Err(), map[string]string{"command": os.Args[0]})
+	}
+
+	return gocore.Error("stop", serve.Measure(ctx, flags.measures), map[string]string{
 		"command": os.Args[0],
 	})
 }

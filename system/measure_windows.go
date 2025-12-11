@@ -6,7 +6,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/StackExchange/wmi"
+	"github.com/yusufpapurcu/wmi"
 	"github.com/zosmac/gocore"
 	"golang.org/x/sys/windows"
 )

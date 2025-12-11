@@ -119,8 +119,8 @@ const (
 	groupState = "state"
 )
 
-// endpoints starts the lsof command to capture process connection endpoints.
-func endpoints(ctx context.Context) error {
+// Endpoints starts the lsof command to capture process connection endpoints.
+func Endpoints(ctx context.Context) error {
 	stdout, err := gocore.Spawn(ctx, lsofCommand())
 	if err != nil {
 		return gocore.Error("Spawn", err, map[string]string{
