@@ -65,7 +65,7 @@ gomon -pretty
 
 To view all the flags that the `gomon` command accepts for configuration, enter `gomon -help`. To see all the metrics that *Gomon* captures, enter `gomon -document`.
 
-To tailor the **measurements** and **observations** that *Gomon* captures, use the `-measures` and `-events` flags. Each takes a comma separated list of what to capture. By default, `-measures` takes `filesystem,io,network,process,system`, while `-events` takes `file,logs,process`. To completely disable captures for either, specify `none`. For example, to capture only the `system` and `process` metrics, run
+To tailor the **measurements** and **observations** that *Gomon* captures, use the `-measures` and `-events` flags. Each takes a comma separated list of what to capture. The default for `-measures` is `filesystem,io,network,process,system` (all measures), for `-events` is `file,logs,process` (all events). To completely disable captures for either, specify `none`. For example, to capture only the `system` and `process` metrics, run
 
 ```zsh
 sudo gomon -measures system,process -events none
