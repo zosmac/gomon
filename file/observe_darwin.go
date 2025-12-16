@@ -26,7 +26,6 @@ import "C"
 import (
 	"errors"
 	"path/filepath"
-	"strconv"
 	"unsafe"
 
 	"github.com/zosmac/gocore"
@@ -111,7 +110,7 @@ func callback(_ C.ConstFSEventStreamRef, info unsafe.Pointer, count C.size_t, pa
 		}
 
 		flag := flgs[i]
-		id := strconv.Itoa(int(idss[i]))
+		id := uint64(idss[i])
 
 		// do we care about symlink changes?
 		isDir := flag&C.kFSEventStreamEventFlagItemIsDir == C.kFSEventStreamEventFlagItemIsDir
@@ -186,7 +185,7 @@ func callback(_ C.ConstFSEventStreamRef, info unsafe.Pointer, count C.size_t, pa
 }
 
 // rename handles the rename of a file or directory.
-func rename(id, absn, abso string) {
+func rename(id uint64, absn, abso string) {
 	relo, _ := filepath.Rel(obs.root, abso)
 	reln, _ := filepath.Rel(obs.root, absn)
 	f, ok := obs.watched[relo]

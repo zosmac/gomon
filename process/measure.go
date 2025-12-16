@@ -134,7 +134,7 @@ func buildTable() Table {
 		id, props, metrics := pid.metrics()
 		tb[pid] = &measurement{
 			Header:      message.Measurement(),
-			Id:          id,
+			EventID:     id,
 			Properties:  props,
 			Metrics:     metrics,
 			Connections: epm[pid],

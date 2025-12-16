@@ -11,8 +11,8 @@ type (
 	// Pid is the identifier for a process.
 	Pid int
 
-	// Id identifies the message.
-	Id struct {
+	// EventID identifies the message.
+	EventID struct {
 		ppid      Pid       // for observer
 		Name      string    `json:"name" gomon:"property"`
 		Pid       Pid       `json:"pid" gomon:"property"`

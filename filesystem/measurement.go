@@ -11,8 +11,8 @@ func init() {
 }
 
 type (
-	// Id identifies the message.
-	Id struct {
+	// EventID identifies the message.
+	EventID struct {
 		Mount string `json:"mount" gomon:"property"`
 		Path  string `json:"path" gomon:"property"`
 	}
@@ -38,7 +38,7 @@ type (
 	// measurement for the message.
 	measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
-		Id                                   `json:"id" gomon:""`
+		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
 		Metrics                              `gomon:""`
 	}
@@ -51,5 +51,5 @@ func (*measurement) Events() []string {
 
 // ID returns the identifier for a filesystem message.
 func (m *measurement) ID() string {
-	return m.Id.Mount + ":" + m.Id.Path
+	return m.EventID.Mount + ":" + m.EventID.Path
 }

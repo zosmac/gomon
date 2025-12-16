@@ -18,7 +18,7 @@ import (
 
 type (
 	// ids maps pids to current process instances.
-	ids map[Pid]Id
+	ids map[Pid]EventID
 )
 
 var (
@@ -114,7 +114,7 @@ func observe() error {
 					continue
 				}
 
-				var id Id
+				var id EventID
 				var ok bool
 				var ppid Pid
 				var youth ids
@@ -197,7 +197,7 @@ func children(ppid Pid) ids {
 
 	kids := ids{}
 	for _, pid := range pids[:n] {
-		kids[Pid(pid)] = Id{}
+		kids[Pid(pid)] = EventID{}
 	}
 
 	return kids

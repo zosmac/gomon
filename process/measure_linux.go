@@ -29,18 +29,18 @@ var (
 )
 
 // id captures the process identifier.
-func (pid Pid) id() Id {
+func (pid Pid) id() EventID {
 	buf, err := os.ReadFile(filepath.Join("/proc", pid.String(), "stat"))
 	if err != nil {
 		gocore.Error("ReadFile", err).Err()
-		return Id{}
+		return EventID{}
 	}
 
 	fields := strings.Fields(string(buf))
 	ppid, _ := strconv.Atoi(fields[3])
 	start, _ := strconv.Atoi(fields[21])
 
-	return Id{
+	return EventID{
 		ppid:      Pid(ppid),
 		Name:      fields[1][1 : len(fields[1])-1],
 		Pid:       pid,
@@ -49,11 +49,11 @@ func (pid Pid) id() Id {
 }
 
 // metrics captures the metrics for a process.
-func (pid Pid) metrics() (Id, Properties, Metrics) {
+func (pid Pid) metrics() (EventID, Properties, Metrics) {
 	buf, err := os.ReadFile(filepath.Join("/proc", pid.String(), "stat"))
 	if err != nil {
 		gocore.Error("ReadFile", err).Err()
-		return Id{Pid: pid}, Properties{}, Metrics{}
+		return EventID{Pid: pid}, Properties{}, Metrics{}
 	}
 	fields := strings.Fields(string(buf))
 
@@ -85,7 +85,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 	voluntaryContextSwitches, _ := strconv.Atoi(m["voluntary_ctxt_switches"])
 	nonVoluntaryContextSwitches, _ := strconv.Atoi(m["nonvoluntary_ctxt_switches"])
 
-	return Id{
+	return EventID{
 			ppid:      Pid(ppid),
 			Name:      fields[1][1 : len(fields[1])-1],
 			Pid:       pid,

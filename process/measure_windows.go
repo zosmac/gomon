@@ -92,11 +92,11 @@ const (
 )
 
 // metrics captures the metrics for a process.
-func (pid Pid) metrics() (Id, Properties, Metrics) {
+func (pid Pid) metrics() (EventID, Properties, Metrics) {
 	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION|windows.PROCESS_VM_READ, false, uint32(pid))
 	if err != nil {
 		gocore.Error("OpenProcess", err).Err()
-		return Id{Pid: pid}, Properties{}, Metrics{}
+		return EventID{Pid: pid}, Properties{}, Metrics{}
 	}
 	defer windows.CloseHandle(handle)
 
@@ -166,7 +166,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 	user := time.Duration(lpUserTime.Nanoseconds())
 	system := time.Duration(lpKernelTime.Nanoseconds())
 
-	return Id{
+	return EventID{
 			Name:      windows.UTF16ToString(name[:n]),
 			Pid:       Pid(wp[0].ProcessID),
 			Starttime: time.Unix(0, lpCreationTime.Nanoseconds()),

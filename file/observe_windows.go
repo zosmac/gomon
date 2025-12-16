@@ -110,16 +110,16 @@ func observe() error {
 					if info, err := os.Stat(name); err != nil {
 						continue
 					} else if info.IsDir() {
-						watchDir(name, "")
+						watchDir(name, 0)
 					} else {
 						if f, err := add(name, false); err == nil {
-							notify(fileCreate, "", f.abs, "")
+							notify(fileCreate, 0, f.abs, "")
 						}
 					}
 				case windows.FILE_ACTION_MODIFIED:
-					notify(fileUpdate, "", obs.watched[name].abs, "")
+					notify(fileUpdate, 0, obs.watched[name].abs, "")
 				case windows.FILE_ACTION_REMOVED, windows.FILE_ACTION_RENAMED_OLD_NAME:
-					remove(obs.watched[name], "")
+					remove(obs.watched[name], 0)
 				}
 
 				if event.NextEntryOffset == 0 {

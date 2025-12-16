@@ -50,7 +50,7 @@ func filesystems() ([]message.Request, error) {
 				return []message.Content{
 					&measurement{
 						Header: message.Measurement(),
-						Id: Id{
+						EventID: EventID{
 							Mount: f[0],
 							Path:  f[1],
 						},

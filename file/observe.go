@@ -56,7 +56,7 @@ func Observer(ctx context.Context) error {
 		msgChan: make(chan *observation, 100),
 	}
 
-	if err := watchDir(".", ""); err != nil {
+	if err := watchDir(".", 0); err != nil {
 		return gocore.Error("watch", err)
 	}
 
@@ -93,7 +93,7 @@ func (obs *observer) close() {
 }
 
 // notify assembles a message and encodes it
-func notify(ev fileEvent, id, name, oldn string) {
+func notify(ev fileEvent, id uint64, name, oldn string) {
 	var msg string
 	if ev == fileRename {
 		msg = "newname=" + name
@@ -101,16 +101,16 @@ func notify(ev fileEvent, id, name, oldn string) {
 	}
 	obs.msgChan <- &observation{
 		Header: message.Observation(time.Now(), ev),
-		Id: Id{
-			Name:    name,
-			EventID: id,
+		EventID: EventID{
+			Name:        name,
+			FileEventID: id,
 		},
 		Message: msg,
 	}
 }
 
 // watchDir adds directory to observe
-func watchDir(rel, id string) error {
+func watchDir(rel string, id uint64) error {
 	if err := filepath.WalkDir(filepath.Join(obs.root, rel), func(abs string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, fs.ErrPermission) {
@@ -159,7 +159,7 @@ func add(abs string, isDir bool) (file, error) {
 }
 
 // remove removes a file from observation.
-func remove(f file, id string) {
+func remove(f file, id uint64) {
 	rel, _ := filepath.Rel(obs.root, f.abs)
 	delete(obs.watched, rel)
 	if f.isDir {

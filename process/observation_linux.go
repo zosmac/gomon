@@ -81,7 +81,7 @@ type (
 	// measurement for the message.
 	tsMeasurement struct {
 		message.Header[netlinkEvent] `gomon:""`
-		Id                           `json:"id" gomon:""`
+		EventID                      `json:"event_id" gomon:""`
 		unix.Taskstats               `gomon:""`
 		// Go formatted taskstats fields
 		Uname string `json:"uname" gomon:"property"`
@@ -108,5 +108,5 @@ func (*tsMeasurement) Events() []string {
 
 // ID returns the identifier for a process message.
 func (m *tsMeasurement) ID() string {
-	return m.Id.Name + "[" + m.Id.Pid.String() + "]"
+	return m.EventID.Name + "[" + m.EventID.Pid.String() + "]"
 }

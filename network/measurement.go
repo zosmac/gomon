@@ -11,8 +11,8 @@ func init() {
 }
 
 type (
-	// Id identifies the message.
-	Id struct {
+	// EventID identifies the message.
+	EventID struct {
 		Name string `json:"name" gomon:"property"`
 	}
 
@@ -53,7 +53,7 @@ type (
 	// measurement for the message.
 	measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
-		Id                                   `json:"id" gomon:""`
+		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
 		Metrics                              `gomon:""`
 	}
@@ -66,5 +66,5 @@ func (*measurement) Events() []string {
 
 // ID returns the identifier for a network interface message.
 func (m *measurement) ID() string {
-	return m.Id.Name
+	return m.EventID.Name
 }

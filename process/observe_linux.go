@@ -27,7 +27,7 @@ var (
 	h = handle{fd: -1, gd: -1, id: -1}
 
 	// ids maps pids to current process instances.
-	ids = map[Pid]Id{}
+	ids = map[Pid]EventID{}
 )
 
 // open obtains netlink socket descriptors.
@@ -170,12 +170,12 @@ func observe() error {
 }
 
 // setuid reports a process change uid. (linux only)
-func (id *Id) setuid(uid int) {
+func (id *EventID) setuid(uid int) {
 	notify(id, processSetuid, fmt.Sprintf("%s[%d] uid: %d", id.Name, id.Pid, uid))
 }
 
 // setgid reports a process change gid. (linux only)
-func (id *Id) setgid(gid int) {
+func (id *EventID) setgid(gid int) {
 	notify(id, processSetgid, fmt.Sprintf("%s[%d] gid: %d", id.Name, id.Pid, gid))
 }
 
@@ -215,7 +215,7 @@ func taskstats() {
 
 				ts := tsMeasurement{
 					Header: message.Observation(time.Now(), netlinkTaskstats),
-					Id: Id{
+					EventID: EventID{
 						ppid:      Pid(tsMsg.ts.Ac_ppid),
 						Name:      gocore.GoStringN((&tsMsg.ts.Ac_comm[0]), len(tsMsg.ts.Ac_comm)),
 						Pid:       Pid(tsMsg.pid),

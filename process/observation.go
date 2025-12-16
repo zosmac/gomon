@@ -18,7 +18,7 @@ type (
 	// message defines the properties of a process message.
 	observation struct {
 		message.Header[processEvent] `gomon:""`
-		Id                           `json:"id" gomon:""`
+		EventID                      `json:"event_id" gomon:""`
 		Message                      string `json:"message" gomon:"property"`
 	}
 )
@@ -50,5 +50,5 @@ func (*observation) Events() []string {
 
 // ID returns the identifier for a process message message.
 func (obs *observation) ID() string {
-	return obs.Id.Name + "[" + obs.Id.Pid.String() + "]"
+	return obs.EventID.Name + "[" + obs.EventID.Pid.String() + "]"
 }

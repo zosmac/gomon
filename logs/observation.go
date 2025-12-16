@@ -17,8 +17,8 @@ type (
 	// LogEvent log level event type.
 	logEvent string
 
-	// Id identifies the message.
-	Id struct {
+	// EventID identifies the message.
+	EventID struct {
 		Name   string `json:"name" gomon:"property"`
 		Pid    int    `json:"pid" gomon:"property"`
 		Sender string `json:"sender" gomon:"property"`
@@ -27,7 +27,7 @@ type (
 	// message defines the properties of a log message.
 	observation struct {
 		message.Header[logEvent] `gomon:"property"`
-		Id                       `json:"id" gomon:""`
+		EventID                  `json:"event_id" gomon:""`
 		Message                  string `json:"message" gomon:"property"`
 	}
 )
@@ -61,5 +61,5 @@ func (*observation) Events() []string {
 
 // ID returns the identifier for a log message message.
 func (obs *observation) ID() string {
-	return obs.Id.Name + "[" + strconv.Itoa(obs.Id.Pid) + "] (" + obs.Id.Sender + ")"
+	return obs.EventID.Name + "[" + strconv.Itoa(obs.EventID.Pid) + "] (" + obs.EventID.Sender + ")"
 }

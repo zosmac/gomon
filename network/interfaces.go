@@ -58,7 +58,7 @@ func interfaces() (ms []*measurement) {
 
 		ms = append(ms, &measurement{
 			Header: message.Measurement(),
-			Id: Id{
+			EventID: EventID{
 				Name: ni.Name,
 			},
 			Properties: Properties{

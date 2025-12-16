@@ -37,7 +37,7 @@ func filesystems() ([]message.Request, error) {
 					return []message.Content{
 						&measurement{
 							Header: message.Measurement(),
-							Id: Id{
+							EventID: EventID{
 								Mount: C.GoString((*C.char)(unsafe.Pointer(&fs.Mntfromname[0]))),
 								Path:  path,
 							},

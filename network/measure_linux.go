@@ -33,7 +33,7 @@ func Measure() (ms []message.Content) {
 			name := strings.TrimSpace(s[0])
 			fmt.Sscanf(s[1], "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d", numa...)
 			for _, m := range is {
-				if name == m.Id.Name {
+				if name == m.EventID.Name {
 					m.Metrics = Metrics{
 						Receive:            nums[0],
 						ReceivePackets:     nums[1],

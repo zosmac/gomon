@@ -254,7 +254,7 @@ func (query Query) ProcNode(p *process.Process) string {
 		color(p.Pid),
 		scheme,
 		flags.port,
-		p.Id.Name,
+		p.EventID.Name,
 		p.Longname(),
 	)
 }

@@ -13,8 +13,8 @@ func init() {
 }
 
 type (
-	// Id identifies the message.
-	Id struct {
+	// EventID identifies the message.
+	EventID struct {
 		Device string `json:"device" gomon:"property"`
 	}
 
@@ -43,7 +43,7 @@ type (
 	// measurement for the message.
 	measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
-		Id                                   `json:"id" gomon:""`
+		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
 		Metrics                              `gomon:""`
 	}
@@ -56,5 +56,5 @@ func (*measurement) Events() []string {
 
 // ID returns the identifier for an I/O message.
 func (m *measurement) ID() string {
-	return m.Id.Device
+	return m.EventID.Device
 }

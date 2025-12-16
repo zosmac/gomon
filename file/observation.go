@@ -15,16 +15,16 @@ type (
 	// fileEvent type.
 	fileEvent string
 
-	// Id identifies the message.
-	Id struct {
-		Name    string `json:"name" gomon:"property"`
-		EventID string `json:"event_id,omitempty" gomon:"property"`
+	// EventID identifies the message.
+	EventID struct {
+		Name        string `json:"name" gomon:"property"`
+		FileEventID uint64 `json:"file_event_id,omitempty" gomon:"property"`
 	}
 
 	// message defines the properties of a file update message.
 	observation struct {
 		message.Header[fileEvent] `gomon:""`
-		Id                        `json:"id" gomon:""`
+		EventID                   `json:"event_id" gomon:""`
 		Message                   string `json:"message" gomon:"property"`
 	}
 )
@@ -54,5 +54,5 @@ func (*observation) Events() []string {
 
 // ID returns the identifier for a file update message message.
 func (obs *observation) ID() string {
-	return obs.Id.Name
+	return obs.EventID.Name
 }

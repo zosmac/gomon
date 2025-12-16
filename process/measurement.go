@@ -98,7 +98,7 @@ type (
 	// measurement for the message.
 	measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
-		Id                                   `json:"id" gomon:""`
+		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
 		Metrics                              `gomon:""`
 		Connections                          []Connection `json:"connections" gomon:""`
@@ -114,5 +114,5 @@ func (*measurement) Events() []string {
 
 // ID returns the identifier for a process message.
 func (m *measurement) ID() string {
-	return m.Id.Name + "[" + m.Id.Pid.String() + "]"
+	return m.EventID.Name + "[" + m.EventID.Pid.String() + "]"
 }

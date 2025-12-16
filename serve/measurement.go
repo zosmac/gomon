@@ -13,8 +13,8 @@ func init() {
 }
 
 type (
-	// Id identifies the message.
-	Id struct {
+	// EventID identifies the message.
+	EventID struct {
 		Name string `json:"name" gomon:"property"`
 	}
 
@@ -44,7 +44,7 @@ type (
 	// measurement for the message.
 	measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
-		Id                                   `json:"id" gomon:""`
+		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
 		Metrics                              `gomon:""`
 	}
@@ -53,8 +53,8 @@ type (
 var (
 	// measures records the metrics for the server's operations.
 	measures = measurement{
-		Header: message.Measurement(),
-		Id:     Id{Name: "gomon"},
+		Header:  message.Measurement(),
+		EventID: EventID{Name: "gomon"},
 	}
 )
 
@@ -65,5 +65,5 @@ func (*measurement) Events() []string {
 
 // ID returns the identifier for a server message.
 func (m *measurement) ID() string {
-	return m.Id.Name
+	return m.EventID.Name
 }

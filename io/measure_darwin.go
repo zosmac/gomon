@@ -104,7 +104,7 @@ func Measure() (ms []message.Content) {
 
 			ms = append(ms, &measurement{
 				Header: message.Measurement(),
-				Id: Id{
+				EventID: EventID{
 					Device: name.(string),
 				},
 				Properties: Properties{

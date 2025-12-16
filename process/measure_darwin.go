@@ -28,7 +28,7 @@ var (
 )
 
 // id gets the identifier of a process.
-func (pid Pid) id() (Id, error) {
+func (pid Pid) id() (EventID, error) {
 	var bsd C.struct_proc_bsdinfo
 	if n, err := C.proc_pidinfo(
 		C.int(pid),
@@ -37,7 +37,7 @@ func (pid Pid) id() (Id, error) {
 		unsafe.Pointer(&bsd),
 		C.int(C.PROC_PIDTBSDINFO_SIZE),
 	); n != C.int(C.PROC_PIDTBSDINFO_SIZE) {
-		return Id{Pid: pid}, gocore.Error("proc_pidinfo", err)
+		return EventID{Pid: pid}, gocore.Error("proc_pidinfo", err)
 	}
 
 	name := C.GoString(&bsd.pbi_name[0])
@@ -45,7 +45,7 @@ func (pid Pid) id() (Id, error) {
 		name = C.GoString(&bsd.pbi_comm[0])
 	}
 
-	return Id{
+	return EventID{
 		ppid: Pid(bsd.pbi_ppid),
 		Name: name,
 		Pid:  pid,
@@ -57,7 +57,7 @@ func (pid Pid) id() (Id, error) {
 }
 
 // metrics captures the metrics for a process.
-func (pid Pid) metrics() (Id, Properties, Metrics) {
+func (pid Pid) metrics() (EventID, Properties, Metrics) {
 	var tai C.struct_proc_taskallinfo
 	if n := C.proc_pidinfo(
 		C.int(pid),
@@ -66,7 +66,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 		unsafe.Pointer(&tai),
 		C.int(C.PROC_PIDTASKALLINFO_SIZE),
 	); n != C.int(C.PROC_PIDTASKALLINFO_SIZE) {
-		return Id{Pid: pid}, Properties{}, Metrics{}
+		return EventID{Pid: pid}, Properties{}, Metrics{}
 	}
 
 	name := C.GoString(&tai.pbsd.pbi_name[0])
@@ -77,7 +77,7 @@ func (pid Pid) metrics() (Id, Properties, Metrics) {
 	user += time.Duration(tai.ptinfo.pti_total_user + tai.ptinfo.pti_threads_user)
 	system += time.Duration(tai.ptinfo.pti_total_system + tai.ptinfo.pti_threads_system)
 
-	return Id{
+	return EventID{
 			ppid: Pid(tai.pbsd.pbi_ppid),
 			Name: name,
 			Pid:  pid,

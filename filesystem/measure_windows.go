@@ -53,7 +53,7 @@ func filesystems() ([]message.Request, error) {
 				return []message.Content{
 					&measurement{
 						Header: message.Measurement(),
-						Id: Id{
+						EventID: EventID{
 							Mount: drive,
 							Path:  windows.UTF16ToString(path[:]),
 						},

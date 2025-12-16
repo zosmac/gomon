@@ -189,7 +189,7 @@ func (p *Process) Longname() string {
 	}
 	name := p.Executable
 	if name == "" {
-		name = p.Id.Name
+		name = p.EventID.Name
 	}
 	return fmt.Sprintf("%s[%d]", name, p.Pid)
 }
@@ -199,5 +199,5 @@ func (p *Process) Shortname() string {
 	if p == nil {
 		return ""
 	}
-	return fmt.Sprintf("%s[%d]", p.Id.Name, p.Pid)
+	return fmt.Sprintf("%s[%d]", p.EventID.Name, p.Pid)
 }

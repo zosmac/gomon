@@ -11,7 +11,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -94,7 +93,7 @@ func observe() error {
 			var event *syscall.InotifyEvent
 			for i := 0; i < n; i += syscall.SizeofInotifyEvent + int(event.Len) {
 				event = (*syscall.InotifyEvent)(unsafe.Pointer(&events[i]))
-				id := strconv.Itoa(int(event.Cookie))
+				id := uint64(event.Cookie)
 
 				if event.Mask&syscall.IN_IGNORED != 0 {
 					continue

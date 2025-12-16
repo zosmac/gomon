@@ -183,7 +183,7 @@ loop:
 	t, _ := time.Parse(format, match[groups[groupTimestamp]])
 	messageChan <- &observation{
 		Header: message.Observation(t, levelMap[strings.ToLower(match[groups[groupLevel]])]),
-		Id: Id{
+		EventID: EventID{
 			Name:   match[groups[groupProcess]],
 			Pid:    pid,
 			Sender: sender,
