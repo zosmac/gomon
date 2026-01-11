@@ -9,13 +9,13 @@ import (
 var (
 	// flags defines the command line flags.
 	flags = struct {
-		measures gocore.Options
-		events gocore.Options
+		measurements gocore.Options
+		observations gocore.Options
 	}{
-		measures: gocore.Options{
+		measurements: gocore.Options{
 			List: []string{"filesystem", "io", "network", "process", "system"},
 		},
-		events: gocore.Options{
+		observations: gocore.Options{
 			List: []string{"file", "logs", "process"},
 		},
 	}
@@ -24,16 +24,15 @@ var (
 // init initializes the command line flags.
 func init() {
 	gocore.Flags.Var(
-		&flags.events,
-		"events",
-		"-events", // options list added by gocore.Flags
-		"A comma-separated list of `events` to capture and report",
+		&flags.measurements,
+		"measurements",
+		"-measurements", // options list added by gocore.Flags
+		"A comma-separated list of `measurements` to capture and report",
 	)
-
 	gocore.Flags.Var(
-		&flags.measures,
-		"measures",
-		"-measures", // options list added by gocore.Flags
-		"A comma-separated list of `measures` to capture and report",
+		&flags.observations,
+		"observations",
+		"-observations", // options list added by gocore.Flags
+		"A comma-separated list of `observations` to capture and report",
 	)
 }

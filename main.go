@@ -34,19 +34,19 @@ func Main(ctx context.Context) error {
 		return gocore.Error("encoder", err)
 	}
 
-	if slices.Contains(flags.events.Selected, "logs") {
+	if slices.Contains(flags.observations.Selected, "logs") {
 		if err := logs.Observer(ctx); err != nil {
 			return gocore.Error("logs Observer", err)
 		}
 	}
 
-	if slices.Contains(flags.events.Selected, "file") {
+	if slices.Contains(flags.observations.Selected, "file") {
 		if err := file.Observer(ctx); err != nil {
 			return gocore.Error("files Observer", err)
 		}
 	}
 
-	if slices.Contains(flags.events.Selected, "process") {
+	if slices.Contains(flags.observations.Selected, "process") {
 		if err := process.Observer(ctx); err != nil {
 			return gocore.Error("processes Observer", err)
 		}
@@ -69,12 +69,12 @@ func Main(ctx context.Context) error {
 
 	gocore.Error("start", nil, settings).Info()
 
-	if slices.Contains(flags.measures.Selected, "none") {
+	if slices.Contains(flags.measurements.Selected, "none") {
 		<-ctx.Done()
 		return gocore.Error("stop", ctx.Err(), map[string]string{"command": os.Args[0]})
 	}
 
-	return gocore.Error("stop", serve.Measure(ctx, flags.measures), map[string]string{
+	return gocore.Error("stop", serve.Measure(ctx, flags.measurements), map[string]string{
 		"command": os.Args[0],
 	})
 }
