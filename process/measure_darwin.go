@@ -2,20 +2,35 @@
 
 package process
 
-/*
-#include <libproc.h>
-#include <sys/sysctl.h>
-*/
-import "C"
-
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"os"
 	"time"
 	"unsafe"
 
 	"github.com/zosmac/gocore"
 )
+
+/*
+#include <libproc.h>
+// #include <mach/host_priv.h>
+#include <mach/mach_error.h>
+#include <mach/mach_init.h>
+#include <mach/mach_port.h>
+// #include <mach/mach_types.h>
+// #include <mach/mach_vm.h>
+// #include <mach/processor_set.h>
+#include <mach/mach_time.h>
+#include <mach/mach_types.h>
+#include <mach/mach_vm.h>
+#include <mach/task.h>
+#include <mach/thread_act.h>
+#include <sys/sysctl.h>
+#include <unistd.h>
+*/
+import "C"
 
 var (
 	status = map[C.uint]string{
@@ -25,7 +40,31 @@ var (
 		C.SSTOP:  "Stopped",
 		C.SZOMB:  "Zombie",
 	}
+
+	cpuTicks       = time.Second / time.Duration(C.sysconf(C._SC_CLK_TCK))
+	machTicksNumer C.uint32_t
+	machTicksDenom C.uint32_t
 )
+
+func machTicksToNanos(ticks C.uint64_t) time.Duration {
+	if machTicksDenom == 0 {
+		return time.Duration(ticks) * cpuTicks
+	}
+	quot := (ticks / C.uint64_t(machTicksDenom)) * C.uint64_t(machTicksNumer)
+	rem := ((ticks % C.uint64_t(machTicksDenom)) * C.uint64_t(machTicksNumer)) / C.uint64_t(machTicksDenom)
+	return time.Duration(quot + rem)
+}
+
+func init() {
+	fmt.Fprintf(os.Stderr, "clock ticks per second: %d\n", cpuTicks)
+
+	var info C.mach_timebase_info_data_t
+	if C.mach_timebase_info(&info) == C.KERN_SUCCESS {
+		machTicksNumer = info.numer
+		machTicksDenom = info.denom
+	}
+	fmt.Fprintf(os.Stderr, "numer: %d, denom: %d\n", machTicksNumer, machTicksDenom)
+}
 
 // id gets the identifier of a process.
 func (pid Pid) id() (EventID, error) {
@@ -74,8 +113,13 @@ func (pid Pid) metrics() (EventID, Properties, Metrics) {
 		name = C.GoString(&tai.pbsd.pbi_comm[0])
 	}
 	user, system := pid.threads(tai.ptinfo.pti_threadnum)
+	// user, system := pid.taskMetrics()
 	user += time.Duration(tai.ptinfo.pti_total_user + tai.ptinfo.pti_threads_user)
 	system += time.Duration(tai.ptinfo.pti_total_system + tai.ptinfo.pti_threads_system)
+	// user += machTicksToNanos(tai.ptinfo.pti_total_user + tai.ptinfo.pti_threads_user)
+	// system += machTicksToNanos(tai.ptinfo.pti_total_system + tai.ptinfo.pti_threads_system)
+	// user = machTicksToNanos(C.uint64_t(user))
+	// system = machTicksToNanos(C.uint64_t(system))
 
 	return EventID{
 			ppid: Pid(tai.pbsd.pbi_ppid),
@@ -141,7 +185,7 @@ func (pid Pid) threads(num C.int) (time.Duration, time.Duration) {
 			tid,
 			unsafe.Pointer(&pti),
 			C.int(C.PROC_PIDTHREADINFO_SIZE),
-		); n == C.PROC_PIDTHREADINFO_SIZE && (pti.pth_flags&C.TH_FLAGS_IDLE == 0) { // idea from libtop.c
+		); n == C.PROC_PIDTHREADINFO_SIZE {
 			user += time.Duration(pti.pth_user_time)
 			system += time.Duration(pti.pth_system_time)
 		}
@@ -250,8 +294,113 @@ func getPids() ([]Pid, error) {
 	}
 
 	pids := make([]Pid, len(buf))
-	for i, pid := range buf {
-		pids[int(n)-i-1] = Pid(pid) // Darwin returns pids in descending order, so reverse the order
+	for i, pid := range buf { // copy from C.int type to Pid type, while also reversing
+		pids[int(n)-i-1] = Pid(pid) // their order, as Darwin returns pids in descending order
 	}
 	return pids[1:], nil // strip kernel task pid (i.e. pid 0)
 }
+
+// taskMetrics captures cpu time for a process using Mach APIs. However, due to macOS SIP, this function requires special entitlements and is not usable for general users, even with root privileges. Therefore, use thread metrics instead?, which is available to all users?.
+
+func (pid Pid) taskMetrics() (time.Duration, time.Duration) {
+	var task C.task_t
+	// var tinfo C.struct_task_thread_times_info
+	// var tcnt C.mach_msg_type_number_t
+
+	if kr := C.task_for_pid(C.mach_task_self_, C.int(pid), &task); kr != C.KERN_SUCCESS {
+		gocore.Error("task_for_pid", errors.New(C.GoString(C.mach_error_string(kr)))).Err()
+		return 0, 0
+	}
+	C.mach_port_deallocate(C.mach_task_self_, task)
+
+	// if kr := C.task_info(task, C.TASK_BASIC_INFO_64, C.task_info_t(unsafe.Pointer(&tinfo)), &tcnt); kr != C.KERN_SUCCESS {
+	// 	gocore.Error("task_info", errors.New(C.GoString(C.mach_error_string(kr)))).Err()
+	// 	return 0, 0
+	// }
+
+	// user := time.Duration(tinfo.user_time.seconds)*time.Second + time.Duration(tinfo.user_time.microseconds)*time.Microsecond
+	// system := time.Duration(tinfo.system_time.seconds)*time.Second + time.Duration(tinfo.system_time.microseconds)*time.Microsecond
+
+	var user, system time.Duration
+	var threadsp C.thread_act_array_t
+	var count C.mach_msg_type_number_t
+	if kr := C.task_threads(task, &threadsp, &count); kr != C.KERN_SUCCESS {
+		gocore.Error("task_threads", errors.New(C.GoString(C.mach_error_string(kr)))).Err()
+		return 0, 0
+	}
+	defer C.mach_vm_deallocate(C.mach_task_self_, C.mach_vm_address_t(uintptr(unsafe.Pointer(threadsp))), C.mach_vm_size_t(uintptr(count)*unsafe.Sizeof(*threadsp)))
+
+	threads := (*[1 << 30]C.thread_act_t)(unsafe.Pointer(threadsp))[:count:count]
+	for _, thread := range threads {
+		var tti C.struct_proc_threadinfo
+		var count C.mach_msg_type_number_t = C.THREAD_EXTENDED_INFO_COUNT
+		if kr := C.thread_info(
+			thread,
+			C.TASK_FLAVOR_INSPECT,
+			(*C.integer_t)(unsafe.Pointer(&tti)),
+			&count,
+		); kr == C.KERN_SUCCESS && count == C.THREAD_EXTENDED_INFO_COUNT {
+			user += time.Duration(tti.pth_user_time)
+			system += time.Duration(tti.pth_system_time)
+		} else {
+			gocore.Error("thread_info", errors.New(C.GoString(C.mach_error_string(kr)))).Err()
+		}
+		C.mach_port_deallocate(C.mach_task_self_, thread)
+	}
+
+	return user, system
+}
+
+// var libtop_port C.mach_port_t = C.mach_host_self()
+
+// // getTaskInfo gets task info for active processes.
+// func getTaskInfo(tb Table) error {
+// 	var psetsp C.processor_set_name_array_t
+// 	var pset C.processor_set_t
+// 	var tasksp C.task_array_t
+// 	var i, j, pcnt, tcnt C.mach_msg_type_number_t
+
+// 	if kr := C.host_processor_sets(libtop_port, &psetsp, &pcnt); kr != C.KERN_SUCCESS {
+// 		return gocore.Error("host_processor_sets", errors.New(C.GoString(C.mach_error_string(kr))))
+// 	}
+
+// 	psets := (*[1 << 30]C.processor_set_name_t)(unsafe.Pointer(psetsp))[:pcnt:pcnt]
+// 	for i = 0; i < pcnt; i++ {
+// 		if kr := C.host_processor_set_priv(libtop_port, psets[i], &pset); kr != C.KERN_SUCCESS {
+// 			gocore.Error("host_processor_set_priv", errors.New(C.GoString(C.mach_error_string(kr)))).Err()
+// 			continue
+// 		}
+// 		if kr := C.processor_set_tasks_with_flavor(pset, C.TASK_FLAVOR_READ, &tasksp, &tcnt); kr != C.KERN_SUCCESS {
+// 			gocore.Error("processor_set_tasks_with_flavor", errors.New(C.GoString(C.mach_error_string(kr)))).Err()
+// 			continue
+// 		}
+// 		tasks := (*[1 << 30]C.task_name_t)(unsafe.Pointer(tasksp))[:tcnt:tcnt]
+// 		for j = 0; j < tcnt; j++ {
+// 			var pid C.int
+// 			var tinfo C.struct_task_thread_times_info
+// 			if kr := C.pid_for_task(tasks[j], &pid); kr != C.KERN_SUCCESS {
+// 				gocore.Error("pid_for_task", errors.New(C.GoString(C.mach_error_string(kr)))).Err()
+// 				continue
+// 			}
+// 			if kr := C.task_info(tasks[j], C.TASK_BASIC_INFO_64, C.task_info_t(unsafe.Pointer(&tinfo)), &tcnt); kr != C.KERN_SUCCESS {
+// 				gocore.Error("task_info", errors.New(C.GoString(C.mach_error_string(kr))), map[string]string{"task": strconv.Itoa(int(tasks[j])), "pid": strconv.Itoa(int(pid))}).Err()
+// 				continue
+// 			}
+// 			if p, ok := tb[Pid(pid)]; ok {
+// 				p.User += time.Duration(tinfo.user_time.seconds)*time.Second + time.Duration(tinfo.user_time.microseconds)*time.Microsecond
+// 				p.System += time.Duration(tinfo.system_time.seconds)*time.Second + time.Duration(tinfo.system_time.microseconds)*time.Microsecond
+// 				p.Total = p.User + p.System
+// 			}
+
+// 			C.mach_port_deallocate(C.mach_task_self_, tasks[j])
+// 		}
+
+// 		C.mach_vm_deallocate(C.mach_task_self_, C.mach_vm_address_t(uintptr(unsafe.Pointer(tasksp))), C.mach_vm_size_t(uintptr(tcnt)*unsafe.Sizeof(*tasksp)))
+// 		C.mach_port_deallocate(C.mach_task_self_, pset)
+// 		C.mach_port_deallocate(C.mach_task_self_, psets[i])
+// 	}
+
+// 	C.mach_vm_deallocate(C.mach_task_self_, C.mach_vm_address_t(uintptr(unsafe.Pointer(psetsp))), C.mach_vm_size_t(uintptr(pcnt)*unsafe.Sizeof(*psetsp)))
+
+// 	return nil
+// }
