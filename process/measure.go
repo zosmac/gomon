@@ -48,24 +48,24 @@ func Measure() (ProcStats, []message.Content) {
 		return ProcStats{}, nil
 	}
 
-	exits := map[Pid]struct{}{}
+	exited := map[Pid]struct{}{}
 	diffCPU := map[Pid]time.Duration{}
 	var cpus []time.Duration
 	for pid := range ptb {
-		exits[pid] = struct{}{}
+		exited[pid] = struct{}{}
 	}
 
 	var active, execed int
 	var total time.Duration
 	for pid, p := range tb {
 		if pp, ok := ptb[pid]; ok {
-			diffCPU[pid] = p.Total - pp.Total
-			cpus = append(cpus, p.Total-pp.Total)
 			if p.Total > pp.Total {
+				diffCPU[pid] = p.Total - pp.Total
+				cpus = append(cpus, p.Total-pp.Total)
 				active++
 				total += p.Total - pp.Total
 			}
-			delete(exits, pid)
+			delete(exited, pid)
 		} else {
 			diffCPU[pid] = p.Total
 			cpus = append(cpus, p.Total)
@@ -76,7 +76,7 @@ func Measure() (ProcStats, []message.Content) {
 	}
 
 	var ms []message.Content
-	slices.Sort(cpus)
+	slices.Sort(cpus)	
 	var minCPU time.Duration
 	if len(cpus) > int(flags.top) {
 		minCPU = cpus[len(cpus)-int(flags.top)-1]
@@ -93,7 +93,7 @@ func Measure() (ProcStats, []message.Content) {
 		Count:  len(tb),
 		Active: active,
 		Execed: execed,
-		Exited: len(exits),
+		Exited: len(exited),
 		CPU:    total,
 	}
 
@@ -107,7 +107,7 @@ func Measure() (ProcStats, []message.Content) {
 
 	var pids []int
 	clLock.Lock()
-	for pid := range exits { // process exited
+	for pid := range exited { // process exited
 		pids = append(pids, int(pid))
 		delete(clMap, pid)
 	}
