@@ -31,8 +31,9 @@ var (
 	procs    = Table{}
 	procLock sync.RWMutex
 
-	// prevProcs is used to limit reporting only of processes that consumed CPU since the previous measurement.
+	// prevProcs and pms used to report only processes that are currently and haveconsumed CPU since the previous measurement.
 	prevProcs = Table{}
+	pms       = []message.Content{}
 )
 
 // Measure captures all processes' metrics.
@@ -59,11 +60,11 @@ func Measure() (ProcStats, []message.Content) {
 	var total time.Duration
 	for pid, p := range tb {
 		if pp, ok := ptb[pid]; ok {
-			if p.Total > pp.Total {
-				diffCPU[pid] = p.Total - pp.Total
-				cpus = append(cpus, p.Total-pp.Total)
+			if diff := p.Total - pp.Total; diff > 0 {
+				diffCPU[pid] = diff
+				cpus = append(cpus, diff)
 				active++
-				total += p.Total - pp.Total
+				total += diff
 			}
 			delete(exited, pid)
 		} else {
@@ -76,7 +77,7 @@ func Measure() (ProcStats, []message.Content) {
 	}
 
 	var ms []message.Content
-	slices.Sort(cpus)	
+	slices.Sort(cpus)
 	var minCPU time.Duration
 	if len(cpus) > int(flags.top) {
 		minCPU = cpus[len(cpus)-int(flags.top)-1]
@@ -88,6 +89,25 @@ func Measure() (ProcStats, []message.Content) {
 			ms = append(ms, tb[pid])
 		}
 	}
+
+	tops := map[Pid]struct{}{}
+	for _, m := range ms {
+		tops[m.(*measurement).EventID.Pid] = struct{}{}
+	}
+	for _, m := range pms {
+		pid := m.(*measurement).EventID.Pid
+		if _, ok := tops[pid]; ok {
+			continue
+		}
+		if p, ok := tb[pid]; ok {
+			if pp, ok := ptb[pid]; ok {
+				if diff := p.Total - pp.Total; diff > 0 {
+					ms = append(ms, m)
+				}
+			}
+		}
+	}
+	pms = ms
 
 	ps := ProcStats{
 		Count:  len(tb),

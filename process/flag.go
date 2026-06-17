@@ -11,7 +11,7 @@ var (
 	flags = struct {
 		top uint
 	}{
-		top: 20,
+		top: 5,
 	}
 )
 
