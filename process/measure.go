@@ -114,7 +114,7 @@ func Measure() (ProcStats, []message.Content) {
 		Active: active,
 		Execed: execed,
 		Exited: len(exited),
-		CPU:    total,
+		Cpu:    total,
 	}
 
 	gocore.Error("Process Measure", nil, map[string]string{
@@ -122,7 +122,7 @@ func Measure() (ProcStats, []message.Content) {
 		"active": strconv.Itoa(ps.Active),
 		"execed": strconv.Itoa(ps.Execed),
 		"exited": strconv.Itoa(ps.Exited),
-		"CPU":    total.String(),
+		"Cpu":    total.String(),
 	}).Info()
 
 	var pids []int
@@ -152,12 +152,12 @@ func buildTable() Table {
 	tb := make(map[Pid]*measurement, len(pids))
 	for _, pid := range pids {
 		id, props, metrics := pid.metrics()
+		props.Connections = epm[pid]
 		tb[pid] = &measurement{
-			Header:      message.Measurement(),
-			EventID:     id,
-			Properties:  props,
-			Metrics:     metrics,
-			Connections: epm[pid],
+			Header:     message.Measurement(),
+			EventID:    id,
+			Properties: props,
+			Metrics:    metrics,
 		}
 	}
 

@@ -55,6 +55,7 @@ func Measure(ctx context.Context, opts gocore.Options) error {
 				gocore.Format(
 					"gomon_"+path.Base(reflect.Indirect(reflect.ValueOf(m)).Type().PkgPath()),
 					"",
+					0,
 					reflect.ValueOf(m),
 					func(name, tag string, val reflect.Value) any {
 						if !strings.HasPrefix(tag, "property") {
@@ -89,7 +90,7 @@ func measure(opts gocore.Options) (ms []message.Content) {
 		!slices.Contains(opts.Selected, "process") {
 		ps, _ = process.Measure()
 		sm = system.Measure(ps)
-	} else if !slices.Contains(opts.Selected, "system") && 
+	} else if !slices.Contains(opts.Selected, "system") &&
 		slices.Contains(opts.Selected, "process") {
 		_, pm = process.Measure()
 	}

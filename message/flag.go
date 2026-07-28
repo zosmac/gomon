@@ -12,6 +12,7 @@ var (
 	// flags defines the command line flags.
 	flags = struct {
 		document bool
+		protobuf bool
 		pretty   bool
 		rotate
 	}{
@@ -64,6 +65,12 @@ func init() {
 		"document",
 		"[-document]",
 		"Document the measurements and observations and exit",
+	)
+	gocore.Flags.Var(
+		&flags.protobuf,
+		"protobuf",
+		"[-protobuf]",
+		"Define the protocol buffers for measurements and observations and exit",
 	)
 	gocore.Flags.Var(
 		&flags.pretty,

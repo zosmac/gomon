@@ -66,12 +66,12 @@ type (
 		Rlimits         `gomon:""`
 		LoadAverage     LoadAverage       `json:"load_average" gomon:""`
 		ContextSwitches int               `json:"context_switches,omitempty" gomon:"counter,count,!darwin"`
-		CPU             CPU               `json:"cpu" gomon:""`
-		CPUCount        int               `json:"cpu_count" gomon:"gauge,count"`
+		Cpu             CPU               `json:"cpu" gomon:""`
+		CpuCount        int               `json:"cpu_count" gomon:"gauge,count"`
 		Cpus            []CPU             `json:"cpus" gomon:""`
 		Memory          Memory            `json:"memory" gomon:""`
 		Swap            Swap              `json:"swap" gomon:""`
-		Processes       process.ProcStats `json:"processes" gomon:""`
+		ProcessStats    process.ProcStats `json:"process_stats" gomon:""`
 	}
 
 	// measurement for the message.

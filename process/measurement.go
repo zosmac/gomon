@@ -19,7 +19,7 @@ type (
 		Active int           `json:"active" gomon:"gauge,count"`
 		Execed int           `json:"execed" gomon:"gauge,count"`
 		Exited int           `json:"exited" gomon:"gauge,count"`
-		CPU    time.Duration `json:"cpu" gomon:"gauge,ns"`
+		Cpu    time.Duration `json:"cpu" gomon:"gauge,ns"`
 	}
 
 	// CommandLine contains a process' command line arguments.
@@ -33,6 +33,19 @@ type (
 	Directories struct {
 		Cwd  string `json:"cwd" gomon:"property"`
 		Root string `json:"root" gomon:"property"`
+	}
+
+	// Endpoint identifies one end of a connection.
+	Endpoint struct {
+		Name string `json:"name" gomon:"property"`
+		Pid  Pid    `json:"pid" gomon:"property"`
+	}
+
+	// Connection represents an inter-process or host/data connection.
+	Connection struct {
+		Type string   `json:"type" gomon:"property"`
+		Self Endpoint `json:"self" gomon:"property"`
+		Peer Endpoint `json:"peer" gomon:"property"`
 	}
 
 	// Properties defines measurement properties.
@@ -49,6 +62,7 @@ type (
 		Nice        int    `json:"nice,omitempty" gomon:"gauge,none,!windows"`
 		CommandLine `gomon:""`
 		Directories `gomon:""`
+		Connections []Connection `json:"connections" gomon:"property"`
 	}
 
 	// Io contains a process' I/O metrics.
@@ -82,26 +96,12 @@ type (
 		Io                          `gomon:""`
 	}
 
-	// Endpoint identifies one end of a connection.
-	Endpoint struct {
-		Name string `json:"name" gomon:"property"`
-		Pid  Pid    `json:"pid" gomon:"property"`
-	}
-
-	// Connection represents an inter-process or host/data connection.
-	Connection struct {
-		Type string   `json:"type" gomon:"property"`
-		Self Endpoint `json:"self" gomon:"property"`
-		Peer Endpoint `json:"peer" gomon:"property"`
-	}
-
 	// measurement for the message.
 	measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
 		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
 		Metrics                              `gomon:""`
-		Connections                          []Connection `json:"connections" gomon:""`
 	}
 
 	Process = measurement

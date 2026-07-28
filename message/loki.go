@@ -121,7 +121,7 @@ func lokiEncode(ms []Content) bool {
 	for _, m := range ms {
 		labels := map[string]string{}
 		var timestamp, message string
-		for _, l := range gocore.Format("", "", reflect.ValueOf(m), lokiFormatter) {
+		for _, l := range gocore.Format("", "", 0, reflect.ValueOf(m), lokiFormatter) {
 			l := l.(tuple)
 			switch l[0] {
 			case "timestamp":

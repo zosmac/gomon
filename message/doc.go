@@ -7,6 +7,7 @@ streamed by the "gomon" command.
 
 The message package defines the following command line flags:
   - -document: document the output that Gomon produces
+  - -protobuf: define the protocol buffers for gRPC support
   - -pretty:   format output in a manner that is human readable
   - -rotate:   an interval at which to rotate the output file
 */

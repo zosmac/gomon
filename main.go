@@ -28,6 +28,9 @@ func Main(ctx context.Context) error {
 	if gocore.Flags.FlagSet.Lookup("document").Value.String() == "true" {
 		message.Document()
 		return nil
+	} else if gocore.Flags.FlagSet.Lookup("protobuf").Value.String() == "true" {
+		message.Protobuf()
+		return nil
 	}
 
 	if err := message.Encoder(ctx); err != nil {

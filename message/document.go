@@ -5,21 +5,11 @@ package message
 import (
 	"cmp"
 	"fmt"
-	"path/filepath"
-	"reflect"
 	"slices"
 	"strings"
-
-	"github.com/zosmac/gocore"
 )
 
 var (
-	// Messages contains a map of all message definitions.
-	Messages = map[string][]field{}
-
-	// fields contains a definition for each message's fields.
-	fields []field
-
 	// max holds the maximum length for formatting of each field name, unit, and type.
 	max = struct {
 		Name int
@@ -27,31 +17,6 @@ var (
 		Type int
 	}{len("- properties "), len(" units "), len(" type ")}
 )
-
-// Define a Message's Content.
-func Define(m Content) {
-	fs := gocore.Format("", "", reflect.ValueOf(m),
-		func(name, tag string, val reflect.Value) any {
-			return documentField(m, name, tag)
-		},
-	)
-	src := filepath.Base(reflect.ValueOf(m).Elem().Type().PkgPath())
-	k := src + " |" + strings.Join(m.Events(), "|")
-	Messages[k] = make([]field, len(fs))
-	for i, f := range fs {
-		Messages[k][i] = f.(field)
-		fields = append(fields, f.(field))
-	}
-}
-
-// field records the attributes of a field for documenting.
-type field struct {
-	key      string
-	Name     string
-	Property bool   // true if field is a property
-	Type     string // metric type
-	Unit     string // metric unit
-}
 
 // Document the messages when the document flag specified on the command line.
 func Document() {
@@ -138,46 +103,5 @@ func Document() {
 				fmt.Println(footers[1]) // finish previous table
 			}
 		}
-	}
-}
-
-// documentField interprets a gomon tag for the Document Formatter.
-func documentField(m Content, name, tag string) field {
-	if max.Name < len(name) {
-		max.Name = len(name)
-	}
-
-	s := strings.Split(tag, ",")
-	t := "counter"
-	u := ""
-	if len(s) > 0 {
-		t = s[0]
-	}
-	if len(s) > 1 {
-		u = s[1]
-	}
-
-	key := filepath.Base(reflect.ValueOf(m).Elem().Type().PkgPath()) + " |" + strings.Join(m.Events(), "|")
-
-	if t == "property" {
-		return field{
-			key:      key,
-			Name:     name,
-			Property: true,
-		}
-	}
-
-	if max.Type < len(t) {
-		max.Type = len(t)
-	}
-	if max.Unit < len(u) {
-		max.Unit = len(u)
-	}
-
-	return field{
-		key:  key,
-		Name: name,
-		Type: t,
-		Unit: u,
 	}
 }

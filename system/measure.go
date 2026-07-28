@@ -27,12 +27,12 @@ func Measure(ps process.ProcStats) message.Content {
 			Rlimits:         rlimits(),
 			LoadAverage:     loadAverage(),
 			ContextSwitches: contextSwitches(),
-			CPU:             cpu(),
-			CPUCount:        runtime.NumCPU(),
+			Cpu:             cpu(),
+			CpuCount:        runtime.NumCPU(),
 			Cpus:            cpus(),
 			Memory:          mem,
 			Swap:            swap,
-			Processes:       ps,
+			ProcessStats:    ps,
 		},
 	}
 }

@@ -5,6 +5,7 @@ package message
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"time"
@@ -13,6 +14,16 @@ import (
 )
 
 type (
+	// field records the attributes of a field for documenting.
+	field struct {
+		key      string
+		Name     string
+		Property bool   // true if field is a property
+		Type     string // metric type
+		Unit     string // metric unit
+		reflect.Value
+	}
+
 	// MeasureEvent defines the event type for a measurement.
 	MeasureEvent string
 
@@ -43,6 +54,12 @@ var (
 
 	// platform identifies the local OS.
 	platform = runtime.GOOS + "_" + runtime.GOARCH
+
+	// fields contains a definition for each message's fields.
+	fields []field
+
+	// Messages contains a map of all message definitions.
+	Messages = map[string][]field{}
 
 	// MeasureEvents has only the single type "measure".
 	MeasureEvents = gocore.ValidValue[MeasureEvent]{}.Define(measure)
@@ -81,4 +98,70 @@ func source() string {
 	f, _ := fs.Next()
 	s, _, _ := strings.Cut(filepath.Base(f.Function), ".")
 	return s
+}
+
+// Define a Message's Content.
+func Define(m Content) {
+	fs := gocore.Format("", "", 0, reflect.ValueOf(m),
+		func(name, tag string, val reflect.Value) any {
+			return messageField(m, name, tag, val)
+		},
+	)
+	src := filepath.Base(reflect.ValueOf(m).Elem().Type().PkgPath())
+	k := src + " |" + strings.Join(m.Events(), "|")
+	Messages[k] = make([]field, len(fs))
+	for i, f := range fs {
+		Messages[k][i] = f.(field)
+		fields = append(fields, f.(field))
+	}
+}
+
+// messageField interprets a gomon tag for each message field.
+func messageField(m Content, name, tag string, val reflect.Value) field {
+	if max.Name < len(name) {
+		max.Name = len(name)
+	}
+
+	s := strings.Split(tag, ",")
+	t := ""
+	u := ""
+	if len(s) > 0 {
+		t = s[0]
+	}
+	if len(s) > 1 {
+		u = s[1]
+	}
+
+	key := filepath.Base(reflect.ValueOf(m).Elem().Type().PkgPath()) + " |" + strings.Join(m.Events(), "|")
+
+	switch t {
+	case "":
+		return field{
+			key:   key,
+			Name:  name,
+			Value: val,
+		}
+	case "property":
+		return field{
+			key:      key,
+			Name:     name,
+			Property: true,
+			Value:    val,
+		}
+	}
+
+	if max.Type < len(t) {
+		max.Type = len(t)
+	}
+	if max.Unit < len(u) {
+		max.Unit = len(u)
+	}
+
+	return field{
+		key:   key,
+		Name:  name,
+		Type:  t,
+		Unit:  u,
+		Value: val,
+	}
 }
