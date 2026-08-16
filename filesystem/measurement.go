@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	message.Define(&measurement{})
+	message.Define(&Measurement{})
 }
 
 type (
@@ -35,8 +35,8 @@ type (
 		FreeFiles int `json:"free_files" gomon:"gauge,count"`
 	}
 
-	// measurement for the message.
-	measurement struct {
+	// Measurement defines the properties and metrics of a filesystem measurement.
+	Measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
 		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
@@ -45,11 +45,11 @@ type (
 )
 
 // Events returns the list of acceptable Event values for this message.
-func (*measurement) Events() []string {
+func (*Measurement) Events() []string {
 	return message.MeasureEvents.ValidValues()
 }
 
 // ID returns the identifier for a filesystem message.
-func (m *measurement) ID() string {
+func (m *Measurement) ID() string {
 	return m.EventID.Mount + ":" + m.EventID.Path
 }

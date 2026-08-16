@@ -20,6 +20,7 @@ var (
 
 // Document the messages when the document flag specified on the command line.
 func Document() {
+	// TODO: this fields sort is both here and in protobuf.go. It should go refactored to somewhere in gocore.
 	slices.SortStableFunc(fields, func(a, b field) int {
 		if c := cmp.Compare(a.key, b.key); c != 0 {
 			return c

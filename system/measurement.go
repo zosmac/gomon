@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	message.Define(&measurement{})
+	message.Define(&Measurement{})
 }
 
 type (
@@ -31,8 +31,8 @@ type (
 		FifteenMinute float64 `json:"fifteen_minute" gomon:"gauge,none"`
 	}
 
-	// CPU holds the CPU metrics for the system and for an individual processor.
-	CPU struct {
+	// Cpu holds the Cpu metrics for the system and for an individual processor.
+	Cpu struct {
 		Total   time.Duration `json:"total" gomon:"counter,ns"`
 		User    time.Duration `json:"user" gomon:"counter,ns"`
 		System  time.Duration `json:"system" gomon:"counter,ns"`
@@ -66,16 +66,16 @@ type (
 		Rlimits         `gomon:""`
 		LoadAverage     LoadAverage       `json:"load_average" gomon:""`
 		ContextSwitches int               `json:"context_switches,omitempty" gomon:"counter,count,!darwin"`
-		Cpu             CPU               `json:"cpu" gomon:""`
+		Cpu             Cpu               `json:"cpu" gomon:""`
 		CpuCount        int               `json:"cpu_count" gomon:"gauge,count"`
-		Cpus            []CPU             `json:"cpus" gomon:""`
+		Cpus            []Cpu             `json:"cpus" gomon:""`
 		Memory          Memory            `json:"memory" gomon:""`
 		Swap            Swap              `json:"swap" gomon:""`
 		ProcessStats    process.ProcStats `json:"process_stats" gomon:""`
 	}
 
-	// measurement for the message.
-	measurement struct {
+	// Measurement defines the properties and metrics of a system measurement.
+	Measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
 		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
@@ -84,11 +84,11 @@ type (
 )
 
 // Events returns the list of acceptable Event values for this message.
-func (*measurement) Events() []string {
+func (*Measurement) Events() []string {
 	return message.MeasureEvents.ValidValues()
 }
 
 // ID returns the identifier for the system message.
-func (m *measurement) ID() string {
+func (m *Measurement) ID() string {
 	return m.EventID.Name
 }

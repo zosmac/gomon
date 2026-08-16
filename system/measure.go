@@ -14,7 +14,7 @@ import (
 func Measure(ps process.ProcStats) message.Content {
 	header := message.Measurement()
 	mem, swap := memory()
-	return &measurement{
+	return &Measurement{
 		Header: header,
 		EventID: EventID{
 			Name: uname,

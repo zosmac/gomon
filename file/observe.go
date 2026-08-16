@@ -25,7 +25,7 @@ type (
 		root string
 		*handle
 		watched map[string]file
-		msgChan chan *observation
+		msgChan chan *Observation
 	}
 )
 
@@ -53,7 +53,7 @@ func Observer(ctx context.Context) error {
 		root:    flags.fileDirectory,
 		handle:  h,
 		watched: map[string]file{},
-		msgChan: make(chan *observation, 100),
+		msgChan: make(chan *Observation, 100),
 	}
 
 	if err := watchDir(".", 0); err != nil {
@@ -99,11 +99,11 @@ func notify(ev fileEvent, id uint64, name, oldn string) {
 		msg = "newname=" + name
 		name = oldn
 	}
-	obs.msgChan <- &observation{
+	obs.msgChan <- &Observation{
 		Header: message.Observation(time.Now(), ev),
 		EventID: EventID{
 			Name:        name,
-			FileEventID: id,
+			FileEventId: id,
 		},
 		Message: msg,
 	}

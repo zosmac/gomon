@@ -8,15 +8,15 @@ import (
 )
 
 func init() {
-	message.Define(&observation{})
+	message.Define(&Observation{})
 }
 
 type (
 	// processEvent type.
 	processEvent string
 
-	// message defines the properties of a process message.
-	observation struct {
+	// Observation defines the properties of a process message.
+	Observation struct {
 		message.Header[processEvent] `gomon:""`
 		EventID                      `json:"event_id" gomon:""`
 		Message                      string `json:"message" gomon:"property"`
@@ -44,11 +44,11 @@ var (
 )
 
 // Events returns the list of acceptable Event values for this message.
-func (*observation) Events() []string {
+func (*Observation) Events() []string {
 	return processEvents.ValidValues()
 }
 
 // ID returns the identifier for a process message message.
-func (obs *observation) ID() string {
+func (obs *Observation) ID() string {
 	return obs.EventID.Name + "[" + obs.EventID.Pid.String() + "]"
 }

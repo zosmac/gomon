@@ -13,7 +13,7 @@ import (
 )
 
 // interfaces captures system's network interfaces.
-func interfaces() (ms []*measurement) {
+func interfaces() (ms []*Measurement) {
 	nis, err := net.Interfaces()
 	if err != nil {
 		gocore.Error("Interfaces", err).Err()
@@ -56,7 +56,7 @@ func interfaces() (ms []*measurement) {
 			}
 		}
 
-		ms = append(ms, &measurement{
+		ms = append(ms, &Measurement{
 			Header: message.Measurement(),
 			EventID: EventID{
 				Name: ni.Name,

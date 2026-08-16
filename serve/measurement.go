@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	message.Define(&measurement{})
+	message.Define(&Measurement{})
 }
 
 type (
@@ -36,13 +36,13 @@ type (
 
 	// Metrics defines measurement metrics.
 	Metrics struct {
-		HTTPRequests int `json:"http_requests" gomon:"counter,count"`
+		HttpRequests int `json:"http_requests" gomon:"counter,count"`
 		Prometheus   `gomon:""`
 		LokiStreams  int `json:"loki_streams" gomon:"counter,count"`
 	}
 
-	// measurement for the message.
-	measurement struct {
+	// Measurement defines the properties and metrics of a gomon server measurement.
+	Measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
 		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
@@ -52,18 +52,18 @@ type (
 
 var (
 	// measures records the metrics for the server's operations.
-	measures = measurement{
+	measures = Measurement{
 		Header:  message.Measurement(),
 		EventID: EventID{Name: "gomon"},
 	}
 )
 
 // Events returns the list of acceptable Event values for this message.
-func (*measurement) Events() []string {
+func (*Measurement) Events() []string {
 	return message.MeasureEvents.ValidValues()
 }
 
 // ID returns the identifier for a server message.
-func (m *measurement) ID() string {
+func (m *Measurement) ID() string {
 	return m.EventID.Name
 }

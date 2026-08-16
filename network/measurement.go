@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	message.Define(&measurement{})
+	message.Define(&Measurement{})
 }
 
 type (
@@ -50,8 +50,8 @@ type (
 		TransmitMulticast  int `json:"transmit_multicast" gomon:"counter,count"`
 	}
 
-	// measurement for the message.
-	measurement struct {
+	// Measurement defines the properties and metrics of a network interface measurement.
+	Measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
 		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
@@ -60,11 +60,11 @@ type (
 )
 
 // Events returns the list of acceptable Event values for this message.
-func (*measurement) Events() []string {
+func (*Measurement) Events() []string {
 	return message.MeasureEvents.ValidValues()
 }
 
 // ID returns the identifier for a network interface message.
-func (m *measurement) ID() string {
+func (m *Measurement) ID() string {
 	return m.EventID.Name
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	message.Define(&measurement{})
+	message.Define(&Measurement{})
 }
 
 type (
@@ -54,8 +54,8 @@ type (
 		Pgid        int    `json:"pgid,omitempty" gomon:"property,,!windows"`
 		Tgid        int    `json:"tgid,omitempty" gomon:"property,,linux"`
 		Tty         string `json:"tty,omitempty" gomon:"property,,!windows"`
-		UID         int    `json:"uid,omitempty" gomon:"property,,!windows"`
-		GID         int    `json:"gid,omitempty" gomon:"property,,!windows"`
+		Uid         int    `json:"uid,omitempty" gomon:"property,,!windows"`
+		Gid         int    `json:"gid,omitempty" gomon:"property,,!windows"`
 		Username    string `json:"username" gomon:"property"`
 		Groupname   string `json:"groupname,omitempty" gomon:"property,,!windows"`
 		Status      string `json:"status" gomon:"enum,none"`
@@ -96,23 +96,23 @@ type (
 		Io                          `gomon:""`
 	}
 
-	// measurement for the message.
-	measurement struct {
+	// Measurement defines the properties and metrics of a process measurement.
+	Measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
 		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
 		Metrics                              `gomon:""`
 	}
 
-	Process = measurement
+	Process = Measurement
 )
 
 // Events returns the list of acceptable Event values for this message.
-func (*measurement) Events() []string {
+func (*Measurement) Events() []string {
 	return message.MeasureEvents.ValidValues()
 }
 
 // ID returns the identifier for a process message.
-func (m *measurement) ID() string {
+func (m *Measurement) ID() string {
 	return m.EventID.Name + "[" + m.EventID.Pid.String() + "]"
 }

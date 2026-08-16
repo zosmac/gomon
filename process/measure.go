@@ -92,10 +92,10 @@ func Measure() (ProcStats, []message.Content) {
 
 	tops := map[Pid]struct{}{}
 	for _, m := range ms {
-		tops[m.(*measurement).EventID.Pid] = struct{}{}
+		tops[m.(*Measurement).EventID.Pid] = struct{}{}
 	}
 	for _, m := range pms {
-		pid := m.(*measurement).EventID.Pid
+		pid := m.(*Measurement).EventID.Pid
 		if _, ok := tops[pid]; ok {
 			continue
 		}
@@ -149,11 +149,11 @@ func buildTable() Table {
 	epm := epMap
 	epLock.RUnlock()
 
-	tb := make(map[Pid]*measurement, len(pids))
+	tb := make(map[Pid]*Measurement, len(pids))
 	for _, pid := range pids {
 		id, props, metrics := pid.metrics()
 		props.Connections = epm[pid]
-		tb[pid] = &measurement{
+		tb[pid] = &Measurement{
 			Header:     message.Measurement(),
 			EventID:    id,
 			Properties: props,

@@ -12,7 +12,7 @@ import (
 
 var (
 	// messageChan queues process event observations for periodic reporting.
-	messageChan = make(chan *observation, 100)
+	messageChan = make(chan *Observation, 100)
 )
 
 // Observer starts capture of process event observations.
@@ -36,7 +36,7 @@ func Observer(ctx context.Context) error {
 
 // notify assembles a message and queues it.
 func notify(id *EventID, ev processEvent, msg string) {
-	messageChan <- &observation{
+	messageChan <- &Observation{
 		Header:  message.Observation(time.Now(), ev),
 		EventID: *id,
 		Message: msg,

@@ -34,7 +34,7 @@ const (
 
 var (
 	// messageChan queues log messages for encoding.
-	messageChan = make(chan *observation, 100)
+	messageChan = make(chan *Observation, 100)
 
 	// levelMap maps various applications' log levels to a common set fatal/error/warn/info/debug/trace.
 	levelMap = map[string]logEvent{
@@ -181,7 +181,7 @@ loop:
 	}
 
 	t, _ := time.Parse(format, match[groups[groupTimestamp]])
-	messageChan <- &observation{
+	messageChan <- &Observation{
 		Header: message.Observation(t, levelMap[strings.ToLower(match[groups[groupLevel]])]),
 		EventID: EventID{
 			Name:   match[groups[groupProcess]],

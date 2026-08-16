@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	message.Define(&observation{})
+	message.Define(&Observation{})
 }
 
 type (
@@ -24,8 +24,8 @@ type (
 		Sender string `json:"sender" gomon:"property"`
 	}
 
-	// message defines the properties of a log message.
-	observation struct {
+	// Observation defines the properties of a log message.
+	Observation struct {
 		message.Header[logEvent] `gomon:"property"`
 		EventID                  `json:"event_id" gomon:""`
 		Message                  string `json:"message" gomon:"property"`
@@ -55,11 +55,11 @@ var (
 )
 
 // Events returns the list of acceptable Event values for this message.
-func (*observation) Events() []string {
+func (*Observation) Events() []string {
 	return logEvents.ValidValues()
 }
 
 // ID returns the identifier for a log message message.
-func (obs *observation) ID() string {
+func (obs *Observation) ID() string {
 	return obs.EventID.Name + "[" + strconv.Itoa(obs.EventID.Pid) + "] (" + obs.EventID.Sender + ")"
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	message.Define(&measurement{})
+	message.Define(&Measurement{})
 }
 
 type (
@@ -40,8 +40,8 @@ type (
 		WriteTime       time.Duration `json:"write_time" gomon:"counter,ns"`
 	}
 
-	// measurement for the message.
-	measurement struct {
+	// Measurement defines the properties and metrics of an I/O measurement.
+	Measurement struct {
 		message.Header[message.MeasureEvent] `gomon:""`
 		EventID                              `json:"event_id" gomon:""`
 		Properties                           `gomon:""`
@@ -50,11 +50,11 @@ type (
 )
 
 // Events returns the list of acceptable Event values for this message.
-func (*measurement) Events() []string {
+func (*Measurement) Events() []string {
 	return message.MeasureEvents.ValidValues()
 }
 
 // ID returns the identifier for an I/O message.
-func (m *measurement) ID() string {
+func (m *Measurement) ID() string {
 	return m.EventID.Device
 }

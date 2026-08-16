@@ -41,7 +41,7 @@ func gomonHandler() error {
 	http.HandleFunc(
 		"/gomon/",
 		func(w http.ResponseWriter, r *http.Request) {
-			measures.HTTPRequests++
+			measures.HttpRequests++
 			for key, values := range httpHeader() {
 				for _, value := range values {
 					w.Header().Add(key, value)

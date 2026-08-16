@@ -102,7 +102,7 @@ func Measure() (ms []message.Content) {
 			bytesWritten := stats[C.kIOBlockStorageDriverStatisticsBytesWrittenKey]
 			totalWriteTime := stats[C.kIOBlockStorageDriverStatisticsTotalWriteTimeKey]
 
-			ms = append(ms, &measurement{
+			ms = append(ms, &Measurement{
 				Header: message.Measurement(),
 				EventID: EventID{
 					Device: name.(string),

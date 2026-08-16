@@ -196,7 +196,7 @@ func rlimits() Rlimits {
 }
 
 // cpu captures CPU metrics for system.
-func cpu() CPU {
+func cpu() Cpu {
 	var lid C.host_cpu_load_info_data_t
 	var number C.mach_msg_type_number_t = C.HOST_CPU_LOAD_INFO_COUNT
 
@@ -209,14 +209,14 @@ func cpu() CPU {
 
 	if status != C.KERN_SUCCESS {
 		gocore.Error("host_statistics", kernReturn(status)).Err()
-		return CPU{}
+		return Cpu{}
 	}
 
 	return scale(lid.cpu_ticks)
 }
 
 // cpus captures individual CPU metrics.
-func cpus() []CPU {
+func cpus() []Cpu {
 	var count C.natural_t
 	var info *[1024]C.processor_cpu_load_info_data_t
 	var number C.mach_msg_type_number_t
@@ -240,7 +240,7 @@ func cpus() []CPU {
 		C.vm_size_t(number*count),
 	)
 
-	cs := make([]CPU, count)
+	cs := make([]Cpu, count)
 	for i := range cs {
 		cs[i] = scale((*info)[i].cpu_ticks)
 	}
@@ -249,8 +249,8 @@ func cpus() []CPU {
 }
 
 // scale converts cpu times to nanoseconds.
-func scale(t cpuTicks) CPU {
-	c := CPU{
+func scale(t cpuTicks) Cpu {
+	c := Cpu{
 		User:   time.Duration(t[C.CPU_STATE_USER]) * factor,
 		System: time.Duration(t[C.CPU_STATE_SYSTEM]) * factor,
 		Idle:   time.Duration(t[C.CPU_STATE_IDLE]) * factor,

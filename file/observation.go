@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	message.Define(&observation{})
+	message.Define(&Observation{})
 }
 
 type (
@@ -18,11 +18,11 @@ type (
 	// EventID identifies the message.
 	EventID struct {
 		Name        string `json:"name" gomon:"property"`
-		FileEventID uint64 `json:"file_event_id,omitempty" gomon:"property"`
+		FileEventId uint64 `json:"file_event_id,omitempty" gomon:"property"`
 	}
 
-	// message defines the properties of a file update message.
-	observation struct {
+	// Observation defines the properties of a file update message.
+	Observation struct {
 		message.Header[fileEvent] `gomon:""`
 		EventID                   `json:"event_id" gomon:""`
 		Message                   string `json:"message" gomon:"property"`
@@ -48,11 +48,11 @@ var (
 )
 
 // Events returns the list of acceptable Event values for this message.
-func (*observation) Events() []string {
+func (*Observation) Events() []string {
 	return fileEvents.ValidValues()
 }
 
 // ID returns the identifier for a file update message message.
-func (obs *observation) ID() string {
+func (obs *Observation) ID() string {
 	return obs.EventID.Name
 }
