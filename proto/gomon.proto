@@ -26,69 +26,15 @@ message GomonMessage {
   }
 } 
 
-message FilesystemMeasurement {
-  google.protobuf.Timestamp timestamp = 1;
-  string host = 2;
-  string platform = 3;
-  string source = 4;
-  string event = 5;
-  string mount = 6;
-  string path = 7;
-  string type = 8;
-  int64 total = 9;
-  int64 used = 10;
-  int64 free = 11;
-  int64 available = 12;
-  int64 files = 13;
-  int64 free_files = 14;
-}
-
-message IoMeasurement {
-  google.protobuf.Timestamp timestamp = 1;
-  string host = 2;
-  string platform = 3;
-  string source = 4;
-  string event = 5;
-  string device = 6;
-  string major = 7;
-  string minor = 8;
-  int64 total_size = 9;
-  int64 block_size = 10;
-  int64 read_operations = 11;
-  int64 read = 12;
-  google.protobuf.Duration read_time = 13;
-  int64 write_operations = 14;
-  int64 write = 15;
-  google.protobuf.Duration write_time = 16;
-}
-
-message NetworkMeasurement {
+message FileObservation {
   google.protobuf.Timestamp timestamp = 1;
   string host = 2;
   string platform = 3;
   string source = 4;
   string event = 5;
   string name = 6;
-  int64 index = 7;
-  string flags = 8;
-  int64 mtu = 9;
-  string mac = 10;
-  string address = 11;
-  string netmask = 12;
-  string broadcast = 13;
-  string linklocal6 = 14;
-  string address6 = 15;
-  int64 receive = 16;
-  int64 receive_packets = 17;
-  int64 receive_errors = 18;
-  int64 receive_dropped = 19;
-  int64 receive_multicast = 20;
-  int64 transmit = 21;
-  int64 transmit_packets = 22;
-  int64 transmit_errors = 23;
-  int64 transmit_dropped = 24;
-  int64 transmit_collisions = 25;
-  int64 transmit_multicast = 26;
+  uint64 file_event_id = 7;
+  string message = 8;
 }
 
 message LogsObservation {
@@ -162,29 +108,7 @@ message ProcessMeasurement {
   int64 write_requested = 35;
 }
 
-message ServeMeasurement {
-  google.protobuf.Timestamp timestamp = 1;
-  string host = 2;
-  string platform = 3;
-  string source = 4;
-  string event = 5;
-  string name = 6;
-  string address = 7;
-  repeated string endpoints = 8;
-  int64 http_requests = 9;
-  int64 collections = 10;
-  google.protobuf.Duration collection_time = 11;
-  int64 loki_streams = 12;
-}
-
 message SystemMeasurement {
-  message ProcStats {
-    int64 count = 1;
-    int64 active = 2;
-    int64 execed = 3;
-    int64 exited = 4;
-    google.protobuf.Duration cpu = 5;
-  }
   message LoadAverage {
     double one_minute = 1;
     double five_minute = 2;
@@ -208,6 +132,13 @@ message SystemMeasurement {
     int64 free = 2;
     int64 used = 3;
   }
+  message ProcStats {
+    int64 count = 1;
+    int64 active = 2;
+    int64 execed = 3;
+    int64 exited = 4;
+    google.protobuf.Duration cpu = 5;
+  }
   google.protobuf.Timestamp timestamp = 1;
   string host = 2;
   string platform = 3;
@@ -230,13 +161,82 @@ message SystemMeasurement {
   ProcStats process_stats = 20;
 }
 
-message FileObservation {
+message FilesystemMeasurement {
+  google.protobuf.Timestamp timestamp = 1;
+  string host = 2;
+  string platform = 3;
+  string source = 4;
+  string event = 5;
+  string mount = 6;
+  string path = 7;
+  string type = 8;
+  int64 total = 9;
+  int64 used = 10;
+  int64 free = 11;
+  int64 available = 12;
+  int64 files = 13;
+  int64 free_files = 14;
+}
+
+message IoMeasurement {
+  google.protobuf.Timestamp timestamp = 1;
+  string host = 2;
+  string platform = 3;
+  string source = 4;
+  string event = 5;
+  string device = 6;
+  string major = 7;
+  string minor = 8;
+  int64 total_size = 9;
+  int64 block_size = 10;
+  int64 read_operations = 11;
+  int64 read = 12;
+  google.protobuf.Duration read_time = 13;
+  int64 write_operations = 14;
+  int64 write = 15;
+  google.protobuf.Duration write_time = 16;
+}
+
+message NetworkMeasurement {
   google.protobuf.Timestamp timestamp = 1;
   string host = 2;
   string platform = 3;
   string source = 4;
   string event = 5;
   string name = 6;
-  uint64 file_event_id = 7;
-  string message = 8;
+  int64 index = 7;
+  string flags = 8;
+  int64 mtu = 9;
+  string mac = 10;
+  string address = 11;
+  string netmask = 12;
+  string broadcast = 13;
+  string linklocal6 = 14;
+  string address6 = 15;
+  int64 receive = 16;
+  int64 receive_packets = 17;
+  int64 receive_errors = 18;
+  int64 receive_dropped = 19;
+  int64 receive_multicast = 20;
+  int64 transmit = 21;
+  int64 transmit_packets = 22;
+  int64 transmit_errors = 23;
+  int64 transmit_dropped = 24;
+  int64 transmit_collisions = 25;
+  int64 transmit_multicast = 26;
+}
+
+message ServeMeasurement {
+  google.protobuf.Timestamp timestamp = 1;
+  string host = 2;
+  string platform = 3;
+  string source = 4;
+  string event = 5;
+  string name = 6;
+  string address = 7;
+  repeated string endpoints = 8;
+  int64 http_requests = 9;
+  int64 collections = 10;
+  google.protobuf.Duration collection_time = 11;
+  int64 loki_streams = 12;
 }

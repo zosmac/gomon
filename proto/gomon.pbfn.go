@@ -160,16 +160,16 @@ func CopyProcessMeasurement(src *process.Measurement) *ProcessMeasurement {
 		Root:       &src.Root,
 		Connections: func() []*ProcessMeasurement_Connection {
 			result := make([]*ProcessMeasurement_Connection, len(src.Connections))
-			for i, v := range src.Connections {
+			for i, src := range src.Connections {
 				result[i] = ProcessMeasurement_Connection_builder{
-					Type: &v.Type,
+					Type: &src.Type,
 					Self: ProcessMeasurement_Connection_Endpoint_builder{
-						Name: &v.Self.Name,
-						Pid:  toInt64(int(v.Self.Pid)),
+						Name: &src.Self.Name,
+						Pid:  toInt64(int(src.Self.Pid)),
 					}.Build(),
 					Peer: ProcessMeasurement_Connection_Endpoint_builder{
-						Name: &v.Peer.Name,
-						Pid:  toInt64(int(v.Peer.Pid)),
+						Name: &src.Peer.Name,
+						Pid:  toInt64(int(src.Peer.Pid)),
 					}.Build(),
 				}.Build()
 			}
@@ -240,12 +240,12 @@ func CopySystemMeasurement(src *system.Measurement) *SystemMeasurement {
 		CpuCount: toInt64(int(src.CpuCount)),
 		Cpus: func() []*SystemMeasurement_Cpu {
 			result := make([]*SystemMeasurement_Cpu, len(src.Cpus))
-			for i, v := range src.Cpus {
+			for i, src := range src.Cpus {
 				result[i] = SystemMeasurement_Cpu_builder{
-					Total:  durationpb.New(v.Total),
-					User:   durationpb.New(v.User),
-					System: durationpb.New(v.System),
-					Idle:   durationpb.New(v.Idle),
+					Total:  durationpb.New(src.Total),
+					User:   durationpb.New(src.User),
+					System: durationpb.New(src.System),
+					Idle:   durationpb.New(src.Idle),
 				}.Build()
 			}
 			return result

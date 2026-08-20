@@ -1,14 +1,14 @@
 module github.com/zosmac/gomon
 
-go 1.26.5
+go 1.27.0
 
 require (
 	github.com/prometheus/client_golang v1.24.1
 	github.com/yusufpapurcu/wmi v1.2.4
-	github.com/zosmac/gocore v0.0.0-20260806142313-35c03e9bab3e
-	golang.org/x/net v0.57.0
+	github.com/zosmac/gocore v0.0.0-20260819171803-1e99038450a5
+	golang.org/x/net v0.58.0
 	golang.org/x/sys v0.47.0
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -20,7 +20,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.70.1 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
-	golang.org/x/mod v0.37.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/tools v0.46.0 // indirect
+	golang.org/x/mod v0.39.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/tools v0.49.0 // indirect
 )

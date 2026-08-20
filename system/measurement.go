@@ -14,6 +14,8 @@ func init() {
 }
 
 type (
+	ProcStats process.ProcStats
+
 	// EventID identifies the message.
 	EventID struct {
 		Name string `json:"name" gomon:"property"`
@@ -64,14 +66,14 @@ type (
 	Metrics struct {
 		Uptime          time.Duration `json:"uptime" gomon:"counter,ns"`
 		Rlimits         `gomon:""`
-		LoadAverage     LoadAverage       `json:"load_average" gomon:""`
-		ContextSwitches int               `json:"context_switches,omitempty" gomon:"counter,count,!darwin"`
-		Cpu             Cpu               `json:"cpu" gomon:""`
-		CpuCount        int               `json:"cpu_count" gomon:"gauge,count"`
-		Cpus            []Cpu             `json:"cpus" gomon:""`
-		Memory          Memory            `json:"memory" gomon:""`
-		Swap            Swap              `json:"swap" gomon:""`
-		ProcessStats    process.ProcStats `json:"process_stats" gomon:""`
+		LoadAverage     LoadAverage `json:"load_average" gomon:""`
+		ContextSwitches int         `json:"context_switches,omitempty" gomon:"counter,count,!darwin"`
+		Cpu             Cpu         `json:"cpu" gomon:""`
+		CpuCount        int         `json:"cpu_count" gomon:"gauge,count"`
+		Cpus            []Cpu       `json:"cpus" gomon:""`
+		Memory          Memory      `json:"memory" gomon:""`
+		Swap            Swap        `json:"swap" gomon:""`
+		ProcessStats    ProcStats   `json:"process_stats" gomon:""`
 	}
 
 	// Measurement defines the properties and metrics of a system measurement.

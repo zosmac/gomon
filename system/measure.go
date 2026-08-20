@@ -32,7 +32,7 @@ func Measure(ps process.ProcStats) message.Content {
 			Cpus:            cpus(),
 			Memory:          mem,
 			Swap:            swap,
-			ProcessStats:    ps,
+			ProcessStats:    ProcStats(ps),
 		},
 	}
 }

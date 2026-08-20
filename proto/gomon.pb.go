@@ -7,13 +7,12 @@
 package proto
 
 import (
-	reflect "reflect"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	unsafe "unsafe"
 )
 
 const (
@@ -577,42 +576,36 @@ func (*gomonMessage_ServeMeasurement) isGomonMessage_GomonMessage() {}
 
 func (*gomonMessage_SystemMeasurement) isGomonMessage_GomonMessage() {}
 
-type FilesystemMeasurement struct {
+type FileObservation struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Timestamp   *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp"`
 	xxx_hidden_Host        *string                `protobuf:"bytes,2,opt,name=host"`
 	xxx_hidden_Platform    *string                `protobuf:"bytes,3,opt,name=platform"`
 	xxx_hidden_Source      *string                `protobuf:"bytes,4,opt,name=source"`
 	xxx_hidden_Event       *string                `protobuf:"bytes,5,opt,name=event"`
-	xxx_hidden_Mount       *string                `protobuf:"bytes,6,opt,name=mount"`
-	xxx_hidden_Path        *string                `protobuf:"bytes,7,opt,name=path"`
-	xxx_hidden_Type        *string                `protobuf:"bytes,8,opt,name=type"`
-	xxx_hidden_Total       int64                  `protobuf:"varint,9,opt,name=total"`
-	xxx_hidden_Used        int64                  `protobuf:"varint,10,opt,name=used"`
-	xxx_hidden_Free        int64                  `protobuf:"varint,11,opt,name=free"`
-	xxx_hidden_Available   int64                  `protobuf:"varint,12,opt,name=available"`
-	xxx_hidden_Files       int64                  `protobuf:"varint,13,opt,name=files"`
-	xxx_hidden_FreeFiles   int64                  `protobuf:"varint,14,opt,name=free_files,json=freeFiles"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,6,opt,name=name"`
+	xxx_hidden_FileEventId uint64                 `protobuf:"varint,7,opt,name=file_event_id,json=fileEventId"`
+	xxx_hidden_Message     *string                `protobuf:"bytes,8,opt,name=message"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
 
-func (x *FilesystemMeasurement) Reset() {
-	*x = FilesystemMeasurement{}
+func (x *FileObservation) Reset() {
+	*x = FileObservation{}
 	mi := &file_proto_gomon_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *FilesystemMeasurement) String() string {
+func (x *FileObservation) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FilesystemMeasurement) ProtoMessage() {}
+func (*FileObservation) ProtoMessage() {}
 
-func (x *FilesystemMeasurement) ProtoReflect() protoreflect.Message {
+func (x *FileObservation) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_gomon_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -624,14 +617,14 @@ func (x *FilesystemMeasurement) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *FilesystemMeasurement) GetTimestamp() *timestamppb.Timestamp {
+func (x *FileObservation) GetTimestamp() *timestamppb.Timestamp {
 	if x != nil {
 		return x.xxx_hidden_Timestamp
 	}
 	return nil
 }
 
-func (x *FilesystemMeasurement) GetHost() string {
+func (x *FileObservation) GetHost() string {
 	if x != nil {
 		if x.xxx_hidden_Host != nil {
 			return *x.xxx_hidden_Host
@@ -641,7 +634,7 @@ func (x *FilesystemMeasurement) GetHost() string {
 	return ""
 }
 
-func (x *FilesystemMeasurement) GetPlatform() string {
+func (x *FileObservation) GetPlatform() string {
 	if x != nil {
 		if x.xxx_hidden_Platform != nil {
 			return *x.xxx_hidden_Platform
@@ -651,7 +644,7 @@ func (x *FilesystemMeasurement) GetPlatform() string {
 	return ""
 }
 
-func (x *FilesystemMeasurement) GetSource() string {
+func (x *FileObservation) GetSource() string {
 	if x != nil {
 		if x.xxx_hidden_Source != nil {
 			return *x.xxx_hidden_Source
@@ -661,7 +654,7 @@ func (x *FilesystemMeasurement) GetSource() string {
 	return ""
 }
 
-func (x *FilesystemMeasurement) GetEvent() string {
+func (x *FileObservation) GetEvent() string {
 	if x != nil {
 		if x.xxx_hidden_Event != nil {
 			return *x.xxx_hidden_Event
@@ -671,1031 +664,7 @@ func (x *FilesystemMeasurement) GetEvent() string {
 	return ""
 }
 
-func (x *FilesystemMeasurement) GetMount() string {
-	if x != nil {
-		if x.xxx_hidden_Mount != nil {
-			return *x.xxx_hidden_Mount
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *FilesystemMeasurement) GetPath() string {
-	if x != nil {
-		if x.xxx_hidden_Path != nil {
-			return *x.xxx_hidden_Path
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *FilesystemMeasurement) GetType() string {
-	if x != nil {
-		if x.xxx_hidden_Type != nil {
-			return *x.xxx_hidden_Type
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *FilesystemMeasurement) GetTotal() int64 {
-	if x != nil {
-		return x.xxx_hidden_Total
-	}
-	return 0
-}
-
-func (x *FilesystemMeasurement) GetUsed() int64 {
-	if x != nil {
-		return x.xxx_hidden_Used
-	}
-	return 0
-}
-
-func (x *FilesystemMeasurement) GetFree() int64 {
-	if x != nil {
-		return x.xxx_hidden_Free
-	}
-	return 0
-}
-
-func (x *FilesystemMeasurement) GetAvailable() int64 {
-	if x != nil {
-		return x.xxx_hidden_Available
-	}
-	return 0
-}
-
-func (x *FilesystemMeasurement) GetFiles() int64 {
-	if x != nil {
-		return x.xxx_hidden_Files
-	}
-	return 0
-}
-
-func (x *FilesystemMeasurement) GetFreeFiles() int64 {
-	if x != nil {
-		return x.xxx_hidden_FreeFiles
-	}
-	return 0
-}
-
-func (x *FilesystemMeasurement) SetTimestamp(v *timestamppb.Timestamp) {
-	x.xxx_hidden_Timestamp = v
-}
-
-func (x *FilesystemMeasurement) SetHost(v string) {
-	x.xxx_hidden_Host = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 14)
-}
-
-func (x *FilesystemMeasurement) SetPlatform(v string) {
-	x.xxx_hidden_Platform = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 14)
-}
-
-func (x *FilesystemMeasurement) SetSource(v string) {
-	x.xxx_hidden_Source = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 14)
-}
-
-func (x *FilesystemMeasurement) SetEvent(v string) {
-	x.xxx_hidden_Event = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 14)
-}
-
-func (x *FilesystemMeasurement) SetMount(v string) {
-	x.xxx_hidden_Mount = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 14)
-}
-
-func (x *FilesystemMeasurement) SetPath(v string) {
-	x.xxx_hidden_Path = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 14)
-}
-
-func (x *FilesystemMeasurement) SetType(v string) {
-	x.xxx_hidden_Type = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 14)
-}
-
-func (x *FilesystemMeasurement) SetTotal(v int64) {
-	x.xxx_hidden_Total = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 14)
-}
-
-func (x *FilesystemMeasurement) SetUsed(v int64) {
-	x.xxx_hidden_Used = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 14)
-}
-
-func (x *FilesystemMeasurement) SetFree(v int64) {
-	x.xxx_hidden_Free = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 14)
-}
-
-func (x *FilesystemMeasurement) SetAvailable(v int64) {
-	x.xxx_hidden_Available = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 14)
-}
-
-func (x *FilesystemMeasurement) SetFiles(v int64) {
-	x.xxx_hidden_Files = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 14)
-}
-
-func (x *FilesystemMeasurement) SetFreeFiles(v int64) {
-	x.xxx_hidden_FreeFiles = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 14)
-}
-
-func (x *FilesystemMeasurement) HasTimestamp() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Timestamp != nil
-}
-
-func (x *FilesystemMeasurement) HasHost() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
-}
-
-func (x *FilesystemMeasurement) HasPlatform() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
-}
-
-func (x *FilesystemMeasurement) HasSource() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
-}
-
-func (x *FilesystemMeasurement) HasEvent() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
-}
-
-func (x *FilesystemMeasurement) HasMount() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
-}
-
-func (x *FilesystemMeasurement) HasPath() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
-}
-
-func (x *FilesystemMeasurement) HasType() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
-}
-
-func (x *FilesystemMeasurement) HasTotal() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
-}
-
-func (x *FilesystemMeasurement) HasUsed() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
-}
-
-func (x *FilesystemMeasurement) HasFree() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
-}
-
-func (x *FilesystemMeasurement) HasAvailable() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
-}
-
-func (x *FilesystemMeasurement) HasFiles() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 12)
-}
-
-func (x *FilesystemMeasurement) HasFreeFiles() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
-}
-
-func (x *FilesystemMeasurement) ClearTimestamp() {
-	x.xxx_hidden_Timestamp = nil
-}
-
-func (x *FilesystemMeasurement) ClearHost() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
-	x.xxx_hidden_Host = nil
-}
-
-func (x *FilesystemMeasurement) ClearPlatform() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
-	x.xxx_hidden_Platform = nil
-}
-
-func (x *FilesystemMeasurement) ClearSource() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
-	x.xxx_hidden_Source = nil
-}
-
-func (x *FilesystemMeasurement) ClearEvent() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
-	x.xxx_hidden_Event = nil
-}
-
-func (x *FilesystemMeasurement) ClearMount() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
-	x.xxx_hidden_Mount = nil
-}
-
-func (x *FilesystemMeasurement) ClearPath() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
-	x.xxx_hidden_Path = nil
-}
-
-func (x *FilesystemMeasurement) ClearType() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
-	x.xxx_hidden_Type = nil
-}
-
-func (x *FilesystemMeasurement) ClearTotal() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
-	x.xxx_hidden_Total = 0
-}
-
-func (x *FilesystemMeasurement) ClearUsed() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
-	x.xxx_hidden_Used = 0
-}
-
-func (x *FilesystemMeasurement) ClearFree() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
-	x.xxx_hidden_Free = 0
-}
-
-func (x *FilesystemMeasurement) ClearAvailable() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
-	x.xxx_hidden_Available = 0
-}
-
-func (x *FilesystemMeasurement) ClearFiles() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 12)
-	x.xxx_hidden_Files = 0
-}
-
-func (x *FilesystemMeasurement) ClearFreeFiles() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
-	x.xxx_hidden_FreeFiles = 0
-}
-
-type FilesystemMeasurement_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Timestamp *timestamppb.Timestamp
-	Host      *string
-	Platform  *string
-	Source    *string
-	Event     *string
-	Mount     *string
-	Path      *string
-	Type      *string
-	Total     *int64
-	Used      *int64
-	Free      *int64
-	Available *int64
-	Files     *int64
-	FreeFiles *int64
-}
-
-func (b0 FilesystemMeasurement_builder) Build() *FilesystemMeasurement {
-	m0 := &FilesystemMeasurement{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Timestamp = b.Timestamp
-	if b.Host != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 14)
-		x.xxx_hidden_Host = b.Host
-	}
-	if b.Platform != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 14)
-		x.xxx_hidden_Platform = b.Platform
-	}
-	if b.Source != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 14)
-		x.xxx_hidden_Source = b.Source
-	}
-	if b.Event != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 14)
-		x.xxx_hidden_Event = b.Event
-	}
-	if b.Mount != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 14)
-		x.xxx_hidden_Mount = b.Mount
-	}
-	if b.Path != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 14)
-		x.xxx_hidden_Path = b.Path
-	}
-	if b.Type != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 14)
-		x.xxx_hidden_Type = b.Type
-	}
-	if b.Total != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 14)
-		x.xxx_hidden_Total = *b.Total
-	}
-	if b.Used != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 14)
-		x.xxx_hidden_Used = *b.Used
-	}
-	if b.Free != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 14)
-		x.xxx_hidden_Free = *b.Free
-	}
-	if b.Available != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 14)
-		x.xxx_hidden_Available = *b.Available
-	}
-	if b.Files != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 14)
-		x.xxx_hidden_Files = *b.Files
-	}
-	if b.FreeFiles != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 14)
-		x.xxx_hidden_FreeFiles = *b.FreeFiles
-	}
-	return m0
-}
-
-type IoMeasurement struct {
-	state                      protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Timestamp       *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp"`
-	xxx_hidden_Host            *string                `protobuf:"bytes,2,opt,name=host"`
-	xxx_hidden_Platform        *string                `protobuf:"bytes,3,opt,name=platform"`
-	xxx_hidden_Source          *string                `protobuf:"bytes,4,opt,name=source"`
-	xxx_hidden_Event           *string                `protobuf:"bytes,5,opt,name=event"`
-	xxx_hidden_Device          *string                `protobuf:"bytes,6,opt,name=device"`
-	xxx_hidden_Major           *string                `protobuf:"bytes,7,opt,name=major"`
-	xxx_hidden_Minor           *string                `protobuf:"bytes,8,opt,name=minor"`
-	xxx_hidden_TotalSize       int64                  `protobuf:"varint,9,opt,name=total_size,json=totalSize"`
-	xxx_hidden_BlockSize       int64                  `protobuf:"varint,10,opt,name=block_size,json=blockSize"`
-	xxx_hidden_ReadOperations  int64                  `protobuf:"varint,11,opt,name=read_operations,json=readOperations"`
-	xxx_hidden_Read            int64                  `protobuf:"varint,12,opt,name=read"`
-	xxx_hidden_ReadTime        *durationpb.Duration   `protobuf:"bytes,13,opt,name=read_time,json=readTime"`
-	xxx_hidden_WriteOperations int64                  `protobuf:"varint,14,opt,name=write_operations,json=writeOperations"`
-	xxx_hidden_Write           int64                  `protobuf:"varint,15,opt,name=write"`
-	xxx_hidden_WriteTime       *durationpb.Duration   `protobuf:"bytes,16,opt,name=write_time,json=writeTime"`
-	XXX_raceDetectHookData     protoimpl.RaceDetectHookData
-	XXX_presence               [1]uint32
-	unknownFields              protoimpl.UnknownFields
-	sizeCache                  protoimpl.SizeCache
-}
-
-func (x *IoMeasurement) Reset() {
-	*x = IoMeasurement{}
-	mi := &file_proto_gomon_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *IoMeasurement) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IoMeasurement) ProtoMessage() {}
-
-func (x *IoMeasurement) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *IoMeasurement) GetTimestamp() *timestamppb.Timestamp {
-	if x != nil {
-		return x.xxx_hidden_Timestamp
-	}
-	return nil
-}
-
-func (x *IoMeasurement) GetHost() string {
-	if x != nil {
-		if x.xxx_hidden_Host != nil {
-			return *x.xxx_hidden_Host
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *IoMeasurement) GetPlatform() string {
-	if x != nil {
-		if x.xxx_hidden_Platform != nil {
-			return *x.xxx_hidden_Platform
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *IoMeasurement) GetSource() string {
-	if x != nil {
-		if x.xxx_hidden_Source != nil {
-			return *x.xxx_hidden_Source
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *IoMeasurement) GetEvent() string {
-	if x != nil {
-		if x.xxx_hidden_Event != nil {
-			return *x.xxx_hidden_Event
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *IoMeasurement) GetDevice() string {
-	if x != nil {
-		if x.xxx_hidden_Device != nil {
-			return *x.xxx_hidden_Device
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *IoMeasurement) GetMajor() string {
-	if x != nil {
-		if x.xxx_hidden_Major != nil {
-			return *x.xxx_hidden_Major
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *IoMeasurement) GetMinor() string {
-	if x != nil {
-		if x.xxx_hidden_Minor != nil {
-			return *x.xxx_hidden_Minor
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *IoMeasurement) GetTotalSize() int64 {
-	if x != nil {
-		return x.xxx_hidden_TotalSize
-	}
-	return 0
-}
-
-func (x *IoMeasurement) GetBlockSize() int64 {
-	if x != nil {
-		return x.xxx_hidden_BlockSize
-	}
-	return 0
-}
-
-func (x *IoMeasurement) GetReadOperations() int64 {
-	if x != nil {
-		return x.xxx_hidden_ReadOperations
-	}
-	return 0
-}
-
-func (x *IoMeasurement) GetRead() int64 {
-	if x != nil {
-		return x.xxx_hidden_Read
-	}
-	return 0
-}
-
-func (x *IoMeasurement) GetReadTime() *durationpb.Duration {
-	if x != nil {
-		return x.xxx_hidden_ReadTime
-	}
-	return nil
-}
-
-func (x *IoMeasurement) GetWriteOperations() int64 {
-	if x != nil {
-		return x.xxx_hidden_WriteOperations
-	}
-	return 0
-}
-
-func (x *IoMeasurement) GetWrite() int64 {
-	if x != nil {
-		return x.xxx_hidden_Write
-	}
-	return 0
-}
-
-func (x *IoMeasurement) GetWriteTime() *durationpb.Duration {
-	if x != nil {
-		return x.xxx_hidden_WriteTime
-	}
-	return nil
-}
-
-func (x *IoMeasurement) SetTimestamp(v *timestamppb.Timestamp) {
-	x.xxx_hidden_Timestamp = v
-}
-
-func (x *IoMeasurement) SetHost(v string) {
-	x.xxx_hidden_Host = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 16)
-}
-
-func (x *IoMeasurement) SetPlatform(v string) {
-	x.xxx_hidden_Platform = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 16)
-}
-
-func (x *IoMeasurement) SetSource(v string) {
-	x.xxx_hidden_Source = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 16)
-}
-
-func (x *IoMeasurement) SetEvent(v string) {
-	x.xxx_hidden_Event = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 16)
-}
-
-func (x *IoMeasurement) SetDevice(v string) {
-	x.xxx_hidden_Device = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 16)
-}
-
-func (x *IoMeasurement) SetMajor(v string) {
-	x.xxx_hidden_Major = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 16)
-}
-
-func (x *IoMeasurement) SetMinor(v string) {
-	x.xxx_hidden_Minor = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 16)
-}
-
-func (x *IoMeasurement) SetTotalSize(v int64) {
-	x.xxx_hidden_TotalSize = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 16)
-}
-
-func (x *IoMeasurement) SetBlockSize(v int64) {
-	x.xxx_hidden_BlockSize = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 16)
-}
-
-func (x *IoMeasurement) SetReadOperations(v int64) {
-	x.xxx_hidden_ReadOperations = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 16)
-}
-
-func (x *IoMeasurement) SetRead(v int64) {
-	x.xxx_hidden_Read = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 16)
-}
-
-func (x *IoMeasurement) SetReadTime(v *durationpb.Duration) {
-	x.xxx_hidden_ReadTime = v
-}
-
-func (x *IoMeasurement) SetWriteOperations(v int64) {
-	x.xxx_hidden_WriteOperations = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 16)
-}
-
-func (x *IoMeasurement) SetWrite(v int64) {
-	x.xxx_hidden_Write = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 16)
-}
-
-func (x *IoMeasurement) SetWriteTime(v *durationpb.Duration) {
-	x.xxx_hidden_WriteTime = v
-}
-
-func (x *IoMeasurement) HasTimestamp() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Timestamp != nil
-}
-
-func (x *IoMeasurement) HasHost() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
-}
-
-func (x *IoMeasurement) HasPlatform() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
-}
-
-func (x *IoMeasurement) HasSource() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
-}
-
-func (x *IoMeasurement) HasEvent() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
-}
-
-func (x *IoMeasurement) HasDevice() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
-}
-
-func (x *IoMeasurement) HasMajor() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
-}
-
-func (x *IoMeasurement) HasMinor() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
-}
-
-func (x *IoMeasurement) HasTotalSize() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
-}
-
-func (x *IoMeasurement) HasBlockSize() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
-}
-
-func (x *IoMeasurement) HasReadOperations() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
-}
-
-func (x *IoMeasurement) HasRead() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
-}
-
-func (x *IoMeasurement) HasReadTime() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_ReadTime != nil
-}
-
-func (x *IoMeasurement) HasWriteOperations() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
-}
-
-func (x *IoMeasurement) HasWrite() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 14)
-}
-
-func (x *IoMeasurement) HasWriteTime() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_WriteTime != nil
-}
-
-func (x *IoMeasurement) ClearTimestamp() {
-	x.xxx_hidden_Timestamp = nil
-}
-
-func (x *IoMeasurement) ClearHost() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
-	x.xxx_hidden_Host = nil
-}
-
-func (x *IoMeasurement) ClearPlatform() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
-	x.xxx_hidden_Platform = nil
-}
-
-func (x *IoMeasurement) ClearSource() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
-	x.xxx_hidden_Source = nil
-}
-
-func (x *IoMeasurement) ClearEvent() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
-	x.xxx_hidden_Event = nil
-}
-
-func (x *IoMeasurement) ClearDevice() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
-	x.xxx_hidden_Device = nil
-}
-
-func (x *IoMeasurement) ClearMajor() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
-	x.xxx_hidden_Major = nil
-}
-
-func (x *IoMeasurement) ClearMinor() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
-	x.xxx_hidden_Minor = nil
-}
-
-func (x *IoMeasurement) ClearTotalSize() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
-	x.xxx_hidden_TotalSize = 0
-}
-
-func (x *IoMeasurement) ClearBlockSize() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
-	x.xxx_hidden_BlockSize = 0
-}
-
-func (x *IoMeasurement) ClearReadOperations() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
-	x.xxx_hidden_ReadOperations = 0
-}
-
-func (x *IoMeasurement) ClearRead() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
-	x.xxx_hidden_Read = 0
-}
-
-func (x *IoMeasurement) ClearReadTime() {
-	x.xxx_hidden_ReadTime = nil
-}
-
-func (x *IoMeasurement) ClearWriteOperations() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
-	x.xxx_hidden_WriteOperations = 0
-}
-
-func (x *IoMeasurement) ClearWrite() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
-	x.xxx_hidden_Write = 0
-}
-
-func (x *IoMeasurement) ClearWriteTime() {
-	x.xxx_hidden_WriteTime = nil
-}
-
-type IoMeasurement_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Timestamp       *timestamppb.Timestamp
-	Host            *string
-	Platform        *string
-	Source          *string
-	Event           *string
-	Device          *string
-	Major           *string
-	Minor           *string
-	TotalSize       *int64
-	BlockSize       *int64
-	ReadOperations  *int64
-	Read            *int64
-	ReadTime        *durationpb.Duration
-	WriteOperations *int64
-	Write           *int64
-	WriteTime       *durationpb.Duration
-}
-
-func (b0 IoMeasurement_builder) Build() *IoMeasurement {
-	m0 := &IoMeasurement{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Timestamp = b.Timestamp
-	if b.Host != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 16)
-		x.xxx_hidden_Host = b.Host
-	}
-	if b.Platform != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 16)
-		x.xxx_hidden_Platform = b.Platform
-	}
-	if b.Source != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 16)
-		x.xxx_hidden_Source = b.Source
-	}
-	if b.Event != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 16)
-		x.xxx_hidden_Event = b.Event
-	}
-	if b.Device != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 16)
-		x.xxx_hidden_Device = b.Device
-	}
-	if b.Major != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 16)
-		x.xxx_hidden_Major = b.Major
-	}
-	if b.Minor != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 16)
-		x.xxx_hidden_Minor = b.Minor
-	}
-	if b.TotalSize != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 16)
-		x.xxx_hidden_TotalSize = *b.TotalSize
-	}
-	if b.BlockSize != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 16)
-		x.xxx_hidden_BlockSize = *b.BlockSize
-	}
-	if b.ReadOperations != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 16)
-		x.xxx_hidden_ReadOperations = *b.ReadOperations
-	}
-	if b.Read != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 16)
-		x.xxx_hidden_Read = *b.Read
-	}
-	x.xxx_hidden_ReadTime = b.ReadTime
-	if b.WriteOperations != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 16)
-		x.xxx_hidden_WriteOperations = *b.WriteOperations
-	}
-	if b.Write != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 16)
-		x.xxx_hidden_Write = *b.Write
-	}
-	x.xxx_hidden_WriteTime = b.WriteTime
-	return m0
-}
-
-type NetworkMeasurement struct {
-	state                         protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Timestamp          *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp"`
-	xxx_hidden_Host               *string                `protobuf:"bytes,2,opt,name=host"`
-	xxx_hidden_Platform           *string                `protobuf:"bytes,3,opt,name=platform"`
-	xxx_hidden_Source             *string                `protobuf:"bytes,4,opt,name=source"`
-	xxx_hidden_Event              *string                `protobuf:"bytes,5,opt,name=event"`
-	xxx_hidden_Name               *string                `protobuf:"bytes,6,opt,name=name"`
-	xxx_hidden_Index              int64                  `protobuf:"varint,7,opt,name=index"`
-	xxx_hidden_Flags              *string                `protobuf:"bytes,8,opt,name=flags"`
-	xxx_hidden_Mtu                int64                  `protobuf:"varint,9,opt,name=mtu"`
-	xxx_hidden_Mac                *string                `protobuf:"bytes,10,opt,name=mac"`
-	xxx_hidden_Address            *string                `protobuf:"bytes,11,opt,name=address"`
-	xxx_hidden_Netmask            *string                `protobuf:"bytes,12,opt,name=netmask"`
-	xxx_hidden_Broadcast          *string                `protobuf:"bytes,13,opt,name=broadcast"`
-	xxx_hidden_Linklocal6         *string                `protobuf:"bytes,14,opt,name=linklocal6"`
-	xxx_hidden_Address6           *string                `protobuf:"bytes,15,opt,name=address6"`
-	xxx_hidden_Receive            int64                  `protobuf:"varint,16,opt,name=receive"`
-	xxx_hidden_ReceivePackets     int64                  `protobuf:"varint,17,opt,name=receive_packets,json=receivePackets"`
-	xxx_hidden_ReceiveErrors      int64                  `protobuf:"varint,18,opt,name=receive_errors,json=receiveErrors"`
-	xxx_hidden_ReceiveDropped     int64                  `protobuf:"varint,19,opt,name=receive_dropped,json=receiveDropped"`
-	xxx_hidden_ReceiveMulticast   int64                  `protobuf:"varint,20,opt,name=receive_multicast,json=receiveMulticast"`
-	xxx_hidden_Transmit           int64                  `protobuf:"varint,21,opt,name=transmit"`
-	xxx_hidden_TransmitPackets    int64                  `protobuf:"varint,22,opt,name=transmit_packets,json=transmitPackets"`
-	xxx_hidden_TransmitErrors     int64                  `protobuf:"varint,23,opt,name=transmit_errors,json=transmitErrors"`
-	xxx_hidden_TransmitDropped    int64                  `protobuf:"varint,24,opt,name=transmit_dropped,json=transmitDropped"`
-	xxx_hidden_TransmitCollisions int64                  `protobuf:"varint,25,opt,name=transmit_collisions,json=transmitCollisions"`
-	xxx_hidden_TransmitMulticast  int64                  `protobuf:"varint,26,opt,name=transmit_multicast,json=transmitMulticast"`
-	XXX_raceDetectHookData        protoimpl.RaceDetectHookData
-	XXX_presence                  [1]uint32
-	unknownFields                 protoimpl.UnknownFields
-	sizeCache                     protoimpl.SizeCache
-}
-
-func (x *NetworkMeasurement) Reset() {
-	*x = NetworkMeasurement{}
-	mi := &file_proto_gomon_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *NetworkMeasurement) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*NetworkMeasurement) ProtoMessage() {}
-
-func (x *NetworkMeasurement) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *NetworkMeasurement) GetTimestamp() *timestamppb.Timestamp {
-	if x != nil {
-		return x.xxx_hidden_Timestamp
-	}
-	return nil
-}
-
-func (x *NetworkMeasurement) GetHost() string {
-	if x != nil {
-		if x.xxx_hidden_Host != nil {
-			return *x.xxx_hidden_Host
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *NetworkMeasurement) GetPlatform() string {
-	if x != nil {
-		if x.xxx_hidden_Platform != nil {
-			return *x.xxx_hidden_Platform
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *NetworkMeasurement) GetSource() string {
-	if x != nil {
-		if x.xxx_hidden_Source != nil {
-			return *x.xxx_hidden_Source
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *NetworkMeasurement) GetEvent() string {
-	if x != nil {
-		if x.xxx_hidden_Event != nil {
-			return *x.xxx_hidden_Event
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *NetworkMeasurement) GetName() string {
+func (x *FileObservation) GetName() string {
 	if x != nil {
 		if x.xxx_hidden_Name != nil {
 			return *x.xxx_hidden_Name
@@ -1705,742 +674,202 @@ func (x *NetworkMeasurement) GetName() string {
 	return ""
 }
 
-func (x *NetworkMeasurement) GetIndex() int64 {
+func (x *FileObservation) GetFileEventId() uint64 {
 	if x != nil {
-		return x.xxx_hidden_Index
+		return x.xxx_hidden_FileEventId
 	}
 	return 0
 }
 
-func (x *NetworkMeasurement) GetFlags() string {
+func (x *FileObservation) GetMessage() string {
 	if x != nil {
-		if x.xxx_hidden_Flags != nil {
-			return *x.xxx_hidden_Flags
+		if x.xxx_hidden_Message != nil {
+			return *x.xxx_hidden_Message
 		}
 		return ""
 	}
 	return ""
 }
 
-func (x *NetworkMeasurement) GetMtu() int64 {
-	if x != nil {
-		return x.xxx_hidden_Mtu
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetMac() string {
-	if x != nil {
-		if x.xxx_hidden_Mac != nil {
-			return *x.xxx_hidden_Mac
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *NetworkMeasurement) GetAddress() string {
-	if x != nil {
-		if x.xxx_hidden_Address != nil {
-			return *x.xxx_hidden_Address
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *NetworkMeasurement) GetNetmask() string {
-	if x != nil {
-		if x.xxx_hidden_Netmask != nil {
-			return *x.xxx_hidden_Netmask
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *NetworkMeasurement) GetBroadcast() string {
-	if x != nil {
-		if x.xxx_hidden_Broadcast != nil {
-			return *x.xxx_hidden_Broadcast
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *NetworkMeasurement) GetLinklocal6() string {
-	if x != nil {
-		if x.xxx_hidden_Linklocal6 != nil {
-			return *x.xxx_hidden_Linklocal6
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *NetworkMeasurement) GetAddress6() string {
-	if x != nil {
-		if x.xxx_hidden_Address6 != nil {
-			return *x.xxx_hidden_Address6
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *NetworkMeasurement) GetReceive() int64 {
-	if x != nil {
-		return x.xxx_hidden_Receive
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetReceivePackets() int64 {
-	if x != nil {
-		return x.xxx_hidden_ReceivePackets
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetReceiveErrors() int64 {
-	if x != nil {
-		return x.xxx_hidden_ReceiveErrors
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetReceiveDropped() int64 {
-	if x != nil {
-		return x.xxx_hidden_ReceiveDropped
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetReceiveMulticast() int64 {
-	if x != nil {
-		return x.xxx_hidden_ReceiveMulticast
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetTransmit() int64 {
-	if x != nil {
-		return x.xxx_hidden_Transmit
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetTransmitPackets() int64 {
-	if x != nil {
-		return x.xxx_hidden_TransmitPackets
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetTransmitErrors() int64 {
-	if x != nil {
-		return x.xxx_hidden_TransmitErrors
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetTransmitDropped() int64 {
-	if x != nil {
-		return x.xxx_hidden_TransmitDropped
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetTransmitCollisions() int64 {
-	if x != nil {
-		return x.xxx_hidden_TransmitCollisions
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) GetTransmitMulticast() int64 {
-	if x != nil {
-		return x.xxx_hidden_TransmitMulticast
-	}
-	return 0
-}
-
-func (x *NetworkMeasurement) SetTimestamp(v *timestamppb.Timestamp) {
+func (x *FileObservation) SetTimestamp(v *timestamppb.Timestamp) {
 	x.xxx_hidden_Timestamp = v
 }
 
-func (x *NetworkMeasurement) SetHost(v string) {
+func (x *FileObservation) SetHost(v string) {
 	x.xxx_hidden_Host = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 8)
 }
 
-func (x *NetworkMeasurement) SetPlatform(v string) {
+func (x *FileObservation) SetPlatform(v string) {
 	x.xxx_hidden_Platform = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 8)
 }
 
-func (x *NetworkMeasurement) SetSource(v string) {
+func (x *FileObservation) SetSource(v string) {
 	x.xxx_hidden_Source = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 8)
 }
 
-func (x *NetworkMeasurement) SetEvent(v string) {
+func (x *FileObservation) SetEvent(v string) {
 	x.xxx_hidden_Event = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 8)
 }
 
-func (x *NetworkMeasurement) SetName(v string) {
+func (x *FileObservation) SetName(v string) {
 	x.xxx_hidden_Name = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 26)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 8)
 }
 
-func (x *NetworkMeasurement) SetIndex(v int64) {
-	x.xxx_hidden_Index = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 26)
+func (x *FileObservation) SetFileEventId(v uint64) {
+	x.xxx_hidden_FileEventId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 8)
 }
 
-func (x *NetworkMeasurement) SetFlags(v string) {
-	x.xxx_hidden_Flags = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 26)
+func (x *FileObservation) SetMessage(v string) {
+	x.xxx_hidden_Message = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 8)
 }
 
-func (x *NetworkMeasurement) SetMtu(v int64) {
-	x.xxx_hidden_Mtu = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 26)
-}
-
-func (x *NetworkMeasurement) SetMac(v string) {
-	x.xxx_hidden_Mac = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 26)
-}
-
-func (x *NetworkMeasurement) SetAddress(v string) {
-	x.xxx_hidden_Address = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 26)
-}
-
-func (x *NetworkMeasurement) SetNetmask(v string) {
-	x.xxx_hidden_Netmask = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 26)
-}
-
-func (x *NetworkMeasurement) SetBroadcast(v string) {
-	x.xxx_hidden_Broadcast = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 26)
-}
-
-func (x *NetworkMeasurement) SetLinklocal6(v string) {
-	x.xxx_hidden_Linklocal6 = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 26)
-}
-
-func (x *NetworkMeasurement) SetAddress6(v string) {
-	x.xxx_hidden_Address6 = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 26)
-}
-
-func (x *NetworkMeasurement) SetReceive(v int64) {
-	x.xxx_hidden_Receive = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 26)
-}
-
-func (x *NetworkMeasurement) SetReceivePackets(v int64) {
-	x.xxx_hidden_ReceivePackets = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 26)
-}
-
-func (x *NetworkMeasurement) SetReceiveErrors(v int64) {
-	x.xxx_hidden_ReceiveErrors = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 26)
-}
-
-func (x *NetworkMeasurement) SetReceiveDropped(v int64) {
-	x.xxx_hidden_ReceiveDropped = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 26)
-}
-
-func (x *NetworkMeasurement) SetReceiveMulticast(v int64) {
-	x.xxx_hidden_ReceiveMulticast = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 26)
-}
-
-func (x *NetworkMeasurement) SetTransmit(v int64) {
-	x.xxx_hidden_Transmit = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 26)
-}
-
-func (x *NetworkMeasurement) SetTransmitPackets(v int64) {
-	x.xxx_hidden_TransmitPackets = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 21, 26)
-}
-
-func (x *NetworkMeasurement) SetTransmitErrors(v int64) {
-	x.xxx_hidden_TransmitErrors = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 22, 26)
-}
-
-func (x *NetworkMeasurement) SetTransmitDropped(v int64) {
-	x.xxx_hidden_TransmitDropped = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 26)
-}
-
-func (x *NetworkMeasurement) SetTransmitCollisions(v int64) {
-	x.xxx_hidden_TransmitCollisions = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 26)
-}
-
-func (x *NetworkMeasurement) SetTransmitMulticast(v int64) {
-	x.xxx_hidden_TransmitMulticast = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 25, 26)
-}
-
-func (x *NetworkMeasurement) HasTimestamp() bool {
+func (x *FileObservation) HasTimestamp() bool {
 	if x == nil {
 		return false
 	}
 	return x.xxx_hidden_Timestamp != nil
 }
 
-func (x *NetworkMeasurement) HasHost() bool {
+func (x *FileObservation) HasHost() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
 }
 
-func (x *NetworkMeasurement) HasPlatform() bool {
+func (x *FileObservation) HasPlatform() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
 }
 
-func (x *NetworkMeasurement) HasSource() bool {
+func (x *FileObservation) HasSource() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
 }
 
-func (x *NetworkMeasurement) HasEvent() bool {
+func (x *FileObservation) HasEvent() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
 }
 
-func (x *NetworkMeasurement) HasName() bool {
+func (x *FileObservation) HasName() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
 }
 
-func (x *NetworkMeasurement) HasIndex() bool {
+func (x *FileObservation) HasFileEventId() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
 }
 
-func (x *NetworkMeasurement) HasFlags() bool {
+func (x *FileObservation) HasMessage() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
 }
 
-func (x *NetworkMeasurement) HasMtu() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
-}
-
-func (x *NetworkMeasurement) HasMac() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
-}
-
-func (x *NetworkMeasurement) HasAddress() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
-}
-
-func (x *NetworkMeasurement) HasNetmask() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
-}
-
-func (x *NetworkMeasurement) HasBroadcast() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 12)
-}
-
-func (x *NetworkMeasurement) HasLinklocal6() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
-}
-
-func (x *NetworkMeasurement) HasAddress6() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 14)
-}
-
-func (x *NetworkMeasurement) HasReceive() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 15)
-}
-
-func (x *NetworkMeasurement) HasReceivePackets() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 16)
-}
-
-func (x *NetworkMeasurement) HasReceiveErrors() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 17)
-}
-
-func (x *NetworkMeasurement) HasReceiveDropped() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 18)
-}
-
-func (x *NetworkMeasurement) HasReceiveMulticast() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 19)
-}
-
-func (x *NetworkMeasurement) HasTransmit() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 20)
-}
-
-func (x *NetworkMeasurement) HasTransmitPackets() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 21)
-}
-
-func (x *NetworkMeasurement) HasTransmitErrors() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 22)
-}
-
-func (x *NetworkMeasurement) HasTransmitDropped() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 23)
-}
-
-func (x *NetworkMeasurement) HasTransmitCollisions() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 24)
-}
-
-func (x *NetworkMeasurement) HasTransmitMulticast() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 25)
-}
-
-func (x *NetworkMeasurement) ClearTimestamp() {
+func (x *FileObservation) ClearTimestamp() {
 	x.xxx_hidden_Timestamp = nil
 }
 
-func (x *NetworkMeasurement) ClearHost() {
+func (x *FileObservation) ClearHost() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
 	x.xxx_hidden_Host = nil
 }
 
-func (x *NetworkMeasurement) ClearPlatform() {
+func (x *FileObservation) ClearPlatform() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
 	x.xxx_hidden_Platform = nil
 }
 
-func (x *NetworkMeasurement) ClearSource() {
+func (x *FileObservation) ClearSource() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
 	x.xxx_hidden_Source = nil
 }
 
-func (x *NetworkMeasurement) ClearEvent() {
+func (x *FileObservation) ClearEvent() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
 	x.xxx_hidden_Event = nil
 }
 
-func (x *NetworkMeasurement) ClearName() {
+func (x *FileObservation) ClearName() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
 	x.xxx_hidden_Name = nil
 }
 
-func (x *NetworkMeasurement) ClearIndex() {
+func (x *FileObservation) ClearFileEventId() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
-	x.xxx_hidden_Index = 0
+	x.xxx_hidden_FileEventId = 0
 }
 
-func (x *NetworkMeasurement) ClearFlags() {
+func (x *FileObservation) ClearMessage() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
-	x.xxx_hidden_Flags = nil
+	x.xxx_hidden_Message = nil
 }
 
-func (x *NetworkMeasurement) ClearMtu() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
-	x.xxx_hidden_Mtu = 0
-}
-
-func (x *NetworkMeasurement) ClearMac() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
-	x.xxx_hidden_Mac = nil
-}
-
-func (x *NetworkMeasurement) ClearAddress() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
-	x.xxx_hidden_Address = nil
-}
-
-func (x *NetworkMeasurement) ClearNetmask() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
-	x.xxx_hidden_Netmask = nil
-}
-
-func (x *NetworkMeasurement) ClearBroadcast() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 12)
-	x.xxx_hidden_Broadcast = nil
-}
-
-func (x *NetworkMeasurement) ClearLinklocal6() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
-	x.xxx_hidden_Linklocal6 = nil
-}
-
-func (x *NetworkMeasurement) ClearAddress6() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
-	x.xxx_hidden_Address6 = nil
-}
-
-func (x *NetworkMeasurement) ClearReceive() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 15)
-	x.xxx_hidden_Receive = 0
-}
-
-func (x *NetworkMeasurement) ClearReceivePackets() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 16)
-	x.xxx_hidden_ReceivePackets = 0
-}
-
-func (x *NetworkMeasurement) ClearReceiveErrors() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 17)
-	x.xxx_hidden_ReceiveErrors = 0
-}
-
-func (x *NetworkMeasurement) ClearReceiveDropped() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 18)
-	x.xxx_hidden_ReceiveDropped = 0
-}
-
-func (x *NetworkMeasurement) ClearReceiveMulticast() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 19)
-	x.xxx_hidden_ReceiveMulticast = 0
-}
-
-func (x *NetworkMeasurement) ClearTransmit() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 20)
-	x.xxx_hidden_Transmit = 0
-}
-
-func (x *NetworkMeasurement) ClearTransmitPackets() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 21)
-	x.xxx_hidden_TransmitPackets = 0
-}
-
-func (x *NetworkMeasurement) ClearTransmitErrors() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 22)
-	x.xxx_hidden_TransmitErrors = 0
-}
-
-func (x *NetworkMeasurement) ClearTransmitDropped() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 23)
-	x.xxx_hidden_TransmitDropped = 0
-}
-
-func (x *NetworkMeasurement) ClearTransmitCollisions() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 24)
-	x.xxx_hidden_TransmitCollisions = 0
-}
-
-func (x *NetworkMeasurement) ClearTransmitMulticast() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 25)
-	x.xxx_hidden_TransmitMulticast = 0
-}
-
-type NetworkMeasurement_builder struct {
+type FileObservation_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Timestamp          *timestamppb.Timestamp
-	Host               *string
-	Platform           *string
-	Source             *string
-	Event              *string
-	Name               *string
-	Index              *int64
-	Flags              *string
-	Mtu                *int64
-	Mac                *string
-	Address            *string
-	Netmask            *string
-	Broadcast          *string
-	Linklocal6         *string
-	Address6           *string
-	Receive            *int64
-	ReceivePackets     *int64
-	ReceiveErrors      *int64
-	ReceiveDropped     *int64
-	ReceiveMulticast   *int64
-	Transmit           *int64
-	TransmitPackets    *int64
-	TransmitErrors     *int64
-	TransmitDropped    *int64
-	TransmitCollisions *int64
-	TransmitMulticast  *int64
+	Timestamp   *timestamppb.Timestamp
+	Host        *string
+	Platform    *string
+	Source      *string
+	Event       *string
+	Name        *string
+	FileEventId *uint64
+	Message     *string
 }
 
-func (b0 NetworkMeasurement_builder) Build() *NetworkMeasurement {
-	m0 := &NetworkMeasurement{}
+func (b0 FileObservation_builder) Build() *FileObservation {
+	m0 := &FileObservation{}
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Timestamp = b.Timestamp
 	if b.Host != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 8)
 		x.xxx_hidden_Host = b.Host
 	}
 	if b.Platform != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 8)
 		x.xxx_hidden_Platform = b.Platform
 	}
 	if b.Source != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 8)
 		x.xxx_hidden_Source = b.Source
 	}
 	if b.Event != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 8)
 		x.xxx_hidden_Event = b.Event
 	}
 	if b.Name != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 26)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 8)
 		x.xxx_hidden_Name = b.Name
 	}
-	if b.Index != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 26)
-		x.xxx_hidden_Index = *b.Index
+	if b.FileEventId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 8)
+		x.xxx_hidden_FileEventId = *b.FileEventId
 	}
-	if b.Flags != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 26)
-		x.xxx_hidden_Flags = b.Flags
-	}
-	if b.Mtu != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 26)
-		x.xxx_hidden_Mtu = *b.Mtu
-	}
-	if b.Mac != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 26)
-		x.xxx_hidden_Mac = b.Mac
-	}
-	if b.Address != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 26)
-		x.xxx_hidden_Address = b.Address
-	}
-	if b.Netmask != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 26)
-		x.xxx_hidden_Netmask = b.Netmask
-	}
-	if b.Broadcast != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 26)
-		x.xxx_hidden_Broadcast = b.Broadcast
-	}
-	if b.Linklocal6 != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 26)
-		x.xxx_hidden_Linklocal6 = b.Linklocal6
-	}
-	if b.Address6 != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 26)
-		x.xxx_hidden_Address6 = b.Address6
-	}
-	if b.Receive != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 26)
-		x.xxx_hidden_Receive = *b.Receive
-	}
-	if b.ReceivePackets != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 26)
-		x.xxx_hidden_ReceivePackets = *b.ReceivePackets
-	}
-	if b.ReceiveErrors != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 26)
-		x.xxx_hidden_ReceiveErrors = *b.ReceiveErrors
-	}
-	if b.ReceiveDropped != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 26)
-		x.xxx_hidden_ReceiveDropped = *b.ReceiveDropped
-	}
-	if b.ReceiveMulticast != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 26)
-		x.xxx_hidden_ReceiveMulticast = *b.ReceiveMulticast
-	}
-	if b.Transmit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 26)
-		x.xxx_hidden_Transmit = *b.Transmit
-	}
-	if b.TransmitPackets != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 21, 26)
-		x.xxx_hidden_TransmitPackets = *b.TransmitPackets
-	}
-	if b.TransmitErrors != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 22, 26)
-		x.xxx_hidden_TransmitErrors = *b.TransmitErrors
-	}
-	if b.TransmitDropped != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 26)
-		x.xxx_hidden_TransmitDropped = *b.TransmitDropped
-	}
-	if b.TransmitCollisions != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 26)
-		x.xxx_hidden_TransmitCollisions = *b.TransmitCollisions
-	}
-	if b.TransmitMulticast != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 25, 26)
-		x.xxx_hidden_TransmitMulticast = *b.TransmitMulticast
+	if b.Message != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 8)
+		x.xxx_hidden_Message = b.Message
 	}
 	return m0
 }
@@ -2464,7 +893,7 @@ type LogsObservation struct {
 
 func (x *LogsObservation) Reset() {
 	*x = LogsObservation{}
-	mi := &file_proto_gomon_proto_msgTypes[5]
+	mi := &file_proto_gomon_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2476,7 +905,7 @@ func (x *LogsObservation) String() string {
 func (*LogsObservation) ProtoMessage() {}
 
 func (x *LogsObservation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[5]
+	mi := &file_proto_gomon_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2795,7 +1224,7 @@ type ProcessObservation struct {
 
 func (x *ProcessObservation) Reset() {
 	*x = ProcessObservation{}
-	mi := &file_proto_gomon_proto_msgTypes[6]
+	mi := &file_proto_gomon_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2807,7 +1236,7 @@ func (x *ProcessObservation) String() string {
 func (*ProcessObservation) ProtoMessage() {}
 
 func (x *ProcessObservation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[6]
+	mi := &file_proto_gomon_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3144,7 +1573,7 @@ type ProcessMeasurement struct {
 
 func (x *ProcessMeasurement) Reset() {
 	*x = ProcessMeasurement{}
-	mi := &file_proto_gomon_proto_msgTypes[7]
+	mi := &file_proto_gomon_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3156,7 +1585,7 @@ func (x *ProcessMeasurement) String() string {
 func (*ProcessMeasurement) ProtoMessage() {}
 
 func (x *ProcessMeasurement) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[7]
+	mi := &file_proto_gomon_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4159,403 +2588,6 @@ func (b0 ProcessMeasurement_builder) Build() *ProcessMeasurement {
 	return m0
 }
 
-type ServeMeasurement struct {
-	state                     protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Timestamp      *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp"`
-	xxx_hidden_Host           *string                `protobuf:"bytes,2,opt,name=host"`
-	xxx_hidden_Platform       *string                `protobuf:"bytes,3,opt,name=platform"`
-	xxx_hidden_Source         *string                `protobuf:"bytes,4,opt,name=source"`
-	xxx_hidden_Event          *string                `protobuf:"bytes,5,opt,name=event"`
-	xxx_hidden_Name           *string                `protobuf:"bytes,6,opt,name=name"`
-	xxx_hidden_Address        *string                `protobuf:"bytes,7,opt,name=address"`
-	xxx_hidden_Endpoints      []string               `protobuf:"bytes,8,rep,name=endpoints"`
-	xxx_hidden_HttpRequests   int64                  `protobuf:"varint,9,opt,name=http_requests,json=httpRequests"`
-	xxx_hidden_Collections    int64                  `protobuf:"varint,10,opt,name=collections"`
-	xxx_hidden_CollectionTime *durationpb.Duration   `protobuf:"bytes,11,opt,name=collection_time,json=collectionTime"`
-	xxx_hidden_LokiStreams    int64                  `protobuf:"varint,12,opt,name=loki_streams,json=lokiStreams"`
-	XXX_raceDetectHookData    protoimpl.RaceDetectHookData
-	XXX_presence              [1]uint32
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
-}
-
-func (x *ServeMeasurement) Reset() {
-	*x = ServeMeasurement{}
-	mi := &file_proto_gomon_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ServeMeasurement) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ServeMeasurement) ProtoMessage() {}
-
-func (x *ServeMeasurement) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *ServeMeasurement) GetTimestamp() *timestamppb.Timestamp {
-	if x != nil {
-		return x.xxx_hidden_Timestamp
-	}
-	return nil
-}
-
-func (x *ServeMeasurement) GetHost() string {
-	if x != nil {
-		if x.xxx_hidden_Host != nil {
-			return *x.xxx_hidden_Host
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ServeMeasurement) GetPlatform() string {
-	if x != nil {
-		if x.xxx_hidden_Platform != nil {
-			return *x.xxx_hidden_Platform
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ServeMeasurement) GetSource() string {
-	if x != nil {
-		if x.xxx_hidden_Source != nil {
-			return *x.xxx_hidden_Source
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ServeMeasurement) GetEvent() string {
-	if x != nil {
-		if x.xxx_hidden_Event != nil {
-			return *x.xxx_hidden_Event
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ServeMeasurement) GetName() string {
-	if x != nil {
-		if x.xxx_hidden_Name != nil {
-			return *x.xxx_hidden_Name
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ServeMeasurement) GetAddress() string {
-	if x != nil {
-		if x.xxx_hidden_Address != nil {
-			return *x.xxx_hidden_Address
-		}
-		return ""
-	}
-	return ""
-}
-
-func (x *ServeMeasurement) GetEndpoints() []string {
-	if x != nil {
-		return x.xxx_hidden_Endpoints
-	}
-	return nil
-}
-
-func (x *ServeMeasurement) GetHttpRequests() int64 {
-	if x != nil {
-		return x.xxx_hidden_HttpRequests
-	}
-	return 0
-}
-
-func (x *ServeMeasurement) GetCollections() int64 {
-	if x != nil {
-		return x.xxx_hidden_Collections
-	}
-	return 0
-}
-
-func (x *ServeMeasurement) GetCollectionTime() *durationpb.Duration {
-	if x != nil {
-		return x.xxx_hidden_CollectionTime
-	}
-	return nil
-}
-
-func (x *ServeMeasurement) GetLokiStreams() int64 {
-	if x != nil {
-		return x.xxx_hidden_LokiStreams
-	}
-	return 0
-}
-
-func (x *ServeMeasurement) SetTimestamp(v *timestamppb.Timestamp) {
-	x.xxx_hidden_Timestamp = v
-}
-
-func (x *ServeMeasurement) SetHost(v string) {
-	x.xxx_hidden_Host = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 12)
-}
-
-func (x *ServeMeasurement) SetPlatform(v string) {
-	x.xxx_hidden_Platform = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 12)
-}
-
-func (x *ServeMeasurement) SetSource(v string) {
-	x.xxx_hidden_Source = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 12)
-}
-
-func (x *ServeMeasurement) SetEvent(v string) {
-	x.xxx_hidden_Event = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 12)
-}
-
-func (x *ServeMeasurement) SetName(v string) {
-	x.xxx_hidden_Name = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 12)
-}
-
-func (x *ServeMeasurement) SetAddress(v string) {
-	x.xxx_hidden_Address = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 12)
-}
-
-func (x *ServeMeasurement) SetEndpoints(v []string) {
-	x.xxx_hidden_Endpoints = v
-}
-
-func (x *ServeMeasurement) SetHttpRequests(v int64) {
-	x.xxx_hidden_HttpRequests = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 12)
-}
-
-func (x *ServeMeasurement) SetCollections(v int64) {
-	x.xxx_hidden_Collections = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 12)
-}
-
-func (x *ServeMeasurement) SetCollectionTime(v *durationpb.Duration) {
-	x.xxx_hidden_CollectionTime = v
-}
-
-func (x *ServeMeasurement) SetLokiStreams(v int64) {
-	x.xxx_hidden_LokiStreams = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 12)
-}
-
-func (x *ServeMeasurement) HasTimestamp() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Timestamp != nil
-}
-
-func (x *ServeMeasurement) HasHost() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
-}
-
-func (x *ServeMeasurement) HasPlatform() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
-}
-
-func (x *ServeMeasurement) HasSource() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
-}
-
-func (x *ServeMeasurement) HasEvent() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
-}
-
-func (x *ServeMeasurement) HasName() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
-}
-
-func (x *ServeMeasurement) HasAddress() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
-}
-
-func (x *ServeMeasurement) HasHttpRequests() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
-}
-
-func (x *ServeMeasurement) HasCollections() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
-}
-
-func (x *ServeMeasurement) HasCollectionTime() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_CollectionTime != nil
-}
-
-func (x *ServeMeasurement) HasLokiStreams() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
-}
-
-func (x *ServeMeasurement) ClearTimestamp() {
-	x.xxx_hidden_Timestamp = nil
-}
-
-func (x *ServeMeasurement) ClearHost() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
-	x.xxx_hidden_Host = nil
-}
-
-func (x *ServeMeasurement) ClearPlatform() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
-	x.xxx_hidden_Platform = nil
-}
-
-func (x *ServeMeasurement) ClearSource() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
-	x.xxx_hidden_Source = nil
-}
-
-func (x *ServeMeasurement) ClearEvent() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
-	x.xxx_hidden_Event = nil
-}
-
-func (x *ServeMeasurement) ClearName() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
-	x.xxx_hidden_Name = nil
-}
-
-func (x *ServeMeasurement) ClearAddress() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
-	x.xxx_hidden_Address = nil
-}
-
-func (x *ServeMeasurement) ClearHttpRequests() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
-	x.xxx_hidden_HttpRequests = 0
-}
-
-func (x *ServeMeasurement) ClearCollections() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
-	x.xxx_hidden_Collections = 0
-}
-
-func (x *ServeMeasurement) ClearCollectionTime() {
-	x.xxx_hidden_CollectionTime = nil
-}
-
-func (x *ServeMeasurement) ClearLokiStreams() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
-	x.xxx_hidden_LokiStreams = 0
-}
-
-type ServeMeasurement_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Timestamp      *timestamppb.Timestamp
-	Host           *string
-	Platform       *string
-	Source         *string
-	Event          *string
-	Name           *string
-	Address        *string
-	Endpoints      []string
-	HttpRequests   *int64
-	Collections    *int64
-	CollectionTime *durationpb.Duration
-	LokiStreams    *int64
-}
-
-func (b0 ServeMeasurement_builder) Build() *ServeMeasurement {
-	m0 := &ServeMeasurement{}
-	b, x := &b0, m0
-	_, _ = b, x
-	x.xxx_hidden_Timestamp = b.Timestamp
-	if b.Host != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 12)
-		x.xxx_hidden_Host = b.Host
-	}
-	if b.Platform != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 12)
-		x.xxx_hidden_Platform = b.Platform
-	}
-	if b.Source != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 12)
-		x.xxx_hidden_Source = b.Source
-	}
-	if b.Event != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 12)
-		x.xxx_hidden_Event = b.Event
-	}
-	if b.Name != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 12)
-		x.xxx_hidden_Name = b.Name
-	}
-	if b.Address != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 12)
-		x.xxx_hidden_Address = b.Address
-	}
-	x.xxx_hidden_Endpoints = b.Endpoints
-	if b.HttpRequests != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 12)
-		x.xxx_hidden_HttpRequests = *b.HttpRequests
-	}
-	if b.Collections != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 12)
-		x.xxx_hidden_Collections = *b.Collections
-	}
-	x.xxx_hidden_CollectionTime = b.CollectionTime
-	if b.LokiStreams != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 12)
-		x.xxx_hidden_LokiStreams = *b.LokiStreams
-	}
-	return m0
-}
-
 type SystemMeasurement struct {
 	state                          protoimpl.MessageState         `protogen:"opaque.v1"`
 	xxx_hidden_Timestamp           *timestamppb.Timestamp         `protobuf:"bytes,1,opt,name=timestamp"`
@@ -4586,7 +2618,7 @@ type SystemMeasurement struct {
 
 func (x *SystemMeasurement) Reset() {
 	*x = SystemMeasurement{}
-	mi := &file_proto_gomon_proto_msgTypes[9]
+	mi := &file_proto_gomon_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4598,7 +2630,7 @@ func (x *SystemMeasurement) String() string {
 func (*SystemMeasurement) ProtoMessage() {}
 
 func (x *SystemMeasurement) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[9]
+	mi := &file_proto_gomon_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5162,36 +3194,1908 @@ func (b0 SystemMeasurement_builder) Build() *SystemMeasurement {
 	return m0
 }
 
-type FileObservation struct {
+type FilesystemMeasurement struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Timestamp   *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp"`
 	xxx_hidden_Host        *string                `protobuf:"bytes,2,opt,name=host"`
 	xxx_hidden_Platform    *string                `protobuf:"bytes,3,opt,name=platform"`
 	xxx_hidden_Source      *string                `protobuf:"bytes,4,opt,name=source"`
 	xxx_hidden_Event       *string                `protobuf:"bytes,5,opt,name=event"`
-	xxx_hidden_Name        *string                `protobuf:"bytes,6,opt,name=name"`
-	xxx_hidden_FileEventId uint64                 `protobuf:"varint,7,opt,name=file_event_id,json=fileEventId"`
-	xxx_hidden_Message     *string                `protobuf:"bytes,8,opt,name=message"`
+	xxx_hidden_Mount       *string                `protobuf:"bytes,6,opt,name=mount"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,7,opt,name=path"`
+	xxx_hidden_Type        *string                `protobuf:"bytes,8,opt,name=type"`
+	xxx_hidden_Total       int64                  `protobuf:"varint,9,opt,name=total"`
+	xxx_hidden_Used        int64                  `protobuf:"varint,10,opt,name=used"`
+	xxx_hidden_Free        int64                  `protobuf:"varint,11,opt,name=free"`
+	xxx_hidden_Available   int64                  `protobuf:"varint,12,opt,name=available"`
+	xxx_hidden_Files       int64                  `protobuf:"varint,13,opt,name=files"`
+	xxx_hidden_FreeFiles   int64                  `protobuf:"varint,14,opt,name=free_files,json=freeFiles"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
 
-func (x *FileObservation) Reset() {
-	*x = FileObservation{}
+func (x *FilesystemMeasurement) Reset() {
+	*x = FilesystemMeasurement{}
+	mi := &file_proto_gomon_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FilesystemMeasurement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FilesystemMeasurement) ProtoMessage() {}
+
+func (x *FilesystemMeasurement) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_gomon_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *FilesystemMeasurement) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_Timestamp
+	}
+	return nil
+}
+
+func (x *FilesystemMeasurement) GetHost() string {
+	if x != nil {
+		if x.xxx_hidden_Host != nil {
+			return *x.xxx_hidden_Host
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *FilesystemMeasurement) GetPlatform() string {
+	if x != nil {
+		if x.xxx_hidden_Platform != nil {
+			return *x.xxx_hidden_Platform
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *FilesystemMeasurement) GetSource() string {
+	if x != nil {
+		if x.xxx_hidden_Source != nil {
+			return *x.xxx_hidden_Source
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *FilesystemMeasurement) GetEvent() string {
+	if x != nil {
+		if x.xxx_hidden_Event != nil {
+			return *x.xxx_hidden_Event
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *FilesystemMeasurement) GetMount() string {
+	if x != nil {
+		if x.xxx_hidden_Mount != nil {
+			return *x.xxx_hidden_Mount
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *FilesystemMeasurement) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *FilesystemMeasurement) GetType() string {
+	if x != nil {
+		if x.xxx_hidden_Type != nil {
+			return *x.xxx_hidden_Type
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *FilesystemMeasurement) GetTotal() int64 {
+	if x != nil {
+		return x.xxx_hidden_Total
+	}
+	return 0
+}
+
+func (x *FilesystemMeasurement) GetUsed() int64 {
+	if x != nil {
+		return x.xxx_hidden_Used
+	}
+	return 0
+}
+
+func (x *FilesystemMeasurement) GetFree() int64 {
+	if x != nil {
+		return x.xxx_hidden_Free
+	}
+	return 0
+}
+
+func (x *FilesystemMeasurement) GetAvailable() int64 {
+	if x != nil {
+		return x.xxx_hidden_Available
+	}
+	return 0
+}
+
+func (x *FilesystemMeasurement) GetFiles() int64 {
+	if x != nil {
+		return x.xxx_hidden_Files
+	}
+	return 0
+}
+
+func (x *FilesystemMeasurement) GetFreeFiles() int64 {
+	if x != nil {
+		return x.xxx_hidden_FreeFiles
+	}
+	return 0
+}
+
+func (x *FilesystemMeasurement) SetTimestamp(v *timestamppb.Timestamp) {
+	x.xxx_hidden_Timestamp = v
+}
+
+func (x *FilesystemMeasurement) SetHost(v string) {
+	x.xxx_hidden_Host = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 14)
+}
+
+func (x *FilesystemMeasurement) SetPlatform(v string) {
+	x.xxx_hidden_Platform = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 14)
+}
+
+func (x *FilesystemMeasurement) SetSource(v string) {
+	x.xxx_hidden_Source = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 14)
+}
+
+func (x *FilesystemMeasurement) SetEvent(v string) {
+	x.xxx_hidden_Event = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 14)
+}
+
+func (x *FilesystemMeasurement) SetMount(v string) {
+	x.xxx_hidden_Mount = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 14)
+}
+
+func (x *FilesystemMeasurement) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 14)
+}
+
+func (x *FilesystemMeasurement) SetType(v string) {
+	x.xxx_hidden_Type = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 14)
+}
+
+func (x *FilesystemMeasurement) SetTotal(v int64) {
+	x.xxx_hidden_Total = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 14)
+}
+
+func (x *FilesystemMeasurement) SetUsed(v int64) {
+	x.xxx_hidden_Used = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 14)
+}
+
+func (x *FilesystemMeasurement) SetFree(v int64) {
+	x.xxx_hidden_Free = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 14)
+}
+
+func (x *FilesystemMeasurement) SetAvailable(v int64) {
+	x.xxx_hidden_Available = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 14)
+}
+
+func (x *FilesystemMeasurement) SetFiles(v int64) {
+	x.xxx_hidden_Files = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 14)
+}
+
+func (x *FilesystemMeasurement) SetFreeFiles(v int64) {
+	x.xxx_hidden_FreeFiles = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 14)
+}
+
+func (x *FilesystemMeasurement) HasTimestamp() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Timestamp != nil
+}
+
+func (x *FilesystemMeasurement) HasHost() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *FilesystemMeasurement) HasPlatform() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *FilesystemMeasurement) HasSource() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *FilesystemMeasurement) HasEvent() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *FilesystemMeasurement) HasMount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *FilesystemMeasurement) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *FilesystemMeasurement) HasType() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *FilesystemMeasurement) HasTotal() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
+}
+
+func (x *FilesystemMeasurement) HasUsed() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *FilesystemMeasurement) HasFree() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
+}
+
+func (x *FilesystemMeasurement) HasAvailable() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
+}
+
+func (x *FilesystemMeasurement) HasFiles() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 12)
+}
+
+func (x *FilesystemMeasurement) HasFreeFiles() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
+}
+
+func (x *FilesystemMeasurement) ClearTimestamp() {
+	x.xxx_hidden_Timestamp = nil
+}
+
+func (x *FilesystemMeasurement) ClearHost() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Host = nil
+}
+
+func (x *FilesystemMeasurement) ClearPlatform() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Platform = nil
+}
+
+func (x *FilesystemMeasurement) ClearSource() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Source = nil
+}
+
+func (x *FilesystemMeasurement) ClearEvent() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_Event = nil
+}
+
+func (x *FilesystemMeasurement) ClearMount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_Mount = nil
+}
+
+func (x *FilesystemMeasurement) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *FilesystemMeasurement) ClearType() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Type = nil
+}
+
+func (x *FilesystemMeasurement) ClearTotal() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
+	x.xxx_hidden_Total = 0
+}
+
+func (x *FilesystemMeasurement) ClearUsed() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_Used = 0
+}
+
+func (x *FilesystemMeasurement) ClearFree() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
+	x.xxx_hidden_Free = 0
+}
+
+func (x *FilesystemMeasurement) ClearAvailable() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
+	x.xxx_hidden_Available = 0
+}
+
+func (x *FilesystemMeasurement) ClearFiles() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 12)
+	x.xxx_hidden_Files = 0
+}
+
+func (x *FilesystemMeasurement) ClearFreeFiles() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
+	x.xxx_hidden_FreeFiles = 0
+}
+
+type FilesystemMeasurement_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Timestamp *timestamppb.Timestamp
+	Host      *string
+	Platform  *string
+	Source    *string
+	Event     *string
+	Mount     *string
+	Path      *string
+	Type      *string
+	Total     *int64
+	Used      *int64
+	Free      *int64
+	Available *int64
+	Files     *int64
+	FreeFiles *int64
+}
+
+func (b0 FilesystemMeasurement_builder) Build() *FilesystemMeasurement {
+	m0 := &FilesystemMeasurement{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Timestamp = b.Timestamp
+	if b.Host != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 14)
+		x.xxx_hidden_Host = b.Host
+	}
+	if b.Platform != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 14)
+		x.xxx_hidden_Platform = b.Platform
+	}
+	if b.Source != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 14)
+		x.xxx_hidden_Source = b.Source
+	}
+	if b.Event != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 14)
+		x.xxx_hidden_Event = b.Event
+	}
+	if b.Mount != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 14)
+		x.xxx_hidden_Mount = b.Mount
+	}
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 14)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Type != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 14)
+		x.xxx_hidden_Type = b.Type
+	}
+	if b.Total != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 14)
+		x.xxx_hidden_Total = *b.Total
+	}
+	if b.Used != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 14)
+		x.xxx_hidden_Used = *b.Used
+	}
+	if b.Free != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 14)
+		x.xxx_hidden_Free = *b.Free
+	}
+	if b.Available != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 14)
+		x.xxx_hidden_Available = *b.Available
+	}
+	if b.Files != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 14)
+		x.xxx_hidden_Files = *b.Files
+	}
+	if b.FreeFiles != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 14)
+		x.xxx_hidden_FreeFiles = *b.FreeFiles
+	}
+	return m0
+}
+
+type IoMeasurement struct {
+	state                      protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Timestamp       *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp"`
+	xxx_hidden_Host            *string                `protobuf:"bytes,2,opt,name=host"`
+	xxx_hidden_Platform        *string                `protobuf:"bytes,3,opt,name=platform"`
+	xxx_hidden_Source          *string                `protobuf:"bytes,4,opt,name=source"`
+	xxx_hidden_Event           *string                `protobuf:"bytes,5,opt,name=event"`
+	xxx_hidden_Device          *string                `protobuf:"bytes,6,opt,name=device"`
+	xxx_hidden_Major           *string                `protobuf:"bytes,7,opt,name=major"`
+	xxx_hidden_Minor           *string                `protobuf:"bytes,8,opt,name=minor"`
+	xxx_hidden_TotalSize       int64                  `protobuf:"varint,9,opt,name=total_size,json=totalSize"`
+	xxx_hidden_BlockSize       int64                  `protobuf:"varint,10,opt,name=block_size,json=blockSize"`
+	xxx_hidden_ReadOperations  int64                  `protobuf:"varint,11,opt,name=read_operations,json=readOperations"`
+	xxx_hidden_Read            int64                  `protobuf:"varint,12,opt,name=read"`
+	xxx_hidden_ReadTime        *durationpb.Duration   `protobuf:"bytes,13,opt,name=read_time,json=readTime"`
+	xxx_hidden_WriteOperations int64                  `protobuf:"varint,14,opt,name=write_operations,json=writeOperations"`
+	xxx_hidden_Write           int64                  `protobuf:"varint,15,opt,name=write"`
+	xxx_hidden_WriteTime       *durationpb.Duration   `protobuf:"bytes,16,opt,name=write_time,json=writeTime"`
+	XXX_raceDetectHookData     protoimpl.RaceDetectHookData
+	XXX_presence               [1]uint32
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
+}
+
+func (x *IoMeasurement) Reset() {
+	*x = IoMeasurement{}
+	mi := &file_proto_gomon_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IoMeasurement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IoMeasurement) ProtoMessage() {}
+
+func (x *IoMeasurement) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_gomon_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IoMeasurement) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_Timestamp
+	}
+	return nil
+}
+
+func (x *IoMeasurement) GetHost() string {
+	if x != nil {
+		if x.xxx_hidden_Host != nil {
+			return *x.xxx_hidden_Host
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IoMeasurement) GetPlatform() string {
+	if x != nil {
+		if x.xxx_hidden_Platform != nil {
+			return *x.xxx_hidden_Platform
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IoMeasurement) GetSource() string {
+	if x != nil {
+		if x.xxx_hidden_Source != nil {
+			return *x.xxx_hidden_Source
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IoMeasurement) GetEvent() string {
+	if x != nil {
+		if x.xxx_hidden_Event != nil {
+			return *x.xxx_hidden_Event
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IoMeasurement) GetDevice() string {
+	if x != nil {
+		if x.xxx_hidden_Device != nil {
+			return *x.xxx_hidden_Device
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IoMeasurement) GetMajor() string {
+	if x != nil {
+		if x.xxx_hidden_Major != nil {
+			return *x.xxx_hidden_Major
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IoMeasurement) GetMinor() string {
+	if x != nil {
+		if x.xxx_hidden_Minor != nil {
+			return *x.xxx_hidden_Minor
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IoMeasurement) GetTotalSize() int64 {
+	if x != nil {
+		return x.xxx_hidden_TotalSize
+	}
+	return 0
+}
+
+func (x *IoMeasurement) GetBlockSize() int64 {
+	if x != nil {
+		return x.xxx_hidden_BlockSize
+	}
+	return 0
+}
+
+func (x *IoMeasurement) GetReadOperations() int64 {
+	if x != nil {
+		return x.xxx_hidden_ReadOperations
+	}
+	return 0
+}
+
+func (x *IoMeasurement) GetRead() int64 {
+	if x != nil {
+		return x.xxx_hidden_Read
+	}
+	return 0
+}
+
+func (x *IoMeasurement) GetReadTime() *durationpb.Duration {
+	if x != nil {
+		return x.xxx_hidden_ReadTime
+	}
+	return nil
+}
+
+func (x *IoMeasurement) GetWriteOperations() int64 {
+	if x != nil {
+		return x.xxx_hidden_WriteOperations
+	}
+	return 0
+}
+
+func (x *IoMeasurement) GetWrite() int64 {
+	if x != nil {
+		return x.xxx_hidden_Write
+	}
+	return 0
+}
+
+func (x *IoMeasurement) GetWriteTime() *durationpb.Duration {
+	if x != nil {
+		return x.xxx_hidden_WriteTime
+	}
+	return nil
+}
+
+func (x *IoMeasurement) SetTimestamp(v *timestamppb.Timestamp) {
+	x.xxx_hidden_Timestamp = v
+}
+
+func (x *IoMeasurement) SetHost(v string) {
+	x.xxx_hidden_Host = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 16)
+}
+
+func (x *IoMeasurement) SetPlatform(v string) {
+	x.xxx_hidden_Platform = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 16)
+}
+
+func (x *IoMeasurement) SetSource(v string) {
+	x.xxx_hidden_Source = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 16)
+}
+
+func (x *IoMeasurement) SetEvent(v string) {
+	x.xxx_hidden_Event = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 16)
+}
+
+func (x *IoMeasurement) SetDevice(v string) {
+	x.xxx_hidden_Device = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 16)
+}
+
+func (x *IoMeasurement) SetMajor(v string) {
+	x.xxx_hidden_Major = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 16)
+}
+
+func (x *IoMeasurement) SetMinor(v string) {
+	x.xxx_hidden_Minor = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 16)
+}
+
+func (x *IoMeasurement) SetTotalSize(v int64) {
+	x.xxx_hidden_TotalSize = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 16)
+}
+
+func (x *IoMeasurement) SetBlockSize(v int64) {
+	x.xxx_hidden_BlockSize = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 16)
+}
+
+func (x *IoMeasurement) SetReadOperations(v int64) {
+	x.xxx_hidden_ReadOperations = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 16)
+}
+
+func (x *IoMeasurement) SetRead(v int64) {
+	x.xxx_hidden_Read = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 16)
+}
+
+func (x *IoMeasurement) SetReadTime(v *durationpb.Duration) {
+	x.xxx_hidden_ReadTime = v
+}
+
+func (x *IoMeasurement) SetWriteOperations(v int64) {
+	x.xxx_hidden_WriteOperations = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 16)
+}
+
+func (x *IoMeasurement) SetWrite(v int64) {
+	x.xxx_hidden_Write = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 16)
+}
+
+func (x *IoMeasurement) SetWriteTime(v *durationpb.Duration) {
+	x.xxx_hidden_WriteTime = v
+}
+
+func (x *IoMeasurement) HasTimestamp() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Timestamp != nil
+}
+
+func (x *IoMeasurement) HasHost() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *IoMeasurement) HasPlatform() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *IoMeasurement) HasSource() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *IoMeasurement) HasEvent() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *IoMeasurement) HasDevice() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *IoMeasurement) HasMajor() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *IoMeasurement) HasMinor() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *IoMeasurement) HasTotalSize() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
+}
+
+func (x *IoMeasurement) HasBlockSize() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *IoMeasurement) HasReadOperations() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
+}
+
+func (x *IoMeasurement) HasRead() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
+}
+
+func (x *IoMeasurement) HasReadTime() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_ReadTime != nil
+}
+
+func (x *IoMeasurement) HasWriteOperations() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
+}
+
+func (x *IoMeasurement) HasWrite() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 14)
+}
+
+func (x *IoMeasurement) HasWriteTime() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_WriteTime != nil
+}
+
+func (x *IoMeasurement) ClearTimestamp() {
+	x.xxx_hidden_Timestamp = nil
+}
+
+func (x *IoMeasurement) ClearHost() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Host = nil
+}
+
+func (x *IoMeasurement) ClearPlatform() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Platform = nil
+}
+
+func (x *IoMeasurement) ClearSource() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Source = nil
+}
+
+func (x *IoMeasurement) ClearEvent() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_Event = nil
+}
+
+func (x *IoMeasurement) ClearDevice() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_Device = nil
+}
+
+func (x *IoMeasurement) ClearMajor() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Major = nil
+}
+
+func (x *IoMeasurement) ClearMinor() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Minor = nil
+}
+
+func (x *IoMeasurement) ClearTotalSize() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
+	x.xxx_hidden_TotalSize = 0
+}
+
+func (x *IoMeasurement) ClearBlockSize() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_BlockSize = 0
+}
+
+func (x *IoMeasurement) ClearReadOperations() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
+	x.xxx_hidden_ReadOperations = 0
+}
+
+func (x *IoMeasurement) ClearRead() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
+	x.xxx_hidden_Read = 0
+}
+
+func (x *IoMeasurement) ClearReadTime() {
+	x.xxx_hidden_ReadTime = nil
+}
+
+func (x *IoMeasurement) ClearWriteOperations() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
+	x.xxx_hidden_WriteOperations = 0
+}
+
+func (x *IoMeasurement) ClearWrite() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
+	x.xxx_hidden_Write = 0
+}
+
+func (x *IoMeasurement) ClearWriteTime() {
+	x.xxx_hidden_WriteTime = nil
+}
+
+type IoMeasurement_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Timestamp       *timestamppb.Timestamp
+	Host            *string
+	Platform        *string
+	Source          *string
+	Event           *string
+	Device          *string
+	Major           *string
+	Minor           *string
+	TotalSize       *int64
+	BlockSize       *int64
+	ReadOperations  *int64
+	Read            *int64
+	ReadTime        *durationpb.Duration
+	WriteOperations *int64
+	Write           *int64
+	WriteTime       *durationpb.Duration
+}
+
+func (b0 IoMeasurement_builder) Build() *IoMeasurement {
+	m0 := &IoMeasurement{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Timestamp = b.Timestamp
+	if b.Host != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 16)
+		x.xxx_hidden_Host = b.Host
+	}
+	if b.Platform != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 16)
+		x.xxx_hidden_Platform = b.Platform
+	}
+	if b.Source != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 16)
+		x.xxx_hidden_Source = b.Source
+	}
+	if b.Event != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 16)
+		x.xxx_hidden_Event = b.Event
+	}
+	if b.Device != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 16)
+		x.xxx_hidden_Device = b.Device
+	}
+	if b.Major != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 16)
+		x.xxx_hidden_Major = b.Major
+	}
+	if b.Minor != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 16)
+		x.xxx_hidden_Minor = b.Minor
+	}
+	if b.TotalSize != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 16)
+		x.xxx_hidden_TotalSize = *b.TotalSize
+	}
+	if b.BlockSize != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 16)
+		x.xxx_hidden_BlockSize = *b.BlockSize
+	}
+	if b.ReadOperations != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 16)
+		x.xxx_hidden_ReadOperations = *b.ReadOperations
+	}
+	if b.Read != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 16)
+		x.xxx_hidden_Read = *b.Read
+	}
+	x.xxx_hidden_ReadTime = b.ReadTime
+	if b.WriteOperations != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 16)
+		x.xxx_hidden_WriteOperations = *b.WriteOperations
+	}
+	if b.Write != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 16)
+		x.xxx_hidden_Write = *b.Write
+	}
+	x.xxx_hidden_WriteTime = b.WriteTime
+	return m0
+}
+
+type NetworkMeasurement struct {
+	state                         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Timestamp          *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp"`
+	xxx_hidden_Host               *string                `protobuf:"bytes,2,opt,name=host"`
+	xxx_hidden_Platform           *string                `protobuf:"bytes,3,opt,name=platform"`
+	xxx_hidden_Source             *string                `protobuf:"bytes,4,opt,name=source"`
+	xxx_hidden_Event              *string                `protobuf:"bytes,5,opt,name=event"`
+	xxx_hidden_Name               *string                `protobuf:"bytes,6,opt,name=name"`
+	xxx_hidden_Index              int64                  `protobuf:"varint,7,opt,name=index"`
+	xxx_hidden_Flags              *string                `protobuf:"bytes,8,opt,name=flags"`
+	xxx_hidden_Mtu                int64                  `protobuf:"varint,9,opt,name=mtu"`
+	xxx_hidden_Mac                *string                `protobuf:"bytes,10,opt,name=mac"`
+	xxx_hidden_Address            *string                `protobuf:"bytes,11,opt,name=address"`
+	xxx_hidden_Netmask            *string                `protobuf:"bytes,12,opt,name=netmask"`
+	xxx_hidden_Broadcast          *string                `protobuf:"bytes,13,opt,name=broadcast"`
+	xxx_hidden_Linklocal6         *string                `protobuf:"bytes,14,opt,name=linklocal6"`
+	xxx_hidden_Address6           *string                `protobuf:"bytes,15,opt,name=address6"`
+	xxx_hidden_Receive            int64                  `protobuf:"varint,16,opt,name=receive"`
+	xxx_hidden_ReceivePackets     int64                  `protobuf:"varint,17,opt,name=receive_packets,json=receivePackets"`
+	xxx_hidden_ReceiveErrors      int64                  `protobuf:"varint,18,opt,name=receive_errors,json=receiveErrors"`
+	xxx_hidden_ReceiveDropped     int64                  `protobuf:"varint,19,opt,name=receive_dropped,json=receiveDropped"`
+	xxx_hidden_ReceiveMulticast   int64                  `protobuf:"varint,20,opt,name=receive_multicast,json=receiveMulticast"`
+	xxx_hidden_Transmit           int64                  `protobuf:"varint,21,opt,name=transmit"`
+	xxx_hidden_TransmitPackets    int64                  `protobuf:"varint,22,opt,name=transmit_packets,json=transmitPackets"`
+	xxx_hidden_TransmitErrors     int64                  `protobuf:"varint,23,opt,name=transmit_errors,json=transmitErrors"`
+	xxx_hidden_TransmitDropped    int64                  `protobuf:"varint,24,opt,name=transmit_dropped,json=transmitDropped"`
+	xxx_hidden_TransmitCollisions int64                  `protobuf:"varint,25,opt,name=transmit_collisions,json=transmitCollisions"`
+	xxx_hidden_TransmitMulticast  int64                  `protobuf:"varint,26,opt,name=transmit_multicast,json=transmitMulticast"`
+	XXX_raceDetectHookData        protoimpl.RaceDetectHookData
+	XXX_presence                  [1]uint32
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
+}
+
+func (x *NetworkMeasurement) Reset() {
+	*x = NetworkMeasurement{}
+	mi := &file_proto_gomon_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NetworkMeasurement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NetworkMeasurement) ProtoMessage() {}
+
+func (x *NetworkMeasurement) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_gomon_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *NetworkMeasurement) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_Timestamp
+	}
+	return nil
+}
+
+func (x *NetworkMeasurement) GetHost() string {
+	if x != nil {
+		if x.xxx_hidden_Host != nil {
+			return *x.xxx_hidden_Host
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetPlatform() string {
+	if x != nil {
+		if x.xxx_hidden_Platform != nil {
+			return *x.xxx_hidden_Platform
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetSource() string {
+	if x != nil {
+		if x.xxx_hidden_Source != nil {
+			return *x.xxx_hidden_Source
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetEvent() string {
+	if x != nil {
+		if x.xxx_hidden_Event != nil {
+			return *x.xxx_hidden_Event
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetIndex() int64 {
+	if x != nil {
+		return x.xxx_hidden_Index
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetFlags() string {
+	if x != nil {
+		if x.xxx_hidden_Flags != nil {
+			return *x.xxx_hidden_Flags
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetMtu() int64 {
+	if x != nil {
+		return x.xxx_hidden_Mtu
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetMac() string {
+	if x != nil {
+		if x.xxx_hidden_Mac != nil {
+			return *x.xxx_hidden_Mac
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetAddress() string {
+	if x != nil {
+		if x.xxx_hidden_Address != nil {
+			return *x.xxx_hidden_Address
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetNetmask() string {
+	if x != nil {
+		if x.xxx_hidden_Netmask != nil {
+			return *x.xxx_hidden_Netmask
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetBroadcast() string {
+	if x != nil {
+		if x.xxx_hidden_Broadcast != nil {
+			return *x.xxx_hidden_Broadcast
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetLinklocal6() string {
+	if x != nil {
+		if x.xxx_hidden_Linklocal6 != nil {
+			return *x.xxx_hidden_Linklocal6
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetAddress6() string {
+	if x != nil {
+		if x.xxx_hidden_Address6 != nil {
+			return *x.xxx_hidden_Address6
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *NetworkMeasurement) GetReceive() int64 {
+	if x != nil {
+		return x.xxx_hidden_Receive
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetReceivePackets() int64 {
+	if x != nil {
+		return x.xxx_hidden_ReceivePackets
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetReceiveErrors() int64 {
+	if x != nil {
+		return x.xxx_hidden_ReceiveErrors
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetReceiveDropped() int64 {
+	if x != nil {
+		return x.xxx_hidden_ReceiveDropped
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetReceiveMulticast() int64 {
+	if x != nil {
+		return x.xxx_hidden_ReceiveMulticast
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetTransmit() int64 {
+	if x != nil {
+		return x.xxx_hidden_Transmit
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetTransmitPackets() int64 {
+	if x != nil {
+		return x.xxx_hidden_TransmitPackets
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetTransmitErrors() int64 {
+	if x != nil {
+		return x.xxx_hidden_TransmitErrors
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetTransmitDropped() int64 {
+	if x != nil {
+		return x.xxx_hidden_TransmitDropped
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetTransmitCollisions() int64 {
+	if x != nil {
+		return x.xxx_hidden_TransmitCollisions
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) GetTransmitMulticast() int64 {
+	if x != nil {
+		return x.xxx_hidden_TransmitMulticast
+	}
+	return 0
+}
+
+func (x *NetworkMeasurement) SetTimestamp(v *timestamppb.Timestamp) {
+	x.xxx_hidden_Timestamp = v
+}
+
+func (x *NetworkMeasurement) SetHost(v string) {
+	x.xxx_hidden_Host = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 26)
+}
+
+func (x *NetworkMeasurement) SetPlatform(v string) {
+	x.xxx_hidden_Platform = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 26)
+}
+
+func (x *NetworkMeasurement) SetSource(v string) {
+	x.xxx_hidden_Source = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 26)
+}
+
+func (x *NetworkMeasurement) SetEvent(v string) {
+	x.xxx_hidden_Event = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 26)
+}
+
+func (x *NetworkMeasurement) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 26)
+}
+
+func (x *NetworkMeasurement) SetIndex(v int64) {
+	x.xxx_hidden_Index = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 26)
+}
+
+func (x *NetworkMeasurement) SetFlags(v string) {
+	x.xxx_hidden_Flags = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 26)
+}
+
+func (x *NetworkMeasurement) SetMtu(v int64) {
+	x.xxx_hidden_Mtu = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 26)
+}
+
+func (x *NetworkMeasurement) SetMac(v string) {
+	x.xxx_hidden_Mac = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 26)
+}
+
+func (x *NetworkMeasurement) SetAddress(v string) {
+	x.xxx_hidden_Address = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 26)
+}
+
+func (x *NetworkMeasurement) SetNetmask(v string) {
+	x.xxx_hidden_Netmask = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 26)
+}
+
+func (x *NetworkMeasurement) SetBroadcast(v string) {
+	x.xxx_hidden_Broadcast = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 26)
+}
+
+func (x *NetworkMeasurement) SetLinklocal6(v string) {
+	x.xxx_hidden_Linklocal6 = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 26)
+}
+
+func (x *NetworkMeasurement) SetAddress6(v string) {
+	x.xxx_hidden_Address6 = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 26)
+}
+
+func (x *NetworkMeasurement) SetReceive(v int64) {
+	x.xxx_hidden_Receive = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 26)
+}
+
+func (x *NetworkMeasurement) SetReceivePackets(v int64) {
+	x.xxx_hidden_ReceivePackets = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 26)
+}
+
+func (x *NetworkMeasurement) SetReceiveErrors(v int64) {
+	x.xxx_hidden_ReceiveErrors = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 26)
+}
+
+func (x *NetworkMeasurement) SetReceiveDropped(v int64) {
+	x.xxx_hidden_ReceiveDropped = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 26)
+}
+
+func (x *NetworkMeasurement) SetReceiveMulticast(v int64) {
+	x.xxx_hidden_ReceiveMulticast = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 26)
+}
+
+func (x *NetworkMeasurement) SetTransmit(v int64) {
+	x.xxx_hidden_Transmit = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 26)
+}
+
+func (x *NetworkMeasurement) SetTransmitPackets(v int64) {
+	x.xxx_hidden_TransmitPackets = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 21, 26)
+}
+
+func (x *NetworkMeasurement) SetTransmitErrors(v int64) {
+	x.xxx_hidden_TransmitErrors = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 22, 26)
+}
+
+func (x *NetworkMeasurement) SetTransmitDropped(v int64) {
+	x.xxx_hidden_TransmitDropped = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 26)
+}
+
+func (x *NetworkMeasurement) SetTransmitCollisions(v int64) {
+	x.xxx_hidden_TransmitCollisions = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 26)
+}
+
+func (x *NetworkMeasurement) SetTransmitMulticast(v int64) {
+	x.xxx_hidden_TransmitMulticast = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 25, 26)
+}
+
+func (x *NetworkMeasurement) HasTimestamp() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Timestamp != nil
+}
+
+func (x *NetworkMeasurement) HasHost() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *NetworkMeasurement) HasPlatform() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *NetworkMeasurement) HasSource() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *NetworkMeasurement) HasEvent() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *NetworkMeasurement) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *NetworkMeasurement) HasIndex() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *NetworkMeasurement) HasFlags() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *NetworkMeasurement) HasMtu() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
+}
+
+func (x *NetworkMeasurement) HasMac() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *NetworkMeasurement) HasAddress() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
+}
+
+func (x *NetworkMeasurement) HasNetmask() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
+}
+
+func (x *NetworkMeasurement) HasBroadcast() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 12)
+}
+
+func (x *NetworkMeasurement) HasLinklocal6() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
+}
+
+func (x *NetworkMeasurement) HasAddress6() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 14)
+}
+
+func (x *NetworkMeasurement) HasReceive() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 15)
+}
+
+func (x *NetworkMeasurement) HasReceivePackets() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 16)
+}
+
+func (x *NetworkMeasurement) HasReceiveErrors() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 17)
+}
+
+func (x *NetworkMeasurement) HasReceiveDropped() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 18)
+}
+
+func (x *NetworkMeasurement) HasReceiveMulticast() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 19)
+}
+
+func (x *NetworkMeasurement) HasTransmit() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 20)
+}
+
+func (x *NetworkMeasurement) HasTransmitPackets() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 21)
+}
+
+func (x *NetworkMeasurement) HasTransmitErrors() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 22)
+}
+
+func (x *NetworkMeasurement) HasTransmitDropped() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 23)
+}
+
+func (x *NetworkMeasurement) HasTransmitCollisions() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 24)
+}
+
+func (x *NetworkMeasurement) HasTransmitMulticast() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 25)
+}
+
+func (x *NetworkMeasurement) ClearTimestamp() {
+	x.xxx_hidden_Timestamp = nil
+}
+
+func (x *NetworkMeasurement) ClearHost() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Host = nil
+}
+
+func (x *NetworkMeasurement) ClearPlatform() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Platform = nil
+}
+
+func (x *NetworkMeasurement) ClearSource() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Source = nil
+}
+
+func (x *NetworkMeasurement) ClearEvent() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_Event = nil
+}
+
+func (x *NetworkMeasurement) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *NetworkMeasurement) ClearIndex() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Index = 0
+}
+
+func (x *NetworkMeasurement) ClearFlags() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Flags = nil
+}
+
+func (x *NetworkMeasurement) ClearMtu() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
+	x.xxx_hidden_Mtu = 0
+}
+
+func (x *NetworkMeasurement) ClearMac() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_Mac = nil
+}
+
+func (x *NetworkMeasurement) ClearAddress() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
+	x.xxx_hidden_Address = nil
+}
+
+func (x *NetworkMeasurement) ClearNetmask() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
+	x.xxx_hidden_Netmask = nil
+}
+
+func (x *NetworkMeasurement) ClearBroadcast() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 12)
+	x.xxx_hidden_Broadcast = nil
+}
+
+func (x *NetworkMeasurement) ClearLinklocal6() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
+	x.xxx_hidden_Linklocal6 = nil
+}
+
+func (x *NetworkMeasurement) ClearAddress6() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
+	x.xxx_hidden_Address6 = nil
+}
+
+func (x *NetworkMeasurement) ClearReceive() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 15)
+	x.xxx_hidden_Receive = 0
+}
+
+func (x *NetworkMeasurement) ClearReceivePackets() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 16)
+	x.xxx_hidden_ReceivePackets = 0
+}
+
+func (x *NetworkMeasurement) ClearReceiveErrors() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 17)
+	x.xxx_hidden_ReceiveErrors = 0
+}
+
+func (x *NetworkMeasurement) ClearReceiveDropped() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 18)
+	x.xxx_hidden_ReceiveDropped = 0
+}
+
+func (x *NetworkMeasurement) ClearReceiveMulticast() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 19)
+	x.xxx_hidden_ReceiveMulticast = 0
+}
+
+func (x *NetworkMeasurement) ClearTransmit() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 20)
+	x.xxx_hidden_Transmit = 0
+}
+
+func (x *NetworkMeasurement) ClearTransmitPackets() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 21)
+	x.xxx_hidden_TransmitPackets = 0
+}
+
+func (x *NetworkMeasurement) ClearTransmitErrors() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 22)
+	x.xxx_hidden_TransmitErrors = 0
+}
+
+func (x *NetworkMeasurement) ClearTransmitDropped() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 23)
+	x.xxx_hidden_TransmitDropped = 0
+}
+
+func (x *NetworkMeasurement) ClearTransmitCollisions() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 24)
+	x.xxx_hidden_TransmitCollisions = 0
+}
+
+func (x *NetworkMeasurement) ClearTransmitMulticast() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 25)
+	x.xxx_hidden_TransmitMulticast = 0
+}
+
+type NetworkMeasurement_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Timestamp          *timestamppb.Timestamp
+	Host               *string
+	Platform           *string
+	Source             *string
+	Event              *string
+	Name               *string
+	Index              *int64
+	Flags              *string
+	Mtu                *int64
+	Mac                *string
+	Address            *string
+	Netmask            *string
+	Broadcast          *string
+	Linklocal6         *string
+	Address6           *string
+	Receive            *int64
+	ReceivePackets     *int64
+	ReceiveErrors      *int64
+	ReceiveDropped     *int64
+	ReceiveMulticast   *int64
+	Transmit           *int64
+	TransmitPackets    *int64
+	TransmitErrors     *int64
+	TransmitDropped    *int64
+	TransmitCollisions *int64
+	TransmitMulticast  *int64
+}
+
+func (b0 NetworkMeasurement_builder) Build() *NetworkMeasurement {
+	m0 := &NetworkMeasurement{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Timestamp = b.Timestamp
+	if b.Host != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 26)
+		x.xxx_hidden_Host = b.Host
+	}
+	if b.Platform != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 26)
+		x.xxx_hidden_Platform = b.Platform
+	}
+	if b.Source != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 26)
+		x.xxx_hidden_Source = b.Source
+	}
+	if b.Event != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 26)
+		x.xxx_hidden_Event = b.Event
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 26)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.Index != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 26)
+		x.xxx_hidden_Index = *b.Index
+	}
+	if b.Flags != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 26)
+		x.xxx_hidden_Flags = b.Flags
+	}
+	if b.Mtu != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 26)
+		x.xxx_hidden_Mtu = *b.Mtu
+	}
+	if b.Mac != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 26)
+		x.xxx_hidden_Mac = b.Mac
+	}
+	if b.Address != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 26)
+		x.xxx_hidden_Address = b.Address
+	}
+	if b.Netmask != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 26)
+		x.xxx_hidden_Netmask = b.Netmask
+	}
+	if b.Broadcast != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 26)
+		x.xxx_hidden_Broadcast = b.Broadcast
+	}
+	if b.Linklocal6 != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 26)
+		x.xxx_hidden_Linklocal6 = b.Linklocal6
+	}
+	if b.Address6 != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 26)
+		x.xxx_hidden_Address6 = b.Address6
+	}
+	if b.Receive != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 26)
+		x.xxx_hidden_Receive = *b.Receive
+	}
+	if b.ReceivePackets != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 26)
+		x.xxx_hidden_ReceivePackets = *b.ReceivePackets
+	}
+	if b.ReceiveErrors != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 26)
+		x.xxx_hidden_ReceiveErrors = *b.ReceiveErrors
+	}
+	if b.ReceiveDropped != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 26)
+		x.xxx_hidden_ReceiveDropped = *b.ReceiveDropped
+	}
+	if b.ReceiveMulticast != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 26)
+		x.xxx_hidden_ReceiveMulticast = *b.ReceiveMulticast
+	}
+	if b.Transmit != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 26)
+		x.xxx_hidden_Transmit = *b.Transmit
+	}
+	if b.TransmitPackets != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 21, 26)
+		x.xxx_hidden_TransmitPackets = *b.TransmitPackets
+	}
+	if b.TransmitErrors != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 22, 26)
+		x.xxx_hidden_TransmitErrors = *b.TransmitErrors
+	}
+	if b.TransmitDropped != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 26)
+		x.xxx_hidden_TransmitDropped = *b.TransmitDropped
+	}
+	if b.TransmitCollisions != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 26)
+		x.xxx_hidden_TransmitCollisions = *b.TransmitCollisions
+	}
+	if b.TransmitMulticast != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 25, 26)
+		x.xxx_hidden_TransmitMulticast = *b.TransmitMulticast
+	}
+	return m0
+}
+
+type ServeMeasurement struct {
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Timestamp      *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp"`
+	xxx_hidden_Host           *string                `protobuf:"bytes,2,opt,name=host"`
+	xxx_hidden_Platform       *string                `protobuf:"bytes,3,opt,name=platform"`
+	xxx_hidden_Source         *string                `protobuf:"bytes,4,opt,name=source"`
+	xxx_hidden_Event          *string                `protobuf:"bytes,5,opt,name=event"`
+	xxx_hidden_Name           *string                `protobuf:"bytes,6,opt,name=name"`
+	xxx_hidden_Address        *string                `protobuf:"bytes,7,opt,name=address"`
+	xxx_hidden_Endpoints      []string               `protobuf:"bytes,8,rep,name=endpoints"`
+	xxx_hidden_HttpRequests   int64                  `protobuf:"varint,9,opt,name=http_requests,json=httpRequests"`
+	xxx_hidden_Collections    int64                  `protobuf:"varint,10,opt,name=collections"`
+	xxx_hidden_CollectionTime *durationpb.Duration   `protobuf:"bytes,11,opt,name=collection_time,json=collectionTime"`
+	xxx_hidden_LokiStreams    int64                  `protobuf:"varint,12,opt,name=loki_streams,json=lokiStreams"`
+	XXX_raceDetectHookData    protoimpl.RaceDetectHookData
+	XXX_presence              [1]uint32
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *ServeMeasurement) Reset() {
+	*x = ServeMeasurement{}
 	mi := &file_proto_gomon_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *FileObservation) String() string {
+func (x *ServeMeasurement) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FileObservation) ProtoMessage() {}
+func (*ServeMeasurement) ProtoMessage() {}
 
-func (x *FileObservation) ProtoReflect() protoreflect.Message {
+func (x *ServeMeasurement) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_gomon_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -5203,14 +5107,14 @@ func (x *FileObservation) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-func (x *FileObservation) GetTimestamp() *timestamppb.Timestamp {
+func (x *ServeMeasurement) GetTimestamp() *timestamppb.Timestamp {
 	if x != nil {
 		return x.xxx_hidden_Timestamp
 	}
 	return nil
 }
 
-func (x *FileObservation) GetHost() string {
+func (x *ServeMeasurement) GetHost() string {
 	if x != nil {
 		if x.xxx_hidden_Host != nil {
 			return *x.xxx_hidden_Host
@@ -5220,7 +5124,7 @@ func (x *FileObservation) GetHost() string {
 	return ""
 }
 
-func (x *FileObservation) GetPlatform() string {
+func (x *ServeMeasurement) GetPlatform() string {
 	if x != nil {
 		if x.xxx_hidden_Platform != nil {
 			return *x.xxx_hidden_Platform
@@ -5230,7 +5134,7 @@ func (x *FileObservation) GetPlatform() string {
 	return ""
 }
 
-func (x *FileObservation) GetSource() string {
+func (x *ServeMeasurement) GetSource() string {
 	if x != nil {
 		if x.xxx_hidden_Source != nil {
 			return *x.xxx_hidden_Source
@@ -5240,7 +5144,7 @@ func (x *FileObservation) GetSource() string {
 	return ""
 }
 
-func (x *FileObservation) GetEvent() string {
+func (x *ServeMeasurement) GetEvent() string {
 	if x != nil {
 		if x.xxx_hidden_Event != nil {
 			return *x.xxx_hidden_Event
@@ -5250,7 +5154,7 @@ func (x *FileObservation) GetEvent() string {
 	return ""
 }
 
-func (x *FileObservation) GetName() string {
+func (x *ServeMeasurement) GetName() string {
 	if x != nil {
 		if x.xxx_hidden_Name != nil {
 			return *x.xxx_hidden_Name
@@ -5260,202 +5164,297 @@ func (x *FileObservation) GetName() string {
 	return ""
 }
 
-func (x *FileObservation) GetFileEventId() uint64 {
+func (x *ServeMeasurement) GetAddress() string {
 	if x != nil {
-		return x.xxx_hidden_FileEventId
-	}
-	return 0
-}
-
-func (x *FileObservation) GetMessage() string {
-	if x != nil {
-		if x.xxx_hidden_Message != nil {
-			return *x.xxx_hidden_Message
+		if x.xxx_hidden_Address != nil {
+			return *x.xxx_hidden_Address
 		}
 		return ""
 	}
 	return ""
 }
 
-func (x *FileObservation) SetTimestamp(v *timestamppb.Timestamp) {
+func (x *ServeMeasurement) GetEndpoints() []string {
+	if x != nil {
+		return x.xxx_hidden_Endpoints
+	}
+	return nil
+}
+
+func (x *ServeMeasurement) GetHttpRequests() int64 {
+	if x != nil {
+		return x.xxx_hidden_HttpRequests
+	}
+	return 0
+}
+
+func (x *ServeMeasurement) GetCollections() int64 {
+	if x != nil {
+		return x.xxx_hidden_Collections
+	}
+	return 0
+}
+
+func (x *ServeMeasurement) GetCollectionTime() *durationpb.Duration {
+	if x != nil {
+		return x.xxx_hidden_CollectionTime
+	}
+	return nil
+}
+
+func (x *ServeMeasurement) GetLokiStreams() int64 {
+	if x != nil {
+		return x.xxx_hidden_LokiStreams
+	}
+	return 0
+}
+
+func (x *ServeMeasurement) SetTimestamp(v *timestamppb.Timestamp) {
 	x.xxx_hidden_Timestamp = v
 }
 
-func (x *FileObservation) SetHost(v string) {
+func (x *ServeMeasurement) SetHost(v string) {
 	x.xxx_hidden_Host = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 8)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 12)
 }
 
-func (x *FileObservation) SetPlatform(v string) {
+func (x *ServeMeasurement) SetPlatform(v string) {
 	x.xxx_hidden_Platform = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 8)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 12)
 }
 
-func (x *FileObservation) SetSource(v string) {
+func (x *ServeMeasurement) SetSource(v string) {
 	x.xxx_hidden_Source = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 8)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 12)
 }
 
-func (x *FileObservation) SetEvent(v string) {
+func (x *ServeMeasurement) SetEvent(v string) {
 	x.xxx_hidden_Event = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 8)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 12)
 }
 
-func (x *FileObservation) SetName(v string) {
+func (x *ServeMeasurement) SetName(v string) {
 	x.xxx_hidden_Name = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 8)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 12)
 }
 
-func (x *FileObservation) SetFileEventId(v uint64) {
-	x.xxx_hidden_FileEventId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 8)
+func (x *ServeMeasurement) SetAddress(v string) {
+	x.xxx_hidden_Address = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 12)
 }
 
-func (x *FileObservation) SetMessage(v string) {
-	x.xxx_hidden_Message = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 8)
+func (x *ServeMeasurement) SetEndpoints(v []string) {
+	x.xxx_hidden_Endpoints = v
 }
 
-func (x *FileObservation) HasTimestamp() bool {
+func (x *ServeMeasurement) SetHttpRequests(v int64) {
+	x.xxx_hidden_HttpRequests = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 12)
+}
+
+func (x *ServeMeasurement) SetCollections(v int64) {
+	x.xxx_hidden_Collections = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 12)
+}
+
+func (x *ServeMeasurement) SetCollectionTime(v *durationpb.Duration) {
+	x.xxx_hidden_CollectionTime = v
+}
+
+func (x *ServeMeasurement) SetLokiStreams(v int64) {
+	x.xxx_hidden_LokiStreams = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 12)
+}
+
+func (x *ServeMeasurement) HasTimestamp() bool {
 	if x == nil {
 		return false
 	}
 	return x.xxx_hidden_Timestamp != nil
 }
 
-func (x *FileObservation) HasHost() bool {
+func (x *ServeMeasurement) HasHost() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
 }
 
-func (x *FileObservation) HasPlatform() bool {
+func (x *ServeMeasurement) HasPlatform() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
 }
 
-func (x *FileObservation) HasSource() bool {
+func (x *ServeMeasurement) HasSource() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
 }
 
-func (x *FileObservation) HasEvent() bool {
+func (x *ServeMeasurement) HasEvent() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
 }
 
-func (x *FileObservation) HasName() bool {
+func (x *ServeMeasurement) HasName() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
 }
 
-func (x *FileObservation) HasFileEventId() bool {
+func (x *ServeMeasurement) HasAddress() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
 }
 
-func (x *FileObservation) HasMessage() bool {
+func (x *ServeMeasurement) HasHttpRequests() bool {
 	if x == nil {
 		return false
 	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
 }
 
-func (x *FileObservation) ClearTimestamp() {
+func (x *ServeMeasurement) HasCollections() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *ServeMeasurement) HasCollectionTime() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_CollectionTime != nil
+}
+
+func (x *ServeMeasurement) HasLokiStreams() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
+}
+
+func (x *ServeMeasurement) ClearTimestamp() {
 	x.xxx_hidden_Timestamp = nil
 }
 
-func (x *FileObservation) ClearHost() {
+func (x *ServeMeasurement) ClearHost() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
 	x.xxx_hidden_Host = nil
 }
 
-func (x *FileObservation) ClearPlatform() {
+func (x *ServeMeasurement) ClearPlatform() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
 	x.xxx_hidden_Platform = nil
 }
 
-func (x *FileObservation) ClearSource() {
+func (x *ServeMeasurement) ClearSource() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
 	x.xxx_hidden_Source = nil
 }
 
-func (x *FileObservation) ClearEvent() {
+func (x *ServeMeasurement) ClearEvent() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
 	x.xxx_hidden_Event = nil
 }
 
-func (x *FileObservation) ClearName() {
+func (x *ServeMeasurement) ClearName() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
 	x.xxx_hidden_Name = nil
 }
 
-func (x *FileObservation) ClearFileEventId() {
+func (x *ServeMeasurement) ClearAddress() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
-	x.xxx_hidden_FileEventId = 0
+	x.xxx_hidden_Address = nil
 }
 
-func (x *FileObservation) ClearMessage() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
-	x.xxx_hidden_Message = nil
+func (x *ServeMeasurement) ClearHttpRequests() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
+	x.xxx_hidden_HttpRequests = 0
 }
 
-type FileObservation_builder struct {
+func (x *ServeMeasurement) ClearCollections() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_Collections = 0
+}
+
+func (x *ServeMeasurement) ClearCollectionTime() {
+	x.xxx_hidden_CollectionTime = nil
+}
+
+func (x *ServeMeasurement) ClearLokiStreams() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
+	x.xxx_hidden_LokiStreams = 0
+}
+
+type ServeMeasurement_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Timestamp   *timestamppb.Timestamp
-	Host        *string
-	Platform    *string
-	Source      *string
-	Event       *string
-	Name        *string
-	FileEventId *uint64
-	Message     *string
+	Timestamp      *timestamppb.Timestamp
+	Host           *string
+	Platform       *string
+	Source         *string
+	Event          *string
+	Name           *string
+	Address        *string
+	Endpoints      []string
+	HttpRequests   *int64
+	Collections    *int64
+	CollectionTime *durationpb.Duration
+	LokiStreams    *int64
 }
 
-func (b0 FileObservation_builder) Build() *FileObservation {
-	m0 := &FileObservation{}
+func (b0 ServeMeasurement_builder) Build() *ServeMeasurement {
+	m0 := &ServeMeasurement{}
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Timestamp = b.Timestamp
 	if b.Host != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 8)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 12)
 		x.xxx_hidden_Host = b.Host
 	}
 	if b.Platform != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 8)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 12)
 		x.xxx_hidden_Platform = b.Platform
 	}
 	if b.Source != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 8)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 12)
 		x.xxx_hidden_Source = b.Source
 	}
 	if b.Event != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 8)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 12)
 		x.xxx_hidden_Event = b.Event
 	}
 	if b.Name != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 8)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 12)
 		x.xxx_hidden_Name = b.Name
 	}
-	if b.FileEventId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 8)
-		x.xxx_hidden_FileEventId = *b.FileEventId
+	if b.Address != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 12)
+		x.xxx_hidden_Address = b.Address
 	}
-	if b.Message != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 8)
-		x.xxx_hidden_Message = b.Message
+	x.xxx_hidden_Endpoints = b.Endpoints
+	if b.HttpRequests != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 12)
+		x.xxx_hidden_HttpRequests = *b.HttpRequests
+	}
+	if b.Collections != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 12)
+		x.xxx_hidden_Collections = *b.Collections
+	}
+	x.xxx_hidden_CollectionTime = b.CollectionTime
+	if b.LokiStreams != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 12)
+		x.xxx_hidden_LokiStreams = *b.LokiStreams
 	}
 	return m0
 }
@@ -5696,196 +5695,6 @@ func (b0 ProcessMeasurement_Connection_Endpoint_builder) Build() *ProcessMeasure
 	return m0
 }
 
-type SystemMeasurement_ProcStats struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Count       int64                  `protobuf:"varint,1,opt,name=count"`
-	xxx_hidden_Active      int64                  `protobuf:"varint,2,opt,name=active"`
-	xxx_hidden_Execed      int64                  `protobuf:"varint,3,opt,name=execed"`
-	xxx_hidden_Exited      int64                  `protobuf:"varint,4,opt,name=exited"`
-	xxx_hidden_Cpu         *durationpb.Duration   `protobuf:"bytes,5,opt,name=cpu"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
-}
-
-func (x *SystemMeasurement_ProcStats) Reset() {
-	*x = SystemMeasurement_ProcStats{}
-	mi := &file_proto_gomon_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SystemMeasurement_ProcStats) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SystemMeasurement_ProcStats) ProtoMessage() {}
-
-func (x *SystemMeasurement_ProcStats) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *SystemMeasurement_ProcStats) GetCount() int64 {
-	if x != nil {
-		return x.xxx_hidden_Count
-	}
-	return 0
-}
-
-func (x *SystemMeasurement_ProcStats) GetActive() int64 {
-	if x != nil {
-		return x.xxx_hidden_Active
-	}
-	return 0
-}
-
-func (x *SystemMeasurement_ProcStats) GetExeced() int64 {
-	if x != nil {
-		return x.xxx_hidden_Execed
-	}
-	return 0
-}
-
-func (x *SystemMeasurement_ProcStats) GetExited() int64 {
-	if x != nil {
-		return x.xxx_hidden_Exited
-	}
-	return 0
-}
-
-func (x *SystemMeasurement_ProcStats) GetCpu() *durationpb.Duration {
-	if x != nil {
-		return x.xxx_hidden_Cpu
-	}
-	return nil
-}
-
-func (x *SystemMeasurement_ProcStats) SetCount(v int64) {
-	x.xxx_hidden_Count = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 5)
-}
-
-func (x *SystemMeasurement_ProcStats) SetActive(v int64) {
-	x.xxx_hidden_Active = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 5)
-}
-
-func (x *SystemMeasurement_ProcStats) SetExeced(v int64) {
-	x.xxx_hidden_Execed = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 5)
-}
-
-func (x *SystemMeasurement_ProcStats) SetExited(v int64) {
-	x.xxx_hidden_Exited = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 5)
-}
-
-func (x *SystemMeasurement_ProcStats) SetCpu(v *durationpb.Duration) {
-	x.xxx_hidden_Cpu = v
-}
-
-func (x *SystemMeasurement_ProcStats) HasCount() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
-}
-
-func (x *SystemMeasurement_ProcStats) HasActive() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
-}
-
-func (x *SystemMeasurement_ProcStats) HasExeced() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
-}
-
-func (x *SystemMeasurement_ProcStats) HasExited() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
-}
-
-func (x *SystemMeasurement_ProcStats) HasCpu() bool {
-	if x == nil {
-		return false
-	}
-	return x.xxx_hidden_Cpu != nil
-}
-
-func (x *SystemMeasurement_ProcStats) ClearCount() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
-	x.xxx_hidden_Count = 0
-}
-
-func (x *SystemMeasurement_ProcStats) ClearActive() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
-	x.xxx_hidden_Active = 0
-}
-
-func (x *SystemMeasurement_ProcStats) ClearExeced() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
-	x.xxx_hidden_Execed = 0
-}
-
-func (x *SystemMeasurement_ProcStats) ClearExited() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
-	x.xxx_hidden_Exited = 0
-}
-
-func (x *SystemMeasurement_ProcStats) ClearCpu() {
-	x.xxx_hidden_Cpu = nil
-}
-
-type SystemMeasurement_ProcStats_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	Count  *int64
-	Active *int64
-	Execed *int64
-	Exited *int64
-	Cpu    *durationpb.Duration
-}
-
-func (b0 SystemMeasurement_ProcStats_builder) Build() *SystemMeasurement_ProcStats {
-	m0 := &SystemMeasurement_ProcStats{}
-	b, x := &b0, m0
-	_, _ = b, x
-	if b.Count != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 5)
-		x.xxx_hidden_Count = *b.Count
-	}
-	if b.Active != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 5)
-		x.xxx_hidden_Active = *b.Active
-	}
-	if b.Execed != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 5)
-		x.xxx_hidden_Execed = *b.Execed
-	}
-	if b.Exited != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 5)
-		x.xxx_hidden_Exited = *b.Exited
-	}
-	x.xxx_hidden_Cpu = b.Cpu
-	return m0
-}
-
 type SystemMeasurement_LoadAverage struct {
 	state                    protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_OneMinute     float64                `protobuf:"fixed64,1,opt,name=one_minute,json=oneMinute"`
@@ -5899,7 +5708,7 @@ type SystemMeasurement_LoadAverage struct {
 
 func (x *SystemMeasurement_LoadAverage) Reset() {
 	*x = SystemMeasurement_LoadAverage{}
-	mi := &file_proto_gomon_proto_msgTypes[14]
+	mi := &file_proto_gomon_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5911,7 +5720,7 @@ func (x *SystemMeasurement_LoadAverage) String() string {
 func (*SystemMeasurement_LoadAverage) ProtoMessage() {}
 
 func (x *SystemMeasurement_LoadAverage) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[14]
+	mi := &file_proto_gomon_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6033,7 +5842,7 @@ type SystemMeasurement_Cpu struct {
 
 func (x *SystemMeasurement_Cpu) Reset() {
 	*x = SystemMeasurement_Cpu{}
-	mi := &file_proto_gomon_proto_msgTypes[15]
+	mi := &file_proto_gomon_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6045,7 +5854,7 @@ func (x *SystemMeasurement_Cpu) String() string {
 func (*SystemMeasurement_Cpu) ProtoMessage() {}
 
 func (x *SystemMeasurement_Cpu) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[15]
+	mi := &file_proto_gomon_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6179,7 +5988,7 @@ type SystemMeasurement_Memory struct {
 
 func (x *SystemMeasurement_Memory) Reset() {
 	*x = SystemMeasurement_Memory{}
-	mi := &file_proto_gomon_proto_msgTypes[16]
+	mi := &file_proto_gomon_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6191,7 +6000,7 @@ func (x *SystemMeasurement_Memory) String() string {
 func (*SystemMeasurement_Memory) ProtoMessage() {}
 
 func (x *SystemMeasurement_Memory) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[16]
+	mi := &file_proto_gomon_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6372,7 +6181,7 @@ type SystemMeasurement_Swap struct {
 
 func (x *SystemMeasurement_Swap) Reset() {
 	*x = SystemMeasurement_Swap{}
-	mi := &file_proto_gomon_proto_msgTypes[17]
+	mi := &file_proto_gomon_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6384,7 +6193,7 @@ func (x *SystemMeasurement_Swap) String() string {
 func (*SystemMeasurement_Swap) ProtoMessage() {}
 
 func (x *SystemMeasurement_Swap) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gomon_proto_msgTypes[17]
+	mi := &file_proto_gomon_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6494,6 +6303,196 @@ func (b0 SystemMeasurement_Swap_builder) Build() *SystemMeasurement_Swap {
 	return m0
 }
 
+type SystemMeasurement_ProcStats struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Count       int64                  `protobuf:"varint,1,opt,name=count"`
+	xxx_hidden_Active      int64                  `protobuf:"varint,2,opt,name=active"`
+	xxx_hidden_Execed      int64                  `protobuf:"varint,3,opt,name=execed"`
+	xxx_hidden_Exited      int64                  `protobuf:"varint,4,opt,name=exited"`
+	xxx_hidden_Cpu         *durationpb.Duration   `protobuf:"bytes,5,opt,name=cpu"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *SystemMeasurement_ProcStats) Reset() {
+	*x = SystemMeasurement_ProcStats{}
+	mi := &file_proto_gomon_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SystemMeasurement_ProcStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemMeasurement_ProcStats) ProtoMessage() {}
+
+func (x *SystemMeasurement_ProcStats) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_gomon_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SystemMeasurement_ProcStats) GetCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_Count
+	}
+	return 0
+}
+
+func (x *SystemMeasurement_ProcStats) GetActive() int64 {
+	if x != nil {
+		return x.xxx_hidden_Active
+	}
+	return 0
+}
+
+func (x *SystemMeasurement_ProcStats) GetExeced() int64 {
+	if x != nil {
+		return x.xxx_hidden_Execed
+	}
+	return 0
+}
+
+func (x *SystemMeasurement_ProcStats) GetExited() int64 {
+	if x != nil {
+		return x.xxx_hidden_Exited
+	}
+	return 0
+}
+
+func (x *SystemMeasurement_ProcStats) GetCpu() *durationpb.Duration {
+	if x != nil {
+		return x.xxx_hidden_Cpu
+	}
+	return nil
+}
+
+func (x *SystemMeasurement_ProcStats) SetCount(v int64) {
+	x.xxx_hidden_Count = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 5)
+}
+
+func (x *SystemMeasurement_ProcStats) SetActive(v int64) {
+	x.xxx_hidden_Active = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 5)
+}
+
+func (x *SystemMeasurement_ProcStats) SetExeced(v int64) {
+	x.xxx_hidden_Execed = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 5)
+}
+
+func (x *SystemMeasurement_ProcStats) SetExited(v int64) {
+	x.xxx_hidden_Exited = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 5)
+}
+
+func (x *SystemMeasurement_ProcStats) SetCpu(v *durationpb.Duration) {
+	x.xxx_hidden_Cpu = v
+}
+
+func (x *SystemMeasurement_ProcStats) HasCount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *SystemMeasurement_ProcStats) HasActive() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *SystemMeasurement_ProcStats) HasExeced() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *SystemMeasurement_ProcStats) HasExited() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *SystemMeasurement_ProcStats) HasCpu() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Cpu != nil
+}
+
+func (x *SystemMeasurement_ProcStats) ClearCount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Count = 0
+}
+
+func (x *SystemMeasurement_ProcStats) ClearActive() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Active = 0
+}
+
+func (x *SystemMeasurement_ProcStats) ClearExeced() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Execed = 0
+}
+
+func (x *SystemMeasurement_ProcStats) ClearExited() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Exited = 0
+}
+
+func (x *SystemMeasurement_ProcStats) ClearCpu() {
+	x.xxx_hidden_Cpu = nil
+}
+
+type SystemMeasurement_ProcStats_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Count  *int64
+	Active *int64
+	Execed *int64
+	Exited *int64
+	Cpu    *durationpb.Duration
+}
+
+func (b0 SystemMeasurement_ProcStats_builder) Build() *SystemMeasurement_ProcStats {
+	m0 := &SystemMeasurement_ProcStats{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Count != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 5)
+		x.xxx_hidden_Count = *b.Count
+	}
+	if b.Active != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 5)
+		x.xxx_hidden_Active = *b.Active
+	}
+	if b.Execed != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 5)
+		x.xxx_hidden_Execed = *b.Execed
+	}
+	if b.Exited != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 5)
+		x.xxx_hidden_Exited = *b.Exited
+	}
+	x.xxx_hidden_Cpu = b.Cpu
+	return m0
+}
+
 var File_proto_gomon_proto protoreflect.FileDescriptor
 
 const file_proto_gomon_proto_rawDesc = "" +
@@ -6511,75 +6510,16 @@ const file_proto_gomon_proto_rawDesc = "" +
 	"\x13process_observation\x18\a \x01(\v2\x19.proto.ProcessObservationH\x00R\x12processObservation\x12F\n" +
 	"\x11serve_measurement\x18\b \x01(\v2\x17.proto.ServeMeasurementH\x00R\x10serveMeasurement\x12I\n" +
 	"\x12system_measurement\x18\t \x01(\v2\x18.proto.SystemMeasurementH\x00R\x11systemMeasurementB\x0f\n" +
-	"\rgomon_message\"\xfe\x02\n" +
-	"\x15FilesystemMeasurement\x128\n" +
-	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
-	"\x04host\x18\x02 \x01(\tR\x04host\x12\x1a\n" +
-	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x16\n" +
-	"\x06source\x18\x04 \x01(\tR\x06source\x12\x14\n" +
-	"\x05event\x18\x05 \x01(\tR\x05event\x12\x14\n" +
-	"\x05mount\x18\x06 \x01(\tR\x05mount\x12\x12\n" +
-	"\x04path\x18\a \x01(\tR\x04path\x12\x12\n" +
-	"\x04type\x18\b \x01(\tR\x04type\x12\x14\n" +
-	"\x05total\x18\t \x01(\x03R\x05total\x12\x12\n" +
-	"\x04used\x18\n" +
-	" \x01(\x03R\x04used\x12\x12\n" +
-	"\x04free\x18\v \x01(\x03R\x04free\x12\x1c\n" +
-	"\tavailable\x18\f \x01(\x03R\tavailable\x12\x14\n" +
-	"\x05files\x18\r \x01(\x03R\x05files\x12\x1d\n" +
-	"\n" +
-	"free_files\x18\x0e \x01(\x03R\tfreeFiles\"\x99\x04\n" +
-	"\rIoMeasurement\x128\n" +
-	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
-	"\x04host\x18\x02 \x01(\tR\x04host\x12\x1a\n" +
-	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x16\n" +
-	"\x06source\x18\x04 \x01(\tR\x06source\x12\x14\n" +
-	"\x05event\x18\x05 \x01(\tR\x05event\x12\x16\n" +
-	"\x06device\x18\x06 \x01(\tR\x06device\x12\x14\n" +
-	"\x05major\x18\a \x01(\tR\x05major\x12\x14\n" +
-	"\x05minor\x18\b \x01(\tR\x05minor\x12\x1d\n" +
-	"\n" +
-	"total_size\x18\t \x01(\x03R\ttotalSize\x12\x1d\n" +
-	"\n" +
-	"block_size\x18\n" +
-	" \x01(\x03R\tblockSize\x12'\n" +
-	"\x0fread_operations\x18\v \x01(\x03R\x0ereadOperations\x12\x12\n" +
-	"\x04read\x18\f \x01(\x03R\x04read\x126\n" +
-	"\tread_time\x18\r \x01(\v2\x19.google.protobuf.DurationR\breadTime\x12)\n" +
-	"\x10write_operations\x18\x0e \x01(\x03R\x0fwriteOperations\x12\x14\n" +
-	"\x05write\x18\x0f \x01(\x03R\x05write\x128\n" +
-	"\n" +
-	"write_time\x18\x10 \x01(\v2\x19.google.protobuf.DurationR\twriteTime\"\xd9\x06\n" +
-	"\x12NetworkMeasurement\x128\n" +
+	"\rgomon_message\"\xfb\x01\n" +
+	"\x0fFileObservation\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04host\x18\x02 \x01(\tR\x04host\x12\x1a\n" +
 	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x16\n" +
 	"\x06source\x18\x04 \x01(\tR\x06source\x12\x14\n" +
 	"\x05event\x18\x05 \x01(\tR\x05event\x12\x12\n" +
-	"\x04name\x18\x06 \x01(\tR\x04name\x12\x14\n" +
-	"\x05index\x18\a \x01(\x03R\x05index\x12\x14\n" +
-	"\x05flags\x18\b \x01(\tR\x05flags\x12\x10\n" +
-	"\x03mtu\x18\t \x01(\x03R\x03mtu\x12\x10\n" +
-	"\x03mac\x18\n" +
-	" \x01(\tR\x03mac\x12\x18\n" +
-	"\aaddress\x18\v \x01(\tR\aaddress\x12\x18\n" +
-	"\anetmask\x18\f \x01(\tR\anetmask\x12\x1c\n" +
-	"\tbroadcast\x18\r \x01(\tR\tbroadcast\x12\x1e\n" +
-	"\n" +
-	"linklocal6\x18\x0e \x01(\tR\n" +
-	"linklocal6\x12\x1a\n" +
-	"\baddress6\x18\x0f \x01(\tR\baddress6\x12\x18\n" +
-	"\areceive\x18\x10 \x01(\x03R\areceive\x12'\n" +
-	"\x0freceive_packets\x18\x11 \x01(\x03R\x0ereceivePackets\x12%\n" +
-	"\x0ereceive_errors\x18\x12 \x01(\x03R\rreceiveErrors\x12'\n" +
-	"\x0freceive_dropped\x18\x13 \x01(\x03R\x0ereceiveDropped\x12+\n" +
-	"\x11receive_multicast\x18\x14 \x01(\x03R\x10receiveMulticast\x12\x1a\n" +
-	"\btransmit\x18\x15 \x01(\x03R\btransmit\x12)\n" +
-	"\x10transmit_packets\x18\x16 \x01(\x03R\x0ftransmitPackets\x12'\n" +
-	"\x0ftransmit_errors\x18\x17 \x01(\x03R\x0etransmitErrors\x12)\n" +
-	"\x10transmit_dropped\x18\x18 \x01(\x03R\x0ftransmitDropped\x12/\n" +
-	"\x13transmit_collisions\x18\x19 \x01(\x03R\x12transmitCollisions\x12-\n" +
-	"\x12transmit_multicast\x18\x1a \x01(\x03R\x11transmitMulticast\"\x81\x02\n" +
+	"\x04name\x18\x06 \x01(\tR\x04name\x12\"\n" +
+	"\rfile_event_id\x18\a \x01(\x04R\vfileEventId\x12\x18\n" +
+	"\amessage\x18\b \x01(\tR\amessage\"\x81\x02\n" +
 	"\x0fLogsObservation\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04host\x18\x02 \x01(\tR\x04host\x12\x1a\n" +
@@ -6649,21 +6589,7 @@ const file_proto_gomon_proto_rawDesc = "" +
 	"\x04peer\x18\x03 \x01(\v2-.proto.ProcessMeasurement.Connection.EndpointR\x04peer\x1a0\n" +
 	"\bEndpoint\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
-	"\x03pid\x18\x02 \x01(\x03R\x03pid\"\xa4\x03\n" +
-	"\x10ServeMeasurement\x128\n" +
-	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
-	"\x04host\x18\x02 \x01(\tR\x04host\x12\x1a\n" +
-	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x16\n" +
-	"\x06source\x18\x04 \x01(\tR\x06source\x12\x14\n" +
-	"\x05event\x18\x05 \x01(\tR\x05event\x12\x12\n" +
-	"\x04name\x18\x06 \x01(\tR\x04name\x12\x18\n" +
-	"\aaddress\x18\a \x01(\tR\aaddress\x12\x1c\n" +
-	"\tendpoints\x18\b \x03(\tR\tendpoints\x12#\n" +
-	"\rhttp_requests\x18\t \x01(\x03R\fhttpRequests\x12 \n" +
-	"\vcollections\x18\n" +
-	" \x01(\x03R\vcollections\x12B\n" +
-	"\x0fcollection_time\x18\v \x01(\v2\x19.google.protobuf.DurationR\x0ecollectionTime\x12!\n" +
-	"\floki_streams\x18\f \x01(\x03R\vlokiStreams\"\xbd\f\n" +
+	"\x03pid\x18\x02 \x01(\x03R\x03pid\"\xbd\f\n" +
 	"\x11SystemMeasurement\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04host\x18\x02 \x01(\tR\x04host\x12\x1a\n" +
@@ -6680,25 +6606,19 @@ const file_proto_gomon_proto_rawDesc = "" +
 	"\x16open_files_per_process\x18\f \x01(\x03R\x13openFilesPerProcess\x12,\n" +
 	"\x12open_files_current\x18\r \x01(\x03R\x10openFilesCurrent\x12G\n" +
 	"\fload_average\x18\x0e \x01(\v2$.proto.SystemMeasurement.LoadAverageR\vloadAverage\x12.\n" +
-	"\x03cpu\x18\x0f \x01(\v2\x1c.proto.SystemMeasurement.CPUR\x03cpu\x12\x1b\n" +
+	"\x03cpu\x18\x0f \x01(\v2\x1c.proto.SystemMeasurement.CpuR\x03cpu\x12\x1b\n" +
 	"\tcpu_count\x18\x10 \x01(\x03R\bcpuCount\x120\n" +
-	"\x04cpus\x18\x11 \x03(\v2\x1c.proto.SystemMeasurement.CPUR\x04cpus\x127\n" +
+	"\x04cpus\x18\x11 \x03(\v2\x1c.proto.SystemMeasurement.CpuR\x04cpus\x127\n" +
 	"\x06memory\x18\x12 \x01(\v2\x1f.proto.SystemMeasurement.MemoryR\x06memory\x121\n" +
 	"\x04swap\x18\x13 \x01(\v2\x1d.proto.SystemMeasurement.SwapR\x04swap\x12G\n" +
-	"\rprocess_stats\x18\x14 \x01(\v2\".proto.SystemMeasurement.ProcStatsR\fprocessStats\x1a\x96\x01\n" +
-	"\tProcStats\x12\x14\n" +
-	"\x05count\x18\x01 \x01(\x03R\x05count\x12\x16\n" +
-	"\x06active\x18\x02 \x01(\x03R\x06active\x12\x16\n" +
-	"\x06execed\x18\x03 \x01(\x03R\x06execed\x12\x16\n" +
-	"\x06exited\x18\x04 \x01(\x03R\x06exited\x12+\n" +
-	"\x03cpu\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\x03cpu\x1at\n" +
+	"\rprocess_stats\x18\x14 \x01(\v2\".proto.SystemMeasurement.ProcStatsR\fprocessStats\x1at\n" +
 	"\vLoadAverage\x12\x1d\n" +
 	"\n" +
 	"one_minute\x18\x01 \x01(\x01R\toneMinute\x12\x1f\n" +
 	"\vfive_minute\x18\x02 \x01(\x01R\n" +
 	"fiveMinute\x12%\n" +
 	"\x0efifteen_minute\x18\x03 \x01(\x01R\rfifteenMinute\x1a\xc7\x01\n" +
-	"\x03CPU\x12/\n" +
+	"\x03Cpu\x12/\n" +
 	"\x05total\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x05total\x12-\n" +
 	"\x04user\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x04user\x121\n" +
 	"\x06system\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x06system\x12-\n" +
@@ -6714,16 +6634,95 @@ const file_proto_gomon_proto_rawDesc = "" +
 	"\x04Swap\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12\x12\n" +
 	"\x04free\x18\x02 \x01(\x03R\x04free\x12\x12\n" +
-	"\x04used\x18\x03 \x01(\x03R\x04used\"\xfb\x01\n" +
-	"\x0fFileObservation\x128\n" +
+	"\x04used\x18\x03 \x01(\x03R\x04used\x1a\x96\x01\n" +
+	"\tProcStats\x12\x14\n" +
+	"\x05count\x18\x01 \x01(\x03R\x05count\x12\x16\n" +
+	"\x06active\x18\x02 \x01(\x03R\x06active\x12\x16\n" +
+	"\x06execed\x18\x03 \x01(\x03R\x06execed\x12\x16\n" +
+	"\x06exited\x18\x04 \x01(\x03R\x06exited\x12+\n" +
+	"\x03cpu\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\x03cpu\"\xfe\x02\n" +
+	"\x15FilesystemMeasurement\x128\n" +
+	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
+	"\x04host\x18\x02 \x01(\tR\x04host\x12\x1a\n" +
+	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x16\n" +
+	"\x06source\x18\x04 \x01(\tR\x06source\x12\x14\n" +
+	"\x05event\x18\x05 \x01(\tR\x05event\x12\x14\n" +
+	"\x05mount\x18\x06 \x01(\tR\x05mount\x12\x12\n" +
+	"\x04path\x18\a \x01(\tR\x04path\x12\x12\n" +
+	"\x04type\x18\b \x01(\tR\x04type\x12\x14\n" +
+	"\x05total\x18\t \x01(\x03R\x05total\x12\x12\n" +
+	"\x04used\x18\n" +
+	" \x01(\x03R\x04used\x12\x12\n" +
+	"\x04free\x18\v \x01(\x03R\x04free\x12\x1c\n" +
+	"\tavailable\x18\f \x01(\x03R\tavailable\x12\x14\n" +
+	"\x05files\x18\r \x01(\x03R\x05files\x12\x1d\n" +
+	"\n" +
+	"free_files\x18\x0e \x01(\x03R\tfreeFiles\"\x99\x04\n" +
+	"\rIoMeasurement\x128\n" +
+	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
+	"\x04host\x18\x02 \x01(\tR\x04host\x12\x1a\n" +
+	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x16\n" +
+	"\x06source\x18\x04 \x01(\tR\x06source\x12\x14\n" +
+	"\x05event\x18\x05 \x01(\tR\x05event\x12\x16\n" +
+	"\x06device\x18\x06 \x01(\tR\x06device\x12\x14\n" +
+	"\x05major\x18\a \x01(\tR\x05major\x12\x14\n" +
+	"\x05minor\x18\b \x01(\tR\x05minor\x12\x1d\n" +
+	"\n" +
+	"total_size\x18\t \x01(\x03R\ttotalSize\x12\x1d\n" +
+	"\n" +
+	"block_size\x18\n" +
+	" \x01(\x03R\tblockSize\x12'\n" +
+	"\x0fread_operations\x18\v \x01(\x03R\x0ereadOperations\x12\x12\n" +
+	"\x04read\x18\f \x01(\x03R\x04read\x126\n" +
+	"\tread_time\x18\r \x01(\v2\x19.google.protobuf.DurationR\breadTime\x12)\n" +
+	"\x10write_operations\x18\x0e \x01(\x03R\x0fwriteOperations\x12\x14\n" +
+	"\x05write\x18\x0f \x01(\x03R\x05write\x128\n" +
+	"\n" +
+	"write_time\x18\x10 \x01(\v2\x19.google.protobuf.DurationR\twriteTime\"\xd9\x06\n" +
+	"\x12NetworkMeasurement\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04host\x18\x02 \x01(\tR\x04host\x12\x1a\n" +
 	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x16\n" +
 	"\x06source\x18\x04 \x01(\tR\x06source\x12\x14\n" +
 	"\x05event\x18\x05 \x01(\tR\x05event\x12\x12\n" +
-	"\x04name\x18\x06 \x01(\tR\x04name\x12\"\n" +
-	"\rfile_event_id\x18\a \x01(\x04R\vfileEventId\x12\x18\n" +
-	"\amessage\x18\b \x01(\tR\amessage2I\n" +
+	"\x04name\x18\x06 \x01(\tR\x04name\x12\x14\n" +
+	"\x05index\x18\a \x01(\x03R\x05index\x12\x14\n" +
+	"\x05flags\x18\b \x01(\tR\x05flags\x12\x10\n" +
+	"\x03mtu\x18\t \x01(\x03R\x03mtu\x12\x10\n" +
+	"\x03mac\x18\n" +
+	" \x01(\tR\x03mac\x12\x18\n" +
+	"\aaddress\x18\v \x01(\tR\aaddress\x12\x18\n" +
+	"\anetmask\x18\f \x01(\tR\anetmask\x12\x1c\n" +
+	"\tbroadcast\x18\r \x01(\tR\tbroadcast\x12\x1e\n" +
+	"\n" +
+	"linklocal6\x18\x0e \x01(\tR\n" +
+	"linklocal6\x12\x1a\n" +
+	"\baddress6\x18\x0f \x01(\tR\baddress6\x12\x18\n" +
+	"\areceive\x18\x10 \x01(\x03R\areceive\x12'\n" +
+	"\x0freceive_packets\x18\x11 \x01(\x03R\x0ereceivePackets\x12%\n" +
+	"\x0ereceive_errors\x18\x12 \x01(\x03R\rreceiveErrors\x12'\n" +
+	"\x0freceive_dropped\x18\x13 \x01(\x03R\x0ereceiveDropped\x12+\n" +
+	"\x11receive_multicast\x18\x14 \x01(\x03R\x10receiveMulticast\x12\x1a\n" +
+	"\btransmit\x18\x15 \x01(\x03R\btransmit\x12)\n" +
+	"\x10transmit_packets\x18\x16 \x01(\x03R\x0ftransmitPackets\x12'\n" +
+	"\x0ftransmit_errors\x18\x17 \x01(\x03R\x0etransmitErrors\x12)\n" +
+	"\x10transmit_dropped\x18\x18 \x01(\x03R\x0ftransmitDropped\x12/\n" +
+	"\x13transmit_collisions\x18\x19 \x01(\x03R\x12transmitCollisions\x12-\n" +
+	"\x12transmit_multicast\x18\x1a \x01(\x03R\x11transmitMulticast\"\xa4\x03\n" +
+	"\x10ServeMeasurement\x128\n" +
+	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
+	"\x04host\x18\x02 \x01(\tR\x04host\x12\x1a\n" +
+	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x16\n" +
+	"\x06source\x18\x04 \x01(\tR\x06source\x12\x14\n" +
+	"\x05event\x18\x05 \x01(\tR\x05event\x12\x12\n" +
+	"\x04name\x18\x06 \x01(\tR\x04name\x12\x18\n" +
+	"\aaddress\x18\a \x01(\tR\aaddress\x12\x1c\n" +
+	"\tendpoints\x18\b \x03(\tR\tendpoints\x12#\n" +
+	"\rhttp_requests\x18\t \x01(\x03R\fhttpRequests\x12 \n" +
+	"\vcollections\x18\n" +
+	" \x01(\x03R\vcollections\x12B\n" +
+	"\x0fcollection_time\x18\v \x01(\v2\x19.google.protobuf.DurationR\x0ecollectionTime\x12!\n" +
+	"\floki_streams\x18\f \x01(\x03R\vlokiStreams2I\n" +
 	"\x05Gomon\x12@\n" +
 	"\vGetMessages\x12\x18.proto.GomonMessageTypes\x1a\x13.proto.GomonMessage\"\x000\x01B\tZ\a.;protob\beditionsp\xe9\a"
 
@@ -6731,68 +6730,68 @@ var file_proto_gomon_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_proto_gomon_proto_goTypes = []any{
 	(*GomonMessageTypes)(nil),                      // 0: proto.GomonMessageTypes
 	(*GomonMessage)(nil),                           // 1: proto.GomonMessage
-	(*FilesystemMeasurement)(nil),                  // 2: proto.FilesystemMeasurement
-	(*IoMeasurement)(nil),                          // 3: proto.IoMeasurement
-	(*NetworkMeasurement)(nil),                     // 4: proto.NetworkMeasurement
-	(*LogsObservation)(nil),                        // 5: proto.LogsObservation
-	(*ProcessObservation)(nil),                     // 6: proto.ProcessObservation
-	(*ProcessMeasurement)(nil),                     // 7: proto.ProcessMeasurement
-	(*ServeMeasurement)(nil),                       // 8: proto.ServeMeasurement
-	(*SystemMeasurement)(nil),                      // 9: proto.SystemMeasurement
-	(*FileObservation)(nil),                        // 10: proto.FileObservation
+	(*FileObservation)(nil),                        // 2: proto.FileObservation
+	(*LogsObservation)(nil),                        // 3: proto.LogsObservation
+	(*ProcessObservation)(nil),                     // 4: proto.ProcessObservation
+	(*ProcessMeasurement)(nil),                     // 5: proto.ProcessMeasurement
+	(*SystemMeasurement)(nil),                      // 6: proto.SystemMeasurement
+	(*FilesystemMeasurement)(nil),                  // 7: proto.FilesystemMeasurement
+	(*IoMeasurement)(nil),                          // 8: proto.IoMeasurement
+	(*NetworkMeasurement)(nil),                     // 9: proto.NetworkMeasurement
+	(*ServeMeasurement)(nil),                       // 10: proto.ServeMeasurement
 	(*ProcessMeasurement_Connection)(nil),          // 11: proto.ProcessMeasurement.Connection
 	(*ProcessMeasurement_Connection_Endpoint)(nil), // 12: proto.ProcessMeasurement.Connection.Endpoint
-	(*SystemMeasurement_ProcStats)(nil),            // 13: proto.SystemMeasurement.ProcStats
-	(*SystemMeasurement_LoadAverage)(nil),          // 14: proto.SystemMeasurement.LoadAverage
-	(*SystemMeasurement_Cpu)(nil),                  // 15: proto.SystemMeasurement.CPU
-	(*SystemMeasurement_Memory)(nil),               // 16: proto.SystemMeasurement.Memory
-	(*SystemMeasurement_Swap)(nil),                 // 17: proto.SystemMeasurement.Swap
+	(*SystemMeasurement_LoadAverage)(nil),          // 13: proto.SystemMeasurement.LoadAverage
+	(*SystemMeasurement_Cpu)(nil),                  // 14: proto.SystemMeasurement.Cpu
+	(*SystemMeasurement_Memory)(nil),               // 15: proto.SystemMeasurement.Memory
+	(*SystemMeasurement_Swap)(nil),                 // 16: proto.SystemMeasurement.Swap
+	(*SystemMeasurement_ProcStats)(nil),            // 17: proto.SystemMeasurement.ProcStats
 	(*timestamppb.Timestamp)(nil),                  // 18: google.protobuf.Timestamp
 	(*durationpb.Duration)(nil),                    // 19: google.protobuf.Duration
 }
 var file_proto_gomon_proto_depIdxs = []int32{
-	10, // 0: proto.GomonMessage.file_observation:type_name -> proto.FileObservation
-	2,  // 1: proto.GomonMessage.filesystem_measurement:type_name -> proto.FilesystemMeasurement
-	3,  // 2: proto.GomonMessage.io_measurement:type_name -> proto.IoMeasurement
-	5,  // 3: proto.GomonMessage.logs_observation:type_name -> proto.LogsObservation
-	4,  // 4: proto.GomonMessage.network_measurement:type_name -> proto.NetworkMeasurement
-	7,  // 5: proto.GomonMessage.process_measurement:type_name -> proto.ProcessMeasurement
-	6,  // 6: proto.GomonMessage.process_observation:type_name -> proto.ProcessObservation
-	8,  // 7: proto.GomonMessage.serve_measurement:type_name -> proto.ServeMeasurement
-	9,  // 8: proto.GomonMessage.system_measurement:type_name -> proto.SystemMeasurement
-	18, // 9: proto.FilesystemMeasurement.timestamp:type_name -> google.protobuf.Timestamp
-	18, // 10: proto.IoMeasurement.timestamp:type_name -> google.protobuf.Timestamp
-	19, // 11: proto.IoMeasurement.read_time:type_name -> google.protobuf.Duration
-	19, // 12: proto.IoMeasurement.write_time:type_name -> google.protobuf.Duration
-	18, // 13: proto.NetworkMeasurement.timestamp:type_name -> google.protobuf.Timestamp
-	18, // 14: proto.LogsObservation.timestamp:type_name -> google.protobuf.Timestamp
-	18, // 15: proto.ProcessObservation.timestamp:type_name -> google.protobuf.Timestamp
-	18, // 16: proto.ProcessObservation.starttime:type_name -> google.protobuf.Timestamp
-	18, // 17: proto.ProcessMeasurement.timestamp:type_name -> google.protobuf.Timestamp
-	18, // 18: proto.ProcessMeasurement.starttime:type_name -> google.protobuf.Timestamp
-	11, // 19: proto.ProcessMeasurement.connections:type_name -> proto.ProcessMeasurement.Connection
-	19, // 20: proto.ProcessMeasurement.user:type_name -> google.protobuf.Duration
-	19, // 21: proto.ProcessMeasurement.system:type_name -> google.protobuf.Duration
-	19, // 22: proto.ProcessMeasurement.total:type_name -> google.protobuf.Duration
-	18, // 23: proto.ServeMeasurement.timestamp:type_name -> google.protobuf.Timestamp
-	19, // 24: proto.ServeMeasurement.collection_time:type_name -> google.protobuf.Duration
-	18, // 25: proto.SystemMeasurement.timestamp:type_name -> google.protobuf.Timestamp
-	18, // 26: proto.SystemMeasurement.boottime:type_name -> google.protobuf.Timestamp
-	19, // 27: proto.SystemMeasurement.uptime:type_name -> google.protobuf.Duration
-	14, // 28: proto.SystemMeasurement.load_average:type_name -> proto.SystemMeasurement.LoadAverage
-	15, // 29: proto.SystemMeasurement.cpu:type_name -> proto.SystemMeasurement.CPU
-	15, // 30: proto.SystemMeasurement.cpus:type_name -> proto.SystemMeasurement.CPU
-	16, // 31: proto.SystemMeasurement.memory:type_name -> proto.SystemMeasurement.Memory
-	17, // 32: proto.SystemMeasurement.swap:type_name -> proto.SystemMeasurement.Swap
-	13, // 33: proto.SystemMeasurement.process_stats:type_name -> proto.SystemMeasurement.ProcStats
-	18, // 34: proto.FileObservation.timestamp:type_name -> google.protobuf.Timestamp
+	2,  // 0: proto.GomonMessage.file_observation:type_name -> proto.FileObservation
+	7,  // 1: proto.GomonMessage.filesystem_measurement:type_name -> proto.FilesystemMeasurement
+	8,  // 2: proto.GomonMessage.io_measurement:type_name -> proto.IoMeasurement
+	3,  // 3: proto.GomonMessage.logs_observation:type_name -> proto.LogsObservation
+	9,  // 4: proto.GomonMessage.network_measurement:type_name -> proto.NetworkMeasurement
+	5,  // 5: proto.GomonMessage.process_measurement:type_name -> proto.ProcessMeasurement
+	4,  // 6: proto.GomonMessage.process_observation:type_name -> proto.ProcessObservation
+	10, // 7: proto.GomonMessage.serve_measurement:type_name -> proto.ServeMeasurement
+	6,  // 8: proto.GomonMessage.system_measurement:type_name -> proto.SystemMeasurement
+	18, // 9: proto.FileObservation.timestamp:type_name -> google.protobuf.Timestamp
+	18, // 10: proto.LogsObservation.timestamp:type_name -> google.protobuf.Timestamp
+	18, // 11: proto.ProcessObservation.timestamp:type_name -> google.protobuf.Timestamp
+	18, // 12: proto.ProcessObservation.starttime:type_name -> google.protobuf.Timestamp
+	18, // 13: proto.ProcessMeasurement.timestamp:type_name -> google.protobuf.Timestamp
+	18, // 14: proto.ProcessMeasurement.starttime:type_name -> google.protobuf.Timestamp
+	11, // 15: proto.ProcessMeasurement.connections:type_name -> proto.ProcessMeasurement.Connection
+	19, // 16: proto.ProcessMeasurement.user:type_name -> google.protobuf.Duration
+	19, // 17: proto.ProcessMeasurement.system:type_name -> google.protobuf.Duration
+	19, // 18: proto.ProcessMeasurement.total:type_name -> google.protobuf.Duration
+	18, // 19: proto.SystemMeasurement.timestamp:type_name -> google.protobuf.Timestamp
+	18, // 20: proto.SystemMeasurement.boottime:type_name -> google.protobuf.Timestamp
+	19, // 21: proto.SystemMeasurement.uptime:type_name -> google.protobuf.Duration
+	13, // 22: proto.SystemMeasurement.load_average:type_name -> proto.SystemMeasurement.LoadAverage
+	14, // 23: proto.SystemMeasurement.cpu:type_name -> proto.SystemMeasurement.Cpu
+	14, // 24: proto.SystemMeasurement.cpus:type_name -> proto.SystemMeasurement.Cpu
+	15, // 25: proto.SystemMeasurement.memory:type_name -> proto.SystemMeasurement.Memory
+	16, // 26: proto.SystemMeasurement.swap:type_name -> proto.SystemMeasurement.Swap
+	17, // 27: proto.SystemMeasurement.process_stats:type_name -> proto.SystemMeasurement.ProcStats
+	18, // 28: proto.FilesystemMeasurement.timestamp:type_name -> google.protobuf.Timestamp
+	18, // 29: proto.IoMeasurement.timestamp:type_name -> google.protobuf.Timestamp
+	19, // 30: proto.IoMeasurement.read_time:type_name -> google.protobuf.Duration
+	19, // 31: proto.IoMeasurement.write_time:type_name -> google.protobuf.Duration
+	18, // 32: proto.NetworkMeasurement.timestamp:type_name -> google.protobuf.Timestamp
+	18, // 33: proto.ServeMeasurement.timestamp:type_name -> google.protobuf.Timestamp
+	19, // 34: proto.ServeMeasurement.collection_time:type_name -> google.protobuf.Duration
 	12, // 35: proto.ProcessMeasurement.Connection.self:type_name -> proto.ProcessMeasurement.Connection.Endpoint
 	12, // 36: proto.ProcessMeasurement.Connection.peer:type_name -> proto.ProcessMeasurement.Connection.Endpoint
-	19, // 37: proto.SystemMeasurement.ProcStats.cpu:type_name -> google.protobuf.Duration
-	19, // 38: proto.SystemMeasurement.CPU.total:type_name -> google.protobuf.Duration
-	19, // 39: proto.SystemMeasurement.CPU.user:type_name -> google.protobuf.Duration
-	19, // 40: proto.SystemMeasurement.CPU.system:type_name -> google.protobuf.Duration
-	19, // 41: proto.SystemMeasurement.CPU.idle:type_name -> google.protobuf.Duration
+	19, // 37: proto.SystemMeasurement.Cpu.total:type_name -> google.protobuf.Duration
+	19, // 38: proto.SystemMeasurement.Cpu.user:type_name -> google.protobuf.Duration
+	19, // 39: proto.SystemMeasurement.Cpu.system:type_name -> google.protobuf.Duration
+	19, // 40: proto.SystemMeasurement.Cpu.idle:type_name -> google.protobuf.Duration
+	19, // 41: proto.SystemMeasurement.ProcStats.cpu:type_name -> google.protobuf.Duration
 	0,  // 42: proto.Gomon.GetMessages:input_type -> proto.GomonMessageTypes
 	1,  // 43: proto.Gomon.GetMessages:output_type -> proto.GomonMessage
 	43, // [43:44] is the sub-list for method output_type

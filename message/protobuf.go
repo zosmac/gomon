@@ -16,9 +16,9 @@ import (
 type (
 	Node struct {
 		message  string
-		fields   []field
 		parent   *Node
 		children Nodes
+		fields   []field
 	}
 
 	Nodes map[string]*Node
@@ -122,10 +122,17 @@ func messagesFunctions(messages *strings.Builder, functions *strings.Builder) {
 	depth := 0
 	node := &Node{}
 	tree := Nodes{}
+	qualifiers := []string{}
+	doSlice := false
 
 	for _, f := range fields {
 		if f.key != prevMessage {
 			if prevMessage != "" {
+				for ; depth > 0; depth-- {
+					node = node.parent
+					functions.WriteString(strings.Repeat("  ", depth+1))
+					functions.WriteString("}.Build(),\n")
+				}
 				functions.WriteString("  }\n  return b.Build()\n}\n")
 			}
 			key := strings.Split(f.key, " |")
@@ -142,11 +149,12 @@ func messagesFunctions(messages *strings.Builder, functions *strings.Builder) {
 			depth = 0
 			tree[typ] = &Node{
 				message:  typ,
-				fields:   []field{},
 				parent:   nil,
 				children: Nodes{},
+				fields:   []field{},
 			}
 			node = tree[typ]
+			qualifiers = []string{}
 		}
 
 		nestedMessage := false
@@ -157,7 +165,6 @@ func messagesFunctions(messages *strings.Builder, functions *strings.Builder) {
 		var name string
 		if strings.HasSuffix(f.Name, "[n]") {
 			name = f.Name[:len(f.Name)-3]
-			fmt.Fprintf(os.Stderr, "slice of type %s\n", f.Value.Type())
 			f.Value = reflect.MakeSlice(reflect.SliceOf(f.Value.Type()), 0, 0)
 		} else if n := strings.Index(f.Name, "[key]"); n >= 0 {
 			gocore.Error("Protobuf", fmt.Errorf("map types support for protobuf unverified")).Err()
@@ -172,49 +179,105 @@ func messagesFunctions(messages *strings.Builder, functions *strings.Builder) {
 			}
 			for ; depth > i/2; depth-- {
 				node = node.parent
+				indent := strings.Repeat("  ", depth+1)
+				if doSlice {
+					indent += "    "
+				}
+				functions.WriteString(indent)
+				functions.WriteString("}.Build()")
+				qualifiers = qualifiers[:len(qualifiers)-1]
+				if depth != 1 || !doSlice {
+					functions.WriteString(",\n")
+				} else {
+					doSlice = false
+					fmt.Fprintf(functions, `
+%[1]s  }
+%[1]s  return result
+%[1]s}(),
+`,
+						indent[:len(indent)-4]) // unindent :(
+				}
 			}
 			break
 		}
-
-		if depth == 0 {
-			fmt.Fprintf(os.Stderr, "%s %s\n", strings.TrimSpace(name), f.Value.Kind().String())
-
-			if f.Value.Type().Name() == "Time" {
-				fmt.Fprintf(functions, "    %s: timestamppb.New(src.%[1]s),\n", strings.TrimSpace(name))
-			} else if f.Value.Type().Name() == "Duration" {
-				fmt.Fprintf(functions, "    %s: durationpb.New(src.%[1]s),\n", strings.TrimSpace(name))
-			} else if f.Value.Kind().String() == "int" {
-				fmt.Fprintf(functions, "    %s: toInt64(int(src.%[1]s)),\n", strings.TrimSpace(name))
-			} else if f.Value.Kind().String() == "struct" {
-				fmt.Fprintf(functions, "    %s: &src.%[1]s,\n", strings.TrimSpace(name))
-			} else if f.Value.Kind().String() == "slice" {
-				fmt.Fprintf(functions, "    %s: src.%[1]s,\n", strings.TrimSpace(name))
-			} else if f.Value.Kind().String() == "string" && f.Value.Type().Name() != "string" {
-				fmt.Fprintf(functions, "    %s: (*string)(&src.%[1]s),\n", strings.TrimSpace(name))
-			} else {
-				fmt.Fprintf(functions, "    %s: &src.%[1]s,\n", strings.TrimSpace(name))
-			}
-		}
+		name = strings.TrimSpace(name)
 
 		node.fields = append(node.fields, f)
 		if nestedMessage {
 			typ := f.Value.Type().Name()
 			if f.Value.Kind().String() == "slice" {
 				typ = f.Value.Type().Elem().Name()
-				fmt.Fprintf(os.Stderr, "slice %s, element type %s\n", f.Value.Type(), f.Value.Type().Elem())
 			}
 			node.children[typ] = &Node{
 				message:  typ,
-				fields:   []field{},
 				parent:   node,
 				children: Nodes{},
+				fields:   []field{},
 			}
 			node = node.children[typ]
 			depth += 1
+			qualifiers = append(qualifiers, name)
+			fmt.Fprintf(os.Stderr, "%s\n", qualifiers)
+
+			indent := strings.Repeat("  ", depth+1)
+			if doSlice {
+				indent += "    "
+			}
+			messages := []string{}
+			for node := node; node != nil; node = node.parent {
+				messages = append([]string{node.message}, messages...)
+			}
+			qualifier := strings.Join(messages, "_") // type qualifier
+
+			if f.Value.Kind().String() == "slice" {
+				doSlice = true
+				fmt.Fprintf(functions,
+					`%s%s: func() []*%s {
+%[1]s  result := make([]*%[3]s, len(src.%[2]s))
+%[1]s  for i, src := range src.%[2]s {
+%[1]s    result[i] = %[3]s_builder{
+`,
+					indent, name, qualifier)
+			} else {
+				fmt.Fprintf(functions, "%s%s: %s_builder{\n", indent, name, qualifier)
+			}
+		} else {
+			indent := strings.Repeat("  ", depth+2)
+			if doSlice {
+				indent += "    "
+			}
+			fmt.Fprintf(os.Stderr, ">%s\n", qualifiers)
+			qualifier := strings.Join(qualifiers, ".")
+			if doSlice {
+				qualifier = strings.Join(qualifiers[1:], ".")
+			}
+			if qualifier != "" {
+				qualifier += "."
+			}
+			if f.Value.Type().Name() == "Time" {
+				fmt.Fprintf(functions, "%s%s: timestamppb.New(src.%s%[2]s),\n", indent, name, qualifier)
+			} else if f.Value.Type().Name() == "Duration" {
+				fmt.Fprintf(functions, "%s%s: durationpb.New(src.%s%[2]s),\n", indent, name, qualifier)
+			} else if f.Value.Kind().String() == "int" {
+				fmt.Fprintf(functions, "%s%s: toInt64(int(src.%s%[2]s)),\n", indent, name, qualifier)
+			} else if f.Value.Kind().String() == "struct" {
+				fmt.Fprintf(functions, "%s%s: &src.%s%[2]s,\n", indent, name, qualifier)
+			} else if f.Value.Kind().String() == "slice" {
+				fmt.Fprintf(functions, "%s%s: src.%s%[2]s,\n", indent, name, qualifier)
+			} else if f.Value.Kind().String() == "string" && f.Value.Type().Name() != "string" {
+				fmt.Fprintf(functions, "%s%s: (*string)(&src.%s%[2]s),\n", indent, name, qualifier)
+			} else {
+				fmt.Fprintf(functions, "%s%s: &src.%s%[2]s,\n", indent, name, qualifier)
+			}
 		}
 	}
 
 	if prevMessage != "" {
+		for ; depth > 0; depth-- {
+			node = node.parent
+			functions.WriteString(strings.Repeat("  ", depth+1))
+			functions.WriteString("}.Build(),\n")
+		}
 		functions.WriteString("  }\n  return b.Build()\n}\n")
 	}
 
@@ -258,9 +321,6 @@ func buildMessages(depth int, tree Nodes) string {
 
 			if typ == "slice" {
 				typ = "repeated " + f.Value.Type().Elem().Name()
-				// }
-				// if strings.HasSuffix(name, "[n]") {
-				// 	typ = "repeated " + typ
 				name = name[:len(name)-3]
 			} else if n := strings.Index(name, "[key]"); n >= 0 {
 				gocore.Error("Protobuf", fmt.Errorf("map types support for protobuf unverified")).Err()
