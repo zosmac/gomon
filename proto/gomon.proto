@@ -37,75 +37,48 @@ message FileObservation {
   string message = 8;
 }
 
-message LogsObservation {
+message NetworkMeasurement {
   google.protobuf.Timestamp timestamp = 1;
   string host = 2;
   string platform = 3;
   string source = 4;
   string event = 5;
   string name = 6;
-  int64 pid = 7;
-  string sender = 8;
-  string message = 9;
+  int64 index = 7;
+  string flags = 8;
+  int64 mtu = 9;
+  string mac = 10;
+  string address = 11;
+  string netmask = 12;
+  string broadcast = 13;
+  string linklocal6 = 14;
+  string address6 = 15;
+  int64 receive = 16;
+  int64 receive_packets = 17;
+  int64 receive_errors = 18;
+  int64 receive_dropped = 19;
+  int64 receive_multicast = 20;
+  int64 transmit = 21;
+  int64 transmit_packets = 22;
+  int64 transmit_errors = 23;
+  int64 transmit_dropped = 24;
+  int64 transmit_collisions = 25;
+  int64 transmit_multicast = 26;
 }
 
-message ProcessObservation {
+message ServeMeasurement {
   google.protobuf.Timestamp timestamp = 1;
   string host = 2;
   string platform = 3;
   string source = 4;
   string event = 5;
   string name = 6;
-  int64 pid = 7;
-  google.protobuf.Timestamp starttime = 8;
-  string message = 9;
-}
-
-message ProcessMeasurement {
-  message Connection {
-    message Endpoint {
-      string name = 1;
-      int64 pid = 2;
-    }
-    string type = 1;
-    Endpoint self = 2;
-    Endpoint peer = 3;
-  }
-  google.protobuf.Timestamp timestamp = 1;
-  string host = 2;
-  string platform = 3;
-  string source = 4;
-  string event = 5;
-  string name = 6;
-  int64 pid = 7;
-  google.protobuf.Timestamp starttime = 8;
-  int64 ppid = 9;
-  int64 pgid = 10;
-  string tty = 11;
-  int64 uid = 12;
-  int64 gid = 13;
-  string username = 14;
-  string groupname = 15;
-  string executable = 16;
-  repeated string args = 17;
-  repeated string envs = 18;
-  string cwd = 19;
-  string root = 20;
-  repeated Connection connections = 21;
-  string status = 22;
-  int64 nice = 23;
-  int64 priority = 24;
-  int64 threads = 25;
-  google.protobuf.Duration user = 26;
-  google.protobuf.Duration system = 27;
-  google.protobuf.Duration total = 28;
-  int64 size = 29;
-  int64 resident = 30;
-  int64 page_faults = 31;
-  int64 context_switches = 32;
-  int64 read_actual = 33;
-  int64 write_actual = 34;
-  int64 write_requested = 35;
+  string address = 7;
+  repeated string endpoints = 8;
+  int64 http_requests = 9;
+  int64 collections = 10;
+  google.protobuf.Duration collection_time = 11;
+  int64 loki_streams = 12;
 }
 
 message SystemMeasurement {
@@ -197,46 +170,73 @@ message IoMeasurement {
   google.protobuf.Duration write_time = 16;
 }
 
-message NetworkMeasurement {
+message LogsObservation {
   google.protobuf.Timestamp timestamp = 1;
   string host = 2;
   string platform = 3;
   string source = 4;
   string event = 5;
   string name = 6;
-  int64 index = 7;
-  string flags = 8;
-  int64 mtu = 9;
-  string mac = 10;
-  string address = 11;
-  string netmask = 12;
-  string broadcast = 13;
-  string linklocal6 = 14;
-  string address6 = 15;
-  int64 receive = 16;
-  int64 receive_packets = 17;
-  int64 receive_errors = 18;
-  int64 receive_dropped = 19;
-  int64 receive_multicast = 20;
-  int64 transmit = 21;
-  int64 transmit_packets = 22;
-  int64 transmit_errors = 23;
-  int64 transmit_dropped = 24;
-  int64 transmit_collisions = 25;
-  int64 transmit_multicast = 26;
+  int64 pid = 7;
+  string sender = 8;
+  string message = 9;
 }
 
-message ServeMeasurement {
+message ProcessObservation {
   google.protobuf.Timestamp timestamp = 1;
   string host = 2;
   string platform = 3;
   string source = 4;
   string event = 5;
   string name = 6;
-  string address = 7;
-  repeated string endpoints = 8;
-  int64 http_requests = 9;
-  int64 collections = 10;
-  google.protobuf.Duration collection_time = 11;
-  int64 loki_streams = 12;
+  int64 pid = 7;
+  google.protobuf.Timestamp starttime = 8;
+  string message = 9;
+}
+
+message ProcessMeasurement {
+  message Connection {
+    message Endpoint {
+      string name = 1;
+      int64 pid = 2;
+    }
+    string type = 1;
+    Endpoint self = 2;
+    Endpoint peer = 3;
+  }
+  google.protobuf.Timestamp timestamp = 1;
+  string host = 2;
+  string platform = 3;
+  string source = 4;
+  string event = 5;
+  string name = 6;
+  int64 pid = 7;
+  google.protobuf.Timestamp starttime = 8;
+  int64 ppid = 9;
+  int64 pgid = 10;
+  string tty = 11;
+  int64 uid = 12;
+  int64 gid = 13;
+  string username = 14;
+  string groupname = 15;
+  string executable = 16;
+  repeated string args = 17;
+  repeated string envs = 18;
+  string cwd = 19;
+  string root = 20;
+  repeated Connection connections = 21;
+  string status = 22;
+  int64 nice = 23;
+  int64 priority = 24;
+  int64 threads = 25;
+  google.protobuf.Duration user = 26;
+  google.protobuf.Duration system = 27;
+  google.protobuf.Duration total = 28;
+  int64 size = 29;
+  int64 resident = 30;
+  int64 page_faults = 31;
+  int64 context_switches = 32;
+  int64 read_actual = 33;
+  int64 write_actual = 34;
+  int64 write_requested = 35;
 }
