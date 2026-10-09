@@ -1,6 +1,6 @@
 edition = "2024";
-package proto;
-option go_package = ".;proto";
+package main;
+option go_package = ".;main";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -14,15 +14,15 @@ message GomonMessageTypes {
 
 message GomonMessage {
   oneof gomon_message {
-	FileObservation file_observation = 1;
+    FileObservation file_observation = 1;
     FilesystemMeasurement filesystem_measurement = 2;
     IoMeasurement io_measurement = 3;
-	LogsObservation logs_observation = 4;
+    LogsObservation logs_observation = 4;
     NetworkMeasurement network_measurement = 5;
-	ProcessMeasurement process_measurement = 6;
-	ProcessObservation process_observation = 7;
-	ServeMeasurement serve_measurement = 8;
-	SystemMeasurement system_measurement = 9;
+    ProcessMeasurement process_measurement = 6;
+    ProcessObservation process_observation = 7;
+    ServeMeasurement serve_measurement = 8;
+    SystemMeasurement system_measurement = 9;
   }
 } 
 
@@ -35,103 +35,6 @@ message FileObservation {
   string name = 6;
   uint64 file_event_id = 7;
   string message = 8;
-}
-
-message NetworkMeasurement {
-  google.protobuf.Timestamp timestamp = 1;
-  string host = 2;
-  string platform = 3;
-  string source = 4;
-  string event = 5;
-  string name = 6;
-  int64 index = 7;
-  string flags = 8;
-  int64 mtu = 9;
-  string mac = 10;
-  string address = 11;
-  string netmask = 12;
-  string broadcast = 13;
-  string linklocal6 = 14;
-  string address6 = 15;
-  int64 receive = 16;
-  int64 receive_packets = 17;
-  int64 receive_errors = 18;
-  int64 receive_dropped = 19;
-  int64 receive_multicast = 20;
-  int64 transmit = 21;
-  int64 transmit_packets = 22;
-  int64 transmit_errors = 23;
-  int64 transmit_dropped = 24;
-  int64 transmit_collisions = 25;
-  int64 transmit_multicast = 26;
-}
-
-message ServeMeasurement {
-  google.protobuf.Timestamp timestamp = 1;
-  string host = 2;
-  string platform = 3;
-  string source = 4;
-  string event = 5;
-  string name = 6;
-  string address = 7;
-  repeated string endpoints = 8;
-  int64 http_requests = 9;
-  int64 collections = 10;
-  google.protobuf.Duration collection_time = 11;
-  int64 loki_streams = 12;
-}
-
-message SystemMeasurement {
-  message LoadAverage {
-    double one_minute = 1;
-    double five_minute = 2;
-    double fifteen_minute = 3;
-  }
-  message Cpu {
-    google.protobuf.Duration total = 1;
-    google.protobuf.Duration user = 2;
-    google.protobuf.Duration system = 3;
-    google.protobuf.Duration idle = 4;
-  }
-  message Memory {
-    int64 total = 1;
-    int64 free = 2;
-    int64 used = 3;
-    int64 free_actual = 4;
-    int64 used_actual = 5;
-  }
-  message Swap {
-    int64 total = 1;
-    int64 free = 2;
-    int64 used = 3;
-  }
-  message ProcStats {
-    int64 count = 1;
-    int64 active = 2;
-    int64 execed = 3;
-    int64 exited = 4;
-    google.protobuf.Duration cpu = 5;
-  }
-  google.protobuf.Timestamp timestamp = 1;
-  string host = 2;
-  string platform = 3;
-  string source = 4;
-  string event = 5;
-  string name = 6;
-  google.protobuf.Timestamp boottime = 7;
-  google.protobuf.Duration uptime = 8;
-  int64 processes_maximum = 9;
-  int64 processes_per_user = 10;
-  int64 open_files_maximum = 11;
-  int64 open_files_per_process = 12;
-  int64 open_files_current = 13;
-  LoadAverage load_average = 14;
-  Cpu cpu = 15;
-  int64 cpu_count = 16;
-  repeated Cpu cpus = 17;
-  Memory memory = 18;
-  Swap swap = 19;
-  ProcStats process_stats = 20;
 }
 
 message FilesystemMeasurement {
@@ -182,16 +85,33 @@ message LogsObservation {
   string message = 9;
 }
 
-message ProcessObservation {
+message NetworkMeasurement {
   google.protobuf.Timestamp timestamp = 1;
   string host = 2;
   string platform = 3;
   string source = 4;
   string event = 5;
   string name = 6;
-  int64 pid = 7;
-  google.protobuf.Timestamp starttime = 8;
-  string message = 9;
+  int64 index = 7;
+  string flags = 8;
+  int64 mtu = 9;
+  string mac = 10;
+  string address = 11;
+  string netmask = 12;
+  string broadcast = 13;
+  string linklocal6 = 14;
+  string address6 = 15;
+  int64 receive = 16;
+  int64 receive_packets = 17;
+  int64 receive_errors = 18;
+  int64 receive_dropped = 19;
+  int64 receive_multicast = 20;
+  int64 transmit = 21;
+  int64 transmit_packets = 22;
+  int64 transmit_errors = 23;
+  int64 transmit_dropped = 24;
+  int64 transmit_collisions = 25;
+  int64 transmit_multicast = 26;
 }
 
 message ProcessMeasurement {
@@ -239,4 +159,84 @@ message ProcessMeasurement {
   int64 read_actual = 33;
   int64 write_actual = 34;
   int64 write_requested = 35;
+}
+
+message ProcessObservation {
+  google.protobuf.Timestamp timestamp = 1;
+  string host = 2;
+  string platform = 3;
+  string source = 4;
+  string event = 5;
+  string name = 6;
+  int64 pid = 7;
+  google.protobuf.Timestamp starttime = 8;
+  string message = 9;
+}
+
+message ServeMeasurement {
+  google.protobuf.Timestamp timestamp = 1;
+  string host = 2;
+  string platform = 3;
+  string source = 4;
+  string event = 5;
+  string name = 6;
+  string address = 7;
+  repeated string endpoints = 8;
+  int64 http_requests = 9;
+  int64 collections = 10;
+  google.protobuf.Duration collection_time = 11;
+  int64 loki_streams = 12;
+}
+
+message SystemMeasurement {
+  message Cpu {
+    google.protobuf.Duration total = 1;
+    google.protobuf.Duration user = 2;
+    google.protobuf.Duration system = 3;
+    google.protobuf.Duration idle = 4;
+  }
+  message LoadAverage {
+    double one_minute = 1;
+    double five_minute = 2;
+    double fifteen_minute = 3;
+  }
+  message Memory {
+    int64 total = 1;
+    int64 free = 2;
+    int64 used = 3;
+    int64 free_actual = 4;
+    int64 used_actual = 5;
+  }
+  message ProcStats {
+    int64 count = 1;
+    int64 active = 2;
+    int64 execed = 3;
+    int64 exited = 4;
+    google.protobuf.Duration cpu = 5;
+  }
+  message Swap {
+    int64 total = 1;
+    int64 free = 2;
+    int64 used = 3;
+  }
+  google.protobuf.Timestamp timestamp = 1;
+  string host = 2;
+  string platform = 3;
+  string source = 4;
+  string event = 5;
+  string name = 6;
+  google.protobuf.Timestamp boottime = 7;
+  google.protobuf.Duration uptime = 8;
+  int64 processes_maximum = 9;
+  int64 processes_per_user = 10;
+  int64 open_files_maximum = 11;
+  int64 open_files_per_process = 12;
+  int64 open_files_current = 13;
+  LoadAverage load_average = 14;
+  Cpu cpu = 15;
+  int64 cpu_count = 16;
+  repeated Cpu cpus = 17;
+  Memory memory = 18;
+  Swap swap = 19;
+  ProcStats process_stats = 20;
 }

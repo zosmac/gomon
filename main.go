@@ -33,7 +33,7 @@ func Main(ctx context.Context) error {
 		return nil
 	}
 
-	if err := message.Encoder(ctx); err != nil {
+	if err := message.Encoder(ctx, Encode); err != nil {
 		return gocore.Error("encoder", err)
 	}
 

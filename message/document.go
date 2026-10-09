@@ -3,7 +3,6 @@
 package message
 
 import (
-	"cmp"
 	"fmt"
 	"slices"
 	"strings"
@@ -20,18 +19,11 @@ var (
 
 // Document the messages when the document flag specified on the command line.
 func Document() {
-	// TODO: this fields sort is both here and in protobuf.go. It should go refactored to somewhere in gocore.
-	slices.SortStableFunc(fields, func(a, b field) int {
-		if c := cmp.Compare(a.key, b.key); c != 0 {
-			return c
-		}
-		if a.Property == b.Property {
-			return 0
-		} else if a.Property {
-			return -1
-		}
-		return 1 // b is a property
-	})
+	keys := make([]string, 0, len(messages))
+	for key := range messages {
+		keys = append(keys, key)
+	}
+	slices.Sort(keys)
 
 	headers := []string{
 		fmt.Sprintf("+-%s%s-+\n",
@@ -54,49 +46,35 @@ func Document() {
 		),
 	}
 
-	prevMessage := ""
-	firstProperty := true
-	firstMetric := true
+	for _, key := range keys {
+		k := strings.Split(key, " |")
+		fmt.Printf(
+			"Source: %s\nEvents: %v\n",
+			k[0],
+			strings.Split(k[1], "|"),
+		)
+		firstProperty := true
+		firstMetric := true
 
-	for _, f := range fields {
-		if f.key != prevMessage {
-			if !firstProperty || !firstMetric {
-				if firstMetric {
-					fmt.Println(footers[0]) // finish previous table
-				} else {
-					fmt.Println(footers[1]) // finish previous table
+		for _, f := range messages[key] {
+			if f.Property {
+				if firstProperty {
+					fmt.Print(headers[0])
+					firstProperty = false
 				}
+				fmt.Printf("| %-*s |\n", max.Name, f.Name)
+			} else {
+				if firstMetric {
+					fmt.Print(headers[1])
+					firstMetric = false
+				}
+				fmt.Printf("| %-*s | %-*s | %-*s |\n",
+					max.Name, f.Name,
+					max.Type, f.Type,
+					max.Unit, f.Unit,
+				)
 			}
-			key := strings.Split(f.key, " |")
-			fmt.Printf(
-				"Source: %s\nEvents: %v\n",
-				key[0],
-				strings.Split(key[1], "|"),
-			)
-			prevMessage = f.key
-			firstProperty = true
-			firstMetric = true
 		}
-		if f.Property {
-			if firstProperty {
-				fmt.Print(headers[0])
-				firstProperty = false
-			}
-			fmt.Printf("| %-*s |\n", max.Name, f.Name)
-		} else {
-			if firstMetric {
-				fmt.Print(headers[1])
-				firstMetric = false
-			}
-			fmt.Printf("| %-*s | %-*s | %-*s |\n",
-				max.Name, f.Name,
-				max.Type, f.Type,
-				max.Unit, f.Unit,
-			)
-		}
-	}
-
-	if prevMessage != "" {
 		if !firstProperty || !firstMetric {
 			if firstMetric {
 				fmt.Println(footers[0]) // finish previous table

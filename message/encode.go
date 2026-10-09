@@ -35,8 +35,8 @@ var (
 // Write enables writer to conform to io.Writer, indirection allows stdout destination to rotate.
 func (writer) Write(buf []byte) (int, error) { return os.Stdout.Write(buf) }
 
-// Encoder configures the message encoder. Its Encode function marshals objects.
-func Encoder(ctx context.Context) error {
+// Encoder configures the message encoder. The encode function marshals objects. If encode is nil, the default fileEncode is used.
+func Encoder(ctx context.Context, encode func([]Content)) error {
 	info, err := os.Stdout.Stat()
 	if err != nil {
 		return gocore.Error("Stat", err)
@@ -61,7 +61,10 @@ func Encoder(ctx context.Context) error {
 		jsonEncoder.SetIndent("", "  ")
 	}
 
-	go encode(ctx)
+	if encode == nil {
+		encode = fileEncode
+	}
+	go encoder(ctx, encode)
 
 	return nil
 }
@@ -78,8 +81,8 @@ func Observations(ms []Content) error {
 	return nil
 }
 
-// encode runs as a goroutine that receives messages and encodes or caches them.
-func encode(ctx context.Context) {
+// encoder runs as a goroutine that receives messages and encodes or caches them.
+func encoder(ctx context.Context, encode func([]Content)) {
 	var timer, ticker <-chan time.Time
 	if flags.rotate.interval > 0 {
 		tm := time.Now().UTC().Truncate(flags.rotate.interval)
@@ -92,13 +95,13 @@ func encode(ctx context.Context) {
 	for {
 		select {
 		case ms := <-measureChan:
-			fileEncode(ms)
+			encode(ms)
 		case ms := <-observeChan:
 			if loki {
 				loki = lokiEncode(ms)
 			}
 			if !loki {
-				fileEncode(ms)
+				encode(ms)
 			}
 		case <-lokiTick:
 			if !loki {

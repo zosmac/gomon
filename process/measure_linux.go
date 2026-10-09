@@ -187,14 +187,12 @@ func getPids() ([]Pid, error) {
 		return nil, gocore.Error("/proc", err)
 	}
 
-	pids := make([]Pid, len(ns))
-	i := 0
+	pids := make([]Pid, 0, len(ns))
 	for _, n := range ns {
 		if pid, err := strconv.Atoi(n); err == nil {
-			pids[i] = Pid(pid)
-			i++
+			pids = append(pids, Pid(pid))
 		}
 	}
 
-	return pids[:i], nil
+	return pids, nil
 }

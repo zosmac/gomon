@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 type (
 	// field records the attributes of a field for documenting.
 	field struct {
-		key      string
 		Name     string
 		Property bool   // true if field is a property
 		Type     string // metric type
@@ -55,11 +55,8 @@ var (
 	// platform identifies the local OS.
 	platform = runtime.GOOS + "_" + runtime.GOARCH
 
-	// fields contains a definition for each message's fields.
-	fields []field
-
-	// Messages contains a map of all message definitions.
-	Messages = map[string][]field{}
+	// messages contains a map of all message definitions.
+	messages = map[string][]field{}
 
 	// MeasureEvents has only the single type "measure".
 	MeasureEvents = gocore.ValidValue[MeasureEvent]{}.Define(measure)
@@ -107,17 +104,25 @@ func Define(m Content) {
 			return messageField(m, name, tag, val)
 		},
 	)
+	slices.SortStableFunc(fs, func(a, b any) int {
+		fa, fb := a.(field), b.(field)
+		if fa.Property == fb.Property {
+			return 0
+		} else if fa.Property {
+			return -1
+		}
+		return 1 // b is a property
+	})
 	src := filepath.Base(reflect.ValueOf(m).Elem().Type().PkgPath())
-	k := src + " |" + strings.Join(m.Events(), "|")
-	Messages[k] = make([]field, len(fs))
+	key := src + " |" + strings.Join(m.Events(), "|")
+	messages[key] = make([]field, len(fs))
 	for i, f := range fs {
-		Messages[k][i] = f.(field)
-		fields = append(fields, f.(field))
+		messages[key][i] = f.(field)
 	}
 }
 
 // messageField interprets a gomon tag for each message field.
-func messageField(m Content, name, tag string, val reflect.Value) field {
+func messageField(_ Content, name, tag string, val reflect.Value) field {
 	if max.Name < len(name) {
 		max.Name = len(name)
 	}
@@ -132,18 +137,14 @@ func messageField(m Content, name, tag string, val reflect.Value) field {
 		u = s[1]
 	}
 
-	key := filepath.Base(reflect.ValueOf(m).Elem().Type().PkgPath()) + " |" + strings.Join(m.Events(), "|")
-
 	switch t {
 	case "":
 		return field{
-			key:   key,
 			Name:  name,
 			Value: val,
 		}
 	case "property":
 		return field{
-			key:      key,
 			Name:     name,
 			Property: true,
 			Value:    val,
@@ -158,7 +159,6 @@ func messageField(m Content, name, tag string, val reflect.Value) field {
 	}
 
 	return field{
-		key:   key,
 		Name:  name,
 		Type:  t,
 		Unit:  u,
