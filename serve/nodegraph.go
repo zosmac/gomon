@@ -84,8 +84,8 @@ func (query Query) BuildGraph(
 	datas map[Pid]string,
 	edges map[[2]Pid][]string,
 ) []byte {
-	var clusterNodes [][2]string // One node in each cluster is linked invisibly to a node
-	var clusterEdges string      //  in the next to maintain left to right order of clusters.
+	var clusterNodes [][2]string     // One node in each cluster is linked invisibly to a node
+	var clusterEdges strings.Builder //  in the next to maintain left to right order of clusters.
 
 	// add process nodes to each cluster, sort connections for tooltip
 	for depth, pid := range itr.All() {
@@ -131,15 +131,13 @@ func (query Query) BuildGraph(
 	}
 
 	// build processes clusters
-	var procs string
+	var procs strings.Builder
 	for depth := range len(prcss) {
 		prcs, pid := cluster(tb, prcss[depth])
-		procs += fmt.Sprintf(
-			"   subgraph processes_%d {cluster=true rank=same label=\"Process depth %[1]d\"\n",
-			depth+1,
-		)
-		procs += prcs
-		procs += "   }\n"
+		fmt.Fprintf(&procs, "   subgraph processes_%d {cluster=true rank=same label=\"Process depth %[1]d\"\n",
+			depth+1)
+		procs.WriteString(prcs)
+		procs.WriteString("   }\n")
 
 		clusterNodes = append(
 			clusterNodes,
@@ -158,17 +156,15 @@ func (query Query) BuildGraph(
 
 	// define invisible edges to force left to right positioning of hosts -> processes -> data clusters
 	for i := range len(clusterNodes) - 1 {
-		clusterEdges += fmt.Sprintf(
-			"  %s -> %s [style=invis ltail=%q lhead=%q]\n",
+		fmt.Fprintf(&clusterEdges, "  %s -> %s [style=invis ltail=%q lhead=%q]\n",
 			clusterNodes[i][0],
 			clusterNodes[i+1][0],
 			clusterNodes[i][1],
-			clusterNodes[i+1][1],
-		)
+			clusterNodes[i+1][1])
 	}
 
 	// add the edges
-	var es string
+	var es strings.Builder
 	// for id, edge := range edges { // does sorting improve graph consistency?
 	for id, edge := range gocore.Ordered(edges, func(a, b [2]Pid) int {
 		return cmp.Or(
@@ -180,7 +176,7 @@ func (query Query) BuildGraph(
 		if id[1] >= 0 && id[1] < math.MaxInt32 && tb[id[1]].Ppid == id[0] {
 			dir = "forward"
 		}
-		es += fmt.Sprintf("%s dir=%s tooltip=%q]", edge[0], dir, strings.Join(edge[1:], "\n"))
+		fmt.Fprintf(&es, "%s dir=%s tooltip=%q]", edge[0], dir, strings.Join(edge[1:], "\n"))
 	}
 
 	return dot(`digraph "Gomon Process Connections Nodegraph" {
@@ -202,12 +198,12 @@ func (query Query) BuildGraph(
 ` + host + `
   }
   subgraph processes {cluster=true label=Processes
-` + procs + `
+` + procs.String() + `
   }
   subgraph datas {cluster=true rank=same label="Data Sources"
 ` + data + `
   }
-` + clusterEdges + es + `
+` + clusterEdges.String() + es.String() + `
 }`)
 }
 
@@ -293,7 +289,7 @@ func cluster(tb process.Table, nodes map[Pid]string) (string, Pid) {
 	}
 
 	var invis Pid
-	var ns string
+	var ns strings.Builder
 	// for pid, node := range nodes { // does sorting improve graph consistency?
 	for pid, node := range gocore.Ordered(nodes, func(a, b Pid) int {
 		if a >= 0 && a < math.MaxInt32 { // processes
@@ -309,8 +305,8 @@ func cluster(tb process.Table, nodes map[Pid]string) (string, Pid) {
 		if invis == 0 {
 			invis = pid
 		}
-		ns += fmt.Sprintf("    %d %s\n", pid, node)
+		fmt.Fprintf(&ns, "    %d %s\n", pid, node)
 	}
 
-	return ns, invis
+	return ns.String(), invis
 }
