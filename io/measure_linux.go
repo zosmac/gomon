@@ -36,7 +36,7 @@ func Measure() (ms []message.Content) {
 		var statfs syscall.Statfs_t
 		syscall.Statfs(filepath.Join("/dev", strs[2]), &statfs)
 
-		ms = append(ms, &measurement{
+		ms = append(ms, &Measurement{
 			Header: message.Measurement(),
 			EventID: EventID{
 				Device: strs[2],

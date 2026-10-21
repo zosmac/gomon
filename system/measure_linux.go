@@ -100,11 +100,11 @@ func rlimits() Rlimits {
 }
 
 // cpu captures CPU metrics for system.
-func cpu() CPU {
+func cpu() Cpu {
 	f, err := os.Open("/proc/stat")
 	if err != nil {
 		gocore.Error("/proc/stat open", err).Err()
-		return CPU{}
+		return Cpu{}
 	}
 	defer f.Close()
 
@@ -119,11 +119,11 @@ func cpu() CPU {
 	}
 
 	gocore.Error("/proc/stat cpu", sc.Err()).Err()
-	return CPU{}
+	return Cpu{}
 }
 
 // cpus captures individual CPU metrics.
-func cpus() []CPU {
+func cpus() []Cpu {
 	f, err := os.Open("/proc/stat")
 	if err != nil {
 		gocore.Error("/proc/stat open", err).Err()
@@ -131,7 +131,7 @@ func cpus() []CPU {
 	}
 	defer f.Close()
 
-	var cpus []CPU
+	var cpus []Cpu
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		l := sc.Text()
@@ -148,7 +148,7 @@ func cpus() []CPU {
 }
 
 // scale converts cpu times to nanoseconds.
-func scale(stat string) CPU {
+func scale(stat string) Cpu {
 	flds := strings.Fields(stat)
 	user, _ := strconv.Atoi(flds[1])
 	nice, _ := strconv.Atoi(flds[2])
@@ -159,7 +159,7 @@ func scale(stat string) CPU {
 	softIrq, _ := strconv.Atoi(flds[7])
 	stolen, _ := strconv.Atoi(flds[8])
 
-	c := CPU{
+	c := Cpu{
 		User:    time.Duration(user) * factor,
 		System:  time.Duration(system) * factor,
 		Idle:    time.Duration(idle) * factor,

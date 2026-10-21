@@ -48,7 +48,7 @@ func filesystems() ([]message.Request, error) {
 		qs = append(qs,
 			func() []message.Content {
 				return []message.Content{
-					&measurement{
+					&Measurement{
 						Header: message.Measurement(),
 						EventID: EventID{
 							Mount: f[0],
